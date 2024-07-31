@@ -4,6 +4,10 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+cairo-lang-sierra = "2.7.0-rc.3"
+cairo-lang-utils = "2.7.0-rc.3"
 clap = { version = "4.5.11", features = ["derive"] }
+num-bigint = "0.4.6"
+starknet-types-core = "0.1.5"
 tracing = "0.1.40"
 tracing-subscriber = { version = "0.3.18", features = ["env-filter"] }

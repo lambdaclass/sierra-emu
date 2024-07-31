@@ -9,7 +9,7 @@ pub struct CmdArgs {
 
 #[derive(Clone, Debug)]
 pub enum EntryPoint {
-    Number(usize),
+    Number(u64),
     String(String),
 }
 
