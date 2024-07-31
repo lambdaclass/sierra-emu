@@ -2,7 +2,7 @@ use self::{args::CmdArgs, vm::VirtualMachine};
 use cairo_lang_sierra::ProgramParser;
 use clap::Parser;
 use std::fs;
-use tracing::{info, Level};
+use tracing::{debug, info, Level};
 use tracing_subscriber::{EnvFilter, FmtSubscriber};
 
 mod args;
@@ -27,7 +27,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .parse(&source_code)
         .map_err(|e| e.to_string())?;
 
+    info!("Preparing the virtual machine.");
     let mut vm = VirtualMachine::new(program.clone());
+
+    debug!("Pushing the entry point's frame.");
     vm.push_frame(
         &program
             .funcs
@@ -38,10 +41,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             })
             .unwrap()
             .id,
-        [],
+        [
+            // TODO: Entry point argument parsing.
+        ],
     );
 
+    info!("Running the program.");
     while let Some(state) = vm.step() {
+        // TODO: Persist the state dump.
         println!("{state:#?}");
     }
 
