@@ -1,10 +1,10 @@
-use self::{args::CmdArgs, value::Value, vm::VirtualMachine};
-use cairo_lang_sierra::{ids::VarId, ProgramParser};
-use cairo_lang_utils::ordered_hash_map::OrderedHashMap;
+use self::{args::CmdArgs, vm::VirtualMachine};
+use cairo_lang_sierra::ProgramParser;
 use clap::Parser;
+use dump::{ProgramTrace, StateDump};
 use std::{
     fs::{self, File},
-    io::{self, stdout},
+    io::stdout,
 };
 use tracing::{debug, info, Level};
 use tracing_subscriber::{EnvFilter, FmtSubscriber};
@@ -33,7 +33,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .map_err(|e| e.to_string())?;
 
     info!("Preparing the virtual machine.");
-    let mut vm = VirtualMachine::new(program.clone());
+    let mut vm = VirtualMachine::new(&program);
 
     debug!("Pushing the entry point's frame.");
     vm.push_frame(
@@ -51,18 +51,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         ],
     );
 
-    let mut state_dump = Vec::<(usize, OrderedHashMap<VarId, Value>)>::new();
+    let mut trace = ProgramTrace::new();
 
     info!("Running the program.");
     while let Some((statement_idx, state)) = vm.step() {
-        // TODO: Persist the state dump.
-        // println!("{state:#?}");
-        state_dump.push((statement_idx.0, state));
+        trace.push(StateDump::new(statement_idx, state));
     }
 
     match args.output {
-        Some(path) => serde_json::to_writer_pretty(File::create(path)?, &state_dump)?,
-        None => serde_json::to_writer_pretty(stdout().lock(), &state_dump)?,
+        Some(path) => serde_json::to_writer_pretty(File::create(path)?, &trace)?,
+        None => serde_json::to_writer_pretty(stdout().lock(), &trace)?,
     };
 
     Ok(())

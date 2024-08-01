@@ -25,7 +25,7 @@ pub fn eval(
 pub fn eval_as_immediate(
     registry: &ProgramRegistry<CoreType, CoreLibfunc>,
     info: &ConstAsImmediateConcreteLibfunc,
-    args: &[Value],
+    _args: &[Value],
 ) -> (Option<usize>, Vec<Value>) {
     let const_ty = match registry.get_type(&info.const_type).unwrap() {
         CoreTypeConcrete::Const(x) => x,

@@ -12,16 +12,16 @@ use std::cell::Cell;
 mod r#const;
 mod mem;
 
-pub struct VirtualMachine {
-    program: Program,
+pub struct VirtualMachine<'a> {
+    program: &'a Program,
     registry: ProgramRegistry<CoreType, CoreLibfunc>,
 
-    frames: Vec<SierraFrame>,
+    frames: Vec<SierraFrame<'a>>,
 }
 
-impl VirtualMachine {
-    pub fn new(program: Program) -> Self {
-        let registry = ProgramRegistry::new(&program).unwrap();
+impl<'a> VirtualMachine<'a> {
+    pub fn new(program: &'a Program) -> Self {
+        let registry = ProgramRegistry::new(program).unwrap();
 
         Self {
             program,
@@ -32,7 +32,7 @@ impl VirtualMachine {
     }
 
     /// Effectively a function call (for entry points).
-    pub fn push_frame<I>(&mut self, function_id: &FunctionId, args: I)
+    pub fn push_frame<I>(&mut self, function_id: &'a FunctionId, args: I)
     where
         I: IntoIterator<Item = Value>,
         I::IntoIter: ExactSizeIterator,
@@ -42,7 +42,7 @@ impl VirtualMachine {
         let args = args.into_iter();
         assert_eq!(args.len(), function.params.len());
         self.frames.push(SierraFrame {
-            function_id: function.id.clone(),
+            _function_id: function_id,
             state: Cell::new(
                 function
                     .params
@@ -114,8 +114,8 @@ impl VirtualMachine {
     }
 }
 
-struct SierraFrame {
-    function_id: FunctionId,
+struct SierraFrame<'a> {
+    _function_id: &'a FunctionId,
 
     state: Cell<OrderedHashMap<VarId, Value>>,
     pc: StatementIdx,

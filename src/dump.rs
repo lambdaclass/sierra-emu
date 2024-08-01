@@ -4,23 +4,30 @@ use cairo_lang_utils::ordered_hash_map::OrderedHashMap;
 use serde::{ser::SerializeMap, Serialize};
 use std::collections::BTreeMap;
 
+#[derive(Clone, Debug, Default, Serialize)]
 pub struct ProgramTrace {
     states: Vec<StateDump>,
+    // TODO: Syscall data.
 }
 
 impl ProgramTrace {
     pub fn new() -> Self {
         Self { states: Vec::new() }
     }
+
+    pub fn push(&mut self, state: StateDump) {
+        self.states.push(state);
+    }
 }
 
+#[derive(Clone, Debug)]
 pub struct StateDump {
     statement_idx: StatementIdx,
     items: BTreeMap<u64, Value>,
 }
 
 impl StateDump {
-    fn new(statement_idx: StatementIdx, state: OrderedHashMap<VarId, Value>) -> Self {
+    pub fn new(statement_idx: StatementIdx, state: OrderedHashMap<VarId, Value>) -> Self {
         Self {
             statement_idx,
             items: state
@@ -36,10 +43,11 @@ impl Serialize for StateDump {
     where
         S: serde::Serializer,
     {
-        let mut s = s.serialize_map(Some(self.items.len()))?;
-        self.items
-            .iter()
-            .try_for_each(|(id, value)| s.serialize_entry(id, value))?;
+        let mut s = s.serialize_map(Some(2))?;
+
+        s.serialize_entry("statementIdx", &self.statement_idx.0)?;
+        s.serialize_entry("preStateDump", &self.items)?;
+
         s.end()
     }
 }

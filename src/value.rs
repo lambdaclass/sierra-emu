@@ -8,7 +8,7 @@ pub enum Value {
 }
 
 impl Value {
-    pub fn is(&self, ty: &CoreTypeConcrete) -> bool {
+    pub fn is(&self, _ty: &CoreTypeConcrete) -> bool {
         todo!()
     }
 }
