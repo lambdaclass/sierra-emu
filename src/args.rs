@@ -5,6 +5,9 @@ use std::{num::ParseIntError, path::PathBuf, str::FromStr};
 pub struct CmdArgs {
     pub program: PathBuf,
     pub entry_point: EntryPoint,
+
+    #[clap(long, short)]
+    pub output: Option<PathBuf>,
 }
 
 #[derive(Clone, Debug)]

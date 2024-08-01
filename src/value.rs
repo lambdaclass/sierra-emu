@@ -1,7 +1,8 @@
 use cairo_lang_sierra::extensions::core::CoreTypeConcrete;
+use serde::Serialize;
 use starknet_types_core::felt::Felt;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize)]
 pub enum Value {
     Felt(Felt),
 }

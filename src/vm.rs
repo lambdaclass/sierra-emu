@@ -59,8 +59,10 @@ impl VirtualMachine {
     }
 
     /// Run a single statement and return the state before its execution.
-    pub fn step(&mut self) -> Option<OrderedHashMap<VarId, Value>> {
+    pub fn step(&mut self) -> Option<(StatementIdx, OrderedHashMap<VarId, Value>)> {
         let frame = self.frames.last_mut()?;
+
+        let pc_snapshot = frame.pc;
         let state_snapshot = frame.state.get_mut().clone();
 
         match &self.program.statements[frame.pc.0] {
@@ -108,7 +110,7 @@ impl VirtualMachine {
             }
         }
 
-        Some(state_snapshot)
+        Some((pc_snapshot, state_snapshot))
     }
 }
 

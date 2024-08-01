@@ -1,11 +1,16 @@
-use self::{args::CmdArgs, vm::VirtualMachine};
-use cairo_lang_sierra::ProgramParser;
+use self::{args::CmdArgs, value::Value, vm::VirtualMachine};
+use cairo_lang_sierra::{ids::VarId, ProgramParser};
+use cairo_lang_utils::ordered_hash_map::OrderedHashMap;
 use clap::Parser;
-use std::fs;
+use std::{
+    fs::{self, File},
+    io::{self, stdout},
+};
 use tracing::{debug, info, Level};
 use tracing_subscriber::{EnvFilter, FmtSubscriber};
 
 mod args;
+mod dump;
 mod value;
 mod vm;
 
@@ -46,11 +51,19 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         ],
     );
 
+    let mut state_dump = Vec::<(usize, OrderedHashMap<VarId, Value>)>::new();
+
     info!("Running the program.");
-    while let Some(state) = vm.step() {
+    while let Some((statement_idx, state)) = vm.step() {
         // TODO: Persist the state dump.
-        println!("{state:#?}");
+        // println!("{state:#?}");
+        state_dump.push((statement_idx.0, state));
     }
+
+    match args.output {
+        Some(path) => serde_json::to_writer_pretty(File::create(path)?, &state_dump)?,
+        None => serde_json::to_writer_pretty(stdout().lock(), &state_dump)?,
+    };
 
     Ok(())
 }
