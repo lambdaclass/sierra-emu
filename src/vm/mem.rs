@@ -1,4 +1,4 @@
-use crate::value::Value;
+use crate::Value;
 use cairo_lang_sierra::{
     extensions::{
         core::{CoreLibfunc, CoreType},
@@ -17,12 +17,21 @@ pub fn eval(
         MemConcreteLibfunc::StoreTemp(info) => eval_store_temp(registry, info, args),
         MemConcreteLibfunc::StoreLocal(_) => todo!(),
         MemConcreteLibfunc::FinalizeLocals(_) => todo!(),
-        MemConcreteLibfunc::AllocLocal(_) => todo!(),
+        MemConcreteLibfunc::AllocLocal(info) => eval_alloc_local(registry, info, args),
         MemConcreteLibfunc::Rename(_) => todo!(),
     }
 }
 
 pub fn eval_store_temp(
+    _registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    _info: &SignatureAndTypeConcreteLibfunc,
+    args: &[Value],
+) -> (Option<usize>, Vec<Value>) {
+    assert_eq!(args.len(), 1);
+    (Some(0), args.to_vec())
+}
+
+pub fn eval_alloc_local(
     _registry: &ProgramRegistry<CoreType, CoreLibfunc>,
     _info: &SignatureAndTypeConcreteLibfunc,
     args: &[Value],

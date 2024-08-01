@@ -1,4 +1,4 @@
-use crate::value::Value;
+use crate::Value;
 use cairo_lang_sierra::{
     extensions::{
         const_type::{ConstAsImmediateConcreteLibfunc, ConstConcreteLibfunc},

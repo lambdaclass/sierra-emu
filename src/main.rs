@@ -1,7 +1,11 @@
 use self::{args::CmdArgs, vm::VirtualMachine};
-use cairo_lang_sierra::ProgramParser;
+use cairo_lang_sierra::{
+    extensions::core::{CoreLibfunc, CoreType, CoreTypeConcrete},
+    program_registry::ProgramRegistry,
+    ProgramParser,
+};
 use clap::Parser;
-use dump::{ProgramTrace, StateDump};
+use sierra_emu::{ProgramTrace, StateDump, Value};
 use std::{
     fs::{self, File},
     io::stdout,
@@ -10,8 +14,6 @@ use tracing::{debug, info, Level};
 use tracing_subscriber::{EnvFilter, FmtSubscriber};
 
 mod args;
-mod dump;
-mod value;
 mod vm;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -31,24 +33,44 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let program = ProgramParser::new()
         .parse(&source_code)
         .map_err(|e| e.to_string())?;
+    let registry = ProgramRegistry::<CoreType, CoreLibfunc>::new(&program).unwrap();
 
     info!("Preparing the virtual machine.");
     let mut vm = VirtualMachine::new(&program);
 
     debug!("Pushing the entry point's frame.");
+    let function = program
+        .funcs
+        .iter()
+        .find(|f| match &args.entry_point {
+            args::EntryPoint::Number(x) => f.id.id == *x,
+            args::EntryPoint::String(x) => f.id.debug_name.as_deref() == Some(x.as_str()),
+        })
+        .unwrap();
+
+    debug!(
+        "Entry point argument types: {:?}",
+        function.signature.param_types
+    );
+    let mut iter = args.args.into_iter();
     vm.push_frame(
-        &program
-            .funcs
+        &function.id,
+        function
+            .signature
+            .param_types
             .iter()
-            .find(|f| match &args.entry_point {
-                args::EntryPoint::Number(x) => f.id.id == *x,
-                args::EntryPoint::String(x) => f.id.debug_name.as_deref() == Some(x.as_str()),
+            .map(|type_id| {
+                let type_info = registry.get_type(type_id).unwrap();
+                match type_info {
+                    CoreTypeConcrete::Felt252(_) => Value::parse_felt(&iter.next().unwrap()),
+                    CoreTypeConcrete::GasBuiltin(_) => Value::U128(args.available_gas.unwrap()),
+                    CoreTypeConcrete::RangeCheck(_) | CoreTypeConcrete::SegmentArena(_) => {
+                        Value::Unit
+                    }
+                    _ => todo!(),
+                }
             })
-            .unwrap()
-            .id,
-        [
-            // TODO: Entry point argument parsing.
-        ],
+            .collect::<Vec<_>>(),
     );
 
     let mut trace = ProgramTrace::new();

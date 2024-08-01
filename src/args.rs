@@ -6,6 +6,10 @@ pub struct CmdArgs {
     pub program: PathBuf,
     pub entry_point: EntryPoint,
 
+    pub args: Vec<String>,
+    #[clap(long)]
+    pub available_gas: Option<u128>,
+
     #[clap(long, short)]
     pub output: Option<PathBuf>,
 }
