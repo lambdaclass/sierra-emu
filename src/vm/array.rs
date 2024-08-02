@@ -1,7 +1,7 @@
 use cairo_lang_sierra::{
     extensions::{
         array::ArrayConcreteLibfunc,
-        core::{CoreLibfunc, CoreType},
+        core::{CoreLibfunc, CoreType, CoreTypeConcrete},
         lib_func::{SignatureAndTypeConcreteLibfunc, SignatureOnlyConcreteLibfunc},
     },
     program_registry::ProgramRegistry,
@@ -31,35 +31,44 @@ pub fn eval(
 }
 
 pub fn eval_new(
-    _registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    registry: &ProgramRegistry<CoreType, CoreLibfunc>,
     info: &SignatureOnlyConcreteLibfunc,
     args: &[Value],
 ) -> (Option<usize>, Vec<Value>) {
     assert!(args.is_empty());
 
+    let type_info = registry
+        .get_type(&info.signature.branch_signatures[0].vars[0].ty)
+        .unwrap();
+    let ty = match type_info {
+        CoreTypeConcrete::Array(info) => info.ty.clone(),
+        _ => unreachable!(),
+    };
+
     (
         Some(0),
         vec![Value::Array {
-            ty: info.signature.branch_signatures[0].vars[0].ty.clone(),
-            values: Vec::new(),
+            ty,
+            data: Vec::new(),
         }],
     )
 }
 
 pub fn eval_append(
-    _registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    registry: &ProgramRegistry<CoreType, CoreLibfunc>,
     info: &SignatureAndTypeConcreteLibfunc,
     args: &[Value],
 ) -> (Option<usize>, Vec<Value>) {
     assert_eq!(args.len(), 2);
 
-    let (ty, mut values) = match &args[0] {
-        Value::Array { ty, values } => (ty.clone(), values.clone()),
+    let (ty, mut data) = match &args[0] {
+        Value::Array { ty, data: values } => (ty.clone(), values.clone()),
         _ => todo!(),
     };
 
-    assert_eq!(info.signature.param_signatures[0].ty, ty);
-    values.push(args[1].clone());
+    assert_eq!(info.signature.param_signatures[1].ty, ty);
+    assert!(args[1].is(registry.get_type(&ty).unwrap()));
+    data.push(args[1].clone());
 
-    (Some(0), vec![Value::Array { ty, values }])
+    (Some(0), vec![Value::Array { ty, data }])
 }

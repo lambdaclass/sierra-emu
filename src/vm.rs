@@ -12,7 +12,12 @@ use std::cell::Cell;
 mod ap_tracking;
 mod array;
 mod r#const;
+mod drop;
+mod dup;
+mod felt252_dict;
+mod function_call;
 mod mem;
+mod snapshot_take;
 
 pub struct VirtualMachine<'a> {
     program: &'a Program,
@@ -144,14 +149,16 @@ fn eval(
         CoreConcreteLibfunc::Coupon(_) => todo!(),
         CoreConcreteLibfunc::CouponCall(_) => todo!(),
         CoreConcreteLibfunc::Debug(_) => todo!(),
-        CoreConcreteLibfunc::Drop(_) => todo!(),
-        CoreConcreteLibfunc::Dup(_) => todo!(),
+        CoreConcreteLibfunc::Drop(info) => self::drop::eval(registry, info, args),
+        CoreConcreteLibfunc::Dup(info) => self::dup::eval(registry, info, args),
         CoreConcreteLibfunc::Ec(_) => todo!(),
         CoreConcreteLibfunc::Enum(_) => todo!(),
         CoreConcreteLibfunc::Felt252(_) => todo!(),
-        CoreConcreteLibfunc::Felt252Dict(_) => todo!(),
+        CoreConcreteLibfunc::Felt252Dict(selector) => {
+            self::felt252_dict::eval(registry, selector, args)
+        }
         CoreConcreteLibfunc::Felt252DictEntry(_) => todo!(),
-        CoreConcreteLibfunc::FunctionCall(_) => todo!(),
+        CoreConcreteLibfunc::FunctionCall(info) => self::function_call::eval(registry, info, args),
         CoreConcreteLibfunc::Gas(_) => todo!(),
         CoreConcreteLibfunc::Mem(selector) => self::mem::eval(registry, selector, args),
         CoreConcreteLibfunc::Nullable(_) => todo!(),
@@ -162,7 +169,7 @@ fn eval(
         CoreConcreteLibfunc::Sint32(_) => todo!(),
         CoreConcreteLibfunc::Sint64(_) => todo!(),
         CoreConcreteLibfunc::Sint8(_) => todo!(),
-        CoreConcreteLibfunc::SnapshotTake(_) => todo!(),
+        CoreConcreteLibfunc::SnapshotTake(info) => self::snapshot_take::eval(registry, info, args),
         CoreConcreteLibfunc::StarkNet(_) => todo!(),
         CoreConcreteLibfunc::Struct(_) => todo!(),
         CoreConcreteLibfunc::Uint128(_) => todo!(),
