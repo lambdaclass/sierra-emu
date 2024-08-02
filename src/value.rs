@@ -4,11 +4,16 @@ use starknet_types_core::felt::Felt;
 
 #[derive(Clone, Debug, Serialize)]
 pub enum Value {
-    Unit,
-    Uninitialized(ConcreteTypeId),
-
+    Array {
+        ty: ConcreteTypeId,
+        values: Vec<Self>,
+    },
     Felt(Felt),
     U128(u128),
+    U32(u32),
+    U8(u8),
+    Uninitialized(ConcreteTypeId),
+    Unit,
 }
 
 impl Value {

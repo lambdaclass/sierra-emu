@@ -49,7 +49,25 @@ pub fn eval_as_immediate(
             }
             _ => unreachable!(),
         },
-        _ => todo!(),
+        CoreTypeConcrete::Uint32(_) => match const_ty.inner_data.as_slice() {
+            [GenericArg::Value(value)] => {
+                let (sign, value) = value.clone().into_parts();
+                assert_ne!(sign, Sign::Minus);
+
+                Value::U32(value.try_into().unwrap())
+            }
+            _ => unreachable!(),
+        },
+        CoreTypeConcrete::Uint8(_) => match const_ty.inner_data.as_slice() {
+            [GenericArg::Value(value)] => {
+                let (sign, value) = value.clone().into_parts();
+                assert_ne!(sign, Sign::Minus);
+
+                Value::U8(value.try_into().unwrap())
+            }
+            _ => unreachable!(),
+        },
+        _ => todo!("{:?}", &const_ty.inner_ty),
     };
 
     (Some(0), vec![value])

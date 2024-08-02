@@ -10,6 +10,7 @@ use cairo_lang_utils::ordered_hash_map::OrderedHashMap;
 use std::cell::Cell;
 
 mod ap_tracking;
+mod array;
 mod r#const;
 mod mem;
 
@@ -128,8 +129,10 @@ fn eval(
     args: &[Value],
 ) -> (Option<usize>, Vec<Value>) {
     match registry.get_libfunc(id).unwrap() {
-        CoreConcreteLibfunc::ApTracking(selector) => self::ap_tracking::eval(registry, selector, args),
-        CoreConcreteLibfunc::Array(_) => todo!(),
+        CoreConcreteLibfunc::ApTracking(selector) => {
+            self::ap_tracking::eval(registry, selector, args)
+        }
+        CoreConcreteLibfunc::Array(selector) => self::array::eval(registry, selector, args),
         CoreConcreteLibfunc::Bool(_) => todo!(),
         CoreConcreteLibfunc::BoundedInt(_) => todo!(),
         CoreConcreteLibfunc::Box(_) => todo!(),
