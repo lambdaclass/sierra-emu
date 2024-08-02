@@ -17,7 +17,7 @@ pub fn eval<'a>(
 ) -> EvalAction<'a> {
     match selector {
         ApTrackingConcreteLibfunc::Revoke(_) => todo!(),
-        ApTrackingConcreteLibfunc::Enable(info) => eval_disable(registry, info, args),
+        ApTrackingConcreteLibfunc::Enable(info) => eval_enable(registry, info, args),
         ApTrackingConcreteLibfunc::Disable(info) => eval_disable(registry, info, args),
     }
 }
