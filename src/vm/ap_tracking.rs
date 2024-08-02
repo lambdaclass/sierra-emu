@@ -13,7 +13,7 @@ use smallvec::smallvec;
 pub fn eval<'a>(
     registry: &'a ProgramRegistry<CoreType, CoreLibfunc>,
     selector: &'a ApTrackingConcreteLibfunc,
-    args: &[Value<'a>],
+    args: Vec<Value<'a>>,
 ) -> EvalAction<'a> {
     match selector {
         ApTrackingConcreteLibfunc::Revoke(_) => todo!(),
@@ -25,8 +25,9 @@ pub fn eval<'a>(
 pub fn eval_disable<'a>(
     _registry: &'a ProgramRegistry<CoreType, CoreLibfunc>,
     _info: &'a SignatureOnlyConcreteLibfunc,
-    args: &[Value<'a>],
+    args: Vec<Value<'a>>,
 ) -> EvalAction<'a> {
-    assert!(args.is_empty());
+    let [] = args.try_into().unwrap();
+
     EvalAction::NormalBranch(0, smallvec![])
 }

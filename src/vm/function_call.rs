@@ -11,7 +11,7 @@ use sierra_emu::Value;
 pub fn eval<'a>(
     registry: &'a ProgramRegistry<CoreType, CoreLibfunc>,
     info: &'a SignatureAndFunctionConcreteLibfunc,
-    args: &[Value<'a>],
+    args: Vec<Value<'a>>,
 ) -> EvalAction<'a> {
     assert_eq!(args.len(), info.function.params.len());
     assert!(args
@@ -19,5 +19,5 @@ pub fn eval<'a>(
         .zip(&info.function.params)
         .all(|(value, param)| value.is(registry, &param.ty)));
 
-    EvalAction::FunctionCall(&info.function.id, args.iter().cloned().collect())
+    EvalAction::FunctionCall(&info.function.id, args.into_iter().collect())
 }

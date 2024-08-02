@@ -13,7 +13,7 @@ use smallvec::smallvec;
 pub fn eval<'a>(
     registry: &'a ProgramRegistry<CoreType, CoreLibfunc>,
     selector: &'a ArrayConcreteLibfunc,
-    args: &[Value<'a>],
+    args: Vec<Value<'a>>,
 ) -> EvalAction<'a> {
     match selector {
         ArrayConcreteLibfunc::New(info) => eval_new(registry, info, args),
@@ -35,9 +35,9 @@ pub fn eval<'a>(
 pub fn eval_new<'a>(
     registry: &'a ProgramRegistry<CoreType, CoreLibfunc>,
     info: &SignatureOnlyConcreteLibfunc,
-    args: &[Value<'a>],
+    args: Vec<Value<'a>>,
 ) -> EvalAction<'a> {
-    assert!(args.is_empty());
+    let [] = args.try_into().unwrap();
 
     let type_info = registry
         .get_type(&info.signature.branch_signatures[0].vars[0].ty)
@@ -59,18 +59,15 @@ pub fn eval_new<'a>(
 pub fn eval_append<'a>(
     registry: &ProgramRegistry<CoreType, CoreLibfunc>,
     info: &SignatureAndTypeConcreteLibfunc,
-    args: &[Value<'a>],
+    args: Vec<Value<'a>>,
 ) -> EvalAction<'a> {
-    assert_eq!(args.len(), 2);
-
-    let (ty, mut data) = match &args[0] {
-        Value::Array { ty, data: values } => (ty, values.clone()),
-        _ => todo!(),
+    let [Value::Array { ty, mut data }, item]: [Value<'a>; 2] = args.try_into().unwrap() else {
+        panic!()
     };
 
-    assert_eq!(&info.signature.param_signatures[1].ty, *ty);
-    assert!(args[1].is(registry, ty));
-    data.push(args[1].clone());
+    assert_eq!(&info.signature.param_signatures[1].ty, ty);
+    assert!(item.is(registry, ty));
+    data.push(item.clone());
 
     EvalAction::NormalBranch(0, smallvec![Value::Array { ty, data }])
 }

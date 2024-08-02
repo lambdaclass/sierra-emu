@@ -14,7 +14,7 @@ use std::collections::HashMap;
 pub fn eval<'a>(
     registry: &'a ProgramRegistry<CoreType, CoreLibfunc>,
     selector: &'a Felt252DictConcreteLibfunc,
-    args: &[Value<'a>],
+    args: Vec<Value<'a>>,
 ) -> EvalAction<'a> {
     match selector {
         Felt252DictConcreteLibfunc::New(info) => eval_new(registry, info, args),
@@ -25,10 +25,11 @@ pub fn eval<'a>(
 pub fn eval_new<'a>(
     registry: &'a ProgramRegistry<CoreType, CoreLibfunc>,
     info: &'a SignatureOnlyConcreteLibfunc,
-    args: &[Value<'a>],
+    args: Vec<Value<'a>>,
 ) -> EvalAction<'a> {
-    assert_eq!(args.len(), 1);
-    assert_eq!(args[0], Value::Unit); // SegmentArena
+    let [segment_arena @ Value::Unit]: [Value<'a>; 1] = args.try_into().unwrap() else {
+        panic!()
+    };
 
     let type_info = registry
         .get_type(&info.signature.branch_signatures[0].vars[1].ty)
@@ -41,7 +42,7 @@ pub fn eval_new<'a>(
     EvalAction::NormalBranch(
         0,
         smallvec![
-            args[0].clone(),
+            segment_arena,
             Value::FeltDict {
                 ty,
                 data: HashMap::new(),

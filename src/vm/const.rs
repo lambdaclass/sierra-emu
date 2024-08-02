@@ -16,7 +16,7 @@ use std::str::FromStr;
 pub fn eval<'a>(
     registry: &'a ProgramRegistry<CoreType, CoreLibfunc>,
     selector: &'a ConstConcreteLibfunc,
-    args: &[Value<'a>],
+    args: Vec<Value<'a>>,
 ) -> EvalAction<'a> {
     match selector {
         ConstConcreteLibfunc::AsBox(_) => todo!(),
@@ -27,8 +27,10 @@ pub fn eval<'a>(
 pub fn eval_as_immediate<'a>(
     registry: &'a ProgramRegistry<CoreType, CoreLibfunc>,
     info: &'a ConstAsImmediateConcreteLibfunc,
-    _args: &[Value<'a>],
+    args: Vec<Value<'a>>,
 ) -> EvalAction<'a> {
+    let [] = args.try_into().unwrap();
+
     let const_ty = match registry.get_type(&info.const_type).unwrap() {
         CoreTypeConcrete::Const(x) => x,
         _ => unreachable!(),
@@ -36,37 +38,15 @@ pub fn eval_as_immediate<'a>(
 
     let value = match registry.get_type(&const_ty.inner_ty).unwrap() {
         CoreTypeConcrete::Felt252(_) => match const_ty.inner_data.as_slice() {
-            [GenericArg::Value(value)] => {
-                let (sign, mut value) = value.clone().into_parts();
-                if sign == Sign::Minus {
-                    let prime = BigUint::from_str(
-                        "0x0800000000000011000000000000000000000000000000000000000000000001",
-                    )
-                    .unwrap();
-
-                    value = prime - value;
-                }
-
-                Value::Felt(Felt::from_bytes_le_slice(&value.to_bytes_le()))
-            }
+            [GenericArg::Value(value)] => Value::Felt(value.into()),
             _ => unreachable!(),
         },
         CoreTypeConcrete::Uint32(_) => match const_ty.inner_data.as_slice() {
-            [GenericArg::Value(value)] => {
-                let (sign, value) = value.clone().into_parts();
-                assert_ne!(sign, Sign::Minus);
-
-                Value::U32(value.try_into().unwrap())
-            }
+            [GenericArg::Value(value)] => Value::U32(value.try_into().unwrap()),
             _ => unreachable!(),
         },
         CoreTypeConcrete::Uint8(_) => match const_ty.inner_data.as_slice() {
-            [GenericArg::Value(value)] => {
-                let (sign, value) = value.clone().into_parts();
-                assert_ne!(sign, Sign::Minus);
-
-                Value::U8(value.try_into().unwrap())
-            }
+            [GenericArg::Value(value)] => Value::U8(value.try_into().unwrap()),
             _ => unreachable!(),
         },
         _ => todo!("{:?}", &const_ty.inner_ty),

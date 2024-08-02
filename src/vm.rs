@@ -76,7 +76,7 @@ impl<'a> VirtualMachine<'a> {
                 let (state, values) =
                     edit_state::take_args(frame.state.take(), invocation.args.iter()).unwrap();
 
-                match eval(self.registry, &invocation.libfunc_id, &values) {
+                match eval(self.registry, &invocation.libfunc_id, values) {
                     EvalAction::NormalBranch(branch_idx, results) => {
                         frame.pc = frame.pc.next(&invocation.branches[branch_idx].target);
                         frame.state.set(
@@ -151,7 +151,7 @@ enum EvalAction<'a> {
 fn eval<'a>(
     registry: &'a ProgramRegistry<CoreType, CoreLibfunc>,
     id: &'a ConcreteLibfuncId,
-    args: &[Value<'a>],
+    args: Vec<Value<'a>>,
 ) -> EvalAction<'a> {
     match registry.get_libfunc(id).unwrap() {
         CoreConcreteLibfunc::ApTracking(selector) => {

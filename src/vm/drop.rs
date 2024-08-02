@@ -12,8 +12,9 @@ use smallvec::smallvec;
 pub fn eval<'a>(
     _registry: &'a ProgramRegistry<CoreType, CoreLibfunc>,
     _info: &'a SignatureOnlyConcreteLibfunc,
-    args: &[Value<'a>],
+    args: Vec<Value<'a>>,
 ) -> EvalAction<'a> {
-    assert_eq!(args.len(), 1);
+    let [_value] = args.try_into().unwrap();
+
     EvalAction::NormalBranch(0, smallvec![])
 }
