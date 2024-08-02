@@ -1,10 +1,11 @@
-use cairo_lang_sierra::extensions::core::CoreTypeConcrete;
+use cairo_lang_sierra::{extensions::core::CoreTypeConcrete, ids::ConcreteTypeId};
 use serde::Serialize;
 use starknet_types_core::felt::Felt;
 
 #[derive(Clone, Debug, Serialize)]
 pub enum Value {
     Unit,
+    Uninitialized(ConcreteTypeId),
 
     Felt(Felt),
     U128(u128),
