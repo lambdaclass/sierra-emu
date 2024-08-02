@@ -69,7 +69,7 @@ pub fn eval_append<'a>(
     };
 
     assert_eq!(&info.signature.param_signatures[1].ty, *ty);
-    assert!(args[1].is(registry.get_type(ty).unwrap()));
+    assert!(args[1].is(registry, ty));
     data.push(args[1].clone());
 
     EvalAction::NormalBranch(0, smallvec![Value::Array { ty, data }])

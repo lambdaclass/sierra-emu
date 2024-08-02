@@ -45,7 +45,7 @@ pub fn eval_store_local<'a>(
         _ => unreachable!(),
     };
     assert!(
-        args[1].is(registry.get_type(type_id).unwrap()),
+        args[1].is(registry, type_id),
         "{:?} is not a {:?}",
         args[1],
         type_id

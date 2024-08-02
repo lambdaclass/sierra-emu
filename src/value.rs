@@ -1,4 +1,8 @@
-use cairo_lang_sierra::{extensions::core::CoreTypeConcrete, ids::ConcreteTypeId};
+use cairo_lang_sierra::{
+    extensions::core::{CoreLibfunc, CoreType, CoreTypeConcrete},
+    ids::ConcreteTypeId,
+    program_registry::ProgramRegistry,
+};
 use serde::Serialize;
 use starknet_types_core::felt::Felt;
 use std::collections::HashMap;
@@ -24,8 +28,12 @@ pub enum Value<'a> {
 }
 
 impl<'a> Value<'a> {
-    pub fn is(&self, type_info: &CoreTypeConcrete) -> bool {
-        match type_info {
+    pub fn is(
+        &self,
+        registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+        type_id: &ConcreteTypeId,
+    ) -> bool {
+        match registry.get_type(type_id).unwrap() {
             CoreTypeConcrete::Array(info) => {
                 matches!(self, Self::Array { ty, .. } if *ty == &info.ty)
             }
@@ -34,7 +42,9 @@ impl<'a> Value<'a> {
                 matches!(self, Self::FeltDict { ty, .. } if *ty == &info.ty)
             }
             CoreTypeConcrete::GasBuiltin(_) => matches!(self, Self::U128(_)),
+            CoreTypeConcrete::Snapshot(info) => self.is(registry, &info.ty),
             CoreTypeConcrete::Uint8(_) => matches!(self, Self::U8(_)),
+            CoreTypeConcrete::Uint32(_) => matches!(self, Self::U32(_)),
 
             // Unused builtins (mapped to `Value::Unit`).
             CoreTypeConcrete::RangeCheck(_) | CoreTypeConcrete::SegmentArena(_) => {
@@ -52,7 +62,6 @@ impl<'a> Value<'a> {
             CoreTypeConcrete::EcState(_) => todo!(),
             CoreTypeConcrete::BuiltinCosts(_) => todo!(),
             CoreTypeConcrete::Uint16(_) => todo!(),
-            CoreTypeConcrete::Uint32(_) => todo!(),
             CoreTypeConcrete::Uint64(_) => todo!(),
             CoreTypeConcrete::Uint128(_) => todo!(),
             CoreTypeConcrete::Uint128MulGuarantee(_) => todo!(),
@@ -73,7 +82,6 @@ impl<'a> Value<'a> {
             CoreTypeConcrete::Poseidon(_) => todo!(),
             CoreTypeConcrete::Span(_) => todo!(),
             CoreTypeConcrete::StarkNet(_) => todo!(),
-            CoreTypeConcrete::Snapshot(_) => todo!(),
             CoreTypeConcrete::Bytes31(_) => todo!(),
             CoreTypeConcrete::BoundedInt(_) => todo!(),
         }

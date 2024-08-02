@@ -55,7 +55,7 @@ impl<'a> VirtualMachine<'a> {
                     .iter()
                     .zip(args)
                     .map(|(param, value)| {
-                        assert!(value.is(self.registry.get_type(&param.ty).unwrap()));
+                        assert!(value.is(self.registry, &param.ty));
                         (param.id.clone(), value)
                     })
                     .collect(),
@@ -76,17 +76,32 @@ impl<'a> VirtualMachine<'a> {
                 let (state, values) =
                     edit_state::take_args(frame.state.take(), invocation.args.iter()).unwrap();
 
-                if let EvalAction::NormalBranch(branch_idx, results) =
-                    eval(self.registry, &invocation.libfunc_id, &values)
-                {
-                    frame.pc = frame.pc.next(&invocation.branches[branch_idx].target);
-                    frame.state.set(
-                        edit_state::put_results(
-                            state,
-                            invocation.branches[branch_idx].results.iter().zip(results),
-                        )
-                        .unwrap(),
-                    );
+                match eval(self.registry, &invocation.libfunc_id, &values) {
+                    EvalAction::NormalBranch(branch_idx, results) => {
+                        frame.pc = frame.pc.next(&invocation.branches[branch_idx].target);
+                        frame.state.set(
+                            edit_state::put_results(
+                                state,
+                                invocation.branches[branch_idx].results.iter().zip(results),
+                            )
+                            .unwrap(),
+                        );
+                    }
+                    EvalAction::FunctionCall(function_id, args) => {
+                        let function = self.registry.get_function(function_id).unwrap();
+                        self.frames.push(SierraFrame {
+                            _function_id: &function.id,
+                            state: Cell::new(
+                                function
+                                    .params
+                                    .iter()
+                                    .map(|param| param.id.clone())
+                                    .zip(args.iter().cloned())
+                                    .collect(),
+                            ),
+                            pc: function.entry_point,
+                        });
+                    }
                 }
             }
             GenStatement::Return(ids) => {
@@ -130,7 +145,7 @@ struct SierraFrame<'a> {
 
 enum EvalAction<'a> {
     NormalBranch(usize, SmallVec<[Value<'a>; 2]>),
-    FunctionCall(&'a FunctionId),
+    FunctionCall(&'a FunctionId, SmallVec<[Value<'a>; 2]>),
 }
 
 fn eval<'a>(

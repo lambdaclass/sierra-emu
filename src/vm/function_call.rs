@@ -9,9 +9,15 @@ use cairo_lang_sierra::{
 use sierra_emu::Value;
 
 pub fn eval<'a>(
-    _registry: &'a ProgramRegistry<CoreType, CoreLibfunc>,
-    _selector: &'a SignatureAndFunctionConcreteLibfunc,
-    _args: &[Value<'a>],
+    registry: &'a ProgramRegistry<CoreType, CoreLibfunc>,
+    info: &'a SignatureAndFunctionConcreteLibfunc,
+    args: &[Value<'a>],
 ) -> EvalAction<'a> {
-    todo!()
+    assert_eq!(args.len(), info.function.params.len());
+    assert!(args
+        .iter()
+        .zip(&info.function.params)
+        .all(|(value, param)| value.is(registry, &param.ty)));
+
+    EvalAction::FunctionCall(&info.function.id, args.iter().cloned().collect())
 }
