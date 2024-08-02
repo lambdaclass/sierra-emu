@@ -1,3 +1,4 @@
+use super::EvalAction;
 use crate::Value;
 use cairo_lang_sierra::{
     extensions::{
@@ -8,11 +9,11 @@ use cairo_lang_sierra::{
     program_registry::ProgramRegistry,
 };
 
-pub fn eval(
+pub fn eval<'a>(
     registry: &ProgramRegistry<CoreType, CoreLibfunc>,
-    selector: &MemConcreteLibfunc,
-    args: &[Value],
-) -> (Option<usize>, Vec<Value>) {
+    selector: &'a MemConcreteLibfunc,
+    args: &[Value<'a>],
+) -> EvalAction<'a> {
     match selector {
         MemConcreteLibfunc::StoreTemp(info) => eval_store_temp(registry, info, args),
         MemConcreteLibfunc::StoreLocal(info) => eval_store_local(registry, info, args),
@@ -22,24 +23,24 @@ pub fn eval(
     }
 }
 
-pub fn eval_store_temp(
+pub fn eval_store_temp<'a>(
     _registry: &ProgramRegistry<CoreType, CoreLibfunc>,
     _info: &SignatureAndTypeConcreteLibfunc,
-    args: &[Value],
-) -> (Option<usize>, Vec<Value>) {
+    args: &[Value<'a>],
+) -> EvalAction<'a> {
     assert_eq!(args.len(), 1);
-    (Some(0), args.to_vec())
+    EvalAction::NormalBranch(0, args.to_vec())
 }
 
-pub fn eval_store_local(
+pub fn eval_store_local<'a>(
     registry: &ProgramRegistry<CoreType, CoreLibfunc>,
     _info: &SignatureAndTypeConcreteLibfunc,
-    args: &[Value],
-) -> (Option<usize>, Vec<Value>) {
+    args: &[Value<'a>],
+) -> EvalAction<'a> {
     assert_eq!(args.len(), 2);
 
     let type_id = match &args[0] {
-        Value::Uninitialized(value) => value,
+        Value::Uninitialized { ty } => ty,
         _ => unreachable!(),
     };
     assert!(
@@ -49,23 +50,23 @@ pub fn eval_store_local(
         type_id
     );
 
-    (Some(0), vec![args[1].clone()])
+    EvalAction::NormalBranch(0, vec![args[1].clone()])
 }
 
-pub fn eval_finalize_locals(
+pub fn eval_finalize_locals<'a>(
     _registry: &ProgramRegistry<CoreType, CoreLibfunc>,
     _info: &SignatureOnlyConcreteLibfunc,
-    args: &[Value],
-) -> (Option<usize>, Vec<Value>) {
+    args: &[Value<'a>],
+) -> EvalAction<'a> {
     assert!(args.is_empty());
-    (Some(0), vec![])
+    EvalAction::NormalBranch(0, vec![])
 }
 
-pub fn eval_alloc_local(
+pub fn eval_alloc_local<'a>(
     _registry: &ProgramRegistry<CoreType, CoreLibfunc>,
-    info: &SignatureAndTypeConcreteLibfunc,
-    args: &[Value],
-) -> (Option<usize>, Vec<Value>) {
+    info: &'a SignatureAndTypeConcreteLibfunc,
+    args: &[Value<'a>],
+) -> EvalAction<'a> {
     assert!(args.is_empty());
-    (Some(0), vec![Value::Uninitialized(info.ty.clone())])
+    EvalAction::NormalBranch(0, vec![Value::Uninitialized { ty: &info.ty }])
 }

@@ -1,3 +1,4 @@
+use super::EvalAction;
 use cairo_lang_sierra::{
     extensions::{
         core::{CoreLibfunc, CoreType},
@@ -7,11 +8,11 @@ use cairo_lang_sierra::{
 };
 use sierra_emu::Value;
 
-pub fn eval(
+pub fn eval<'a>(
     _registry: &ProgramRegistry<CoreType, CoreLibfunc>,
     _info: &SignatureOnlyConcreteLibfunc,
-    args: &[Value],
-) -> (Option<usize>, Vec<Value>) {
+    args: &[Value<'a>],
+) -> EvalAction<'a> {
     assert_eq!(args.len(), 1);
-    (Some(0), vec![args[0].clone(), args[0].clone()])
+    EvalAction::NormalBranch(0, vec![args[0].clone(), args[0].clone()])
 }

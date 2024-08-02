@@ -1,3 +1,4 @@
+use super::EvalAction;
 use cairo_lang_sierra::{
     extensions::{
         array::ArrayConcreteLibfunc,
@@ -8,11 +9,11 @@ use cairo_lang_sierra::{
 };
 use sierra_emu::Value;
 
-pub fn eval(
-    registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+pub fn eval<'a>(
+    registry: &'a ProgramRegistry<CoreType, CoreLibfunc>,
     selector: &ArrayConcreteLibfunc,
-    args: &[Value],
-) -> (Option<usize>, Vec<Value>) {
+    args: &[Value<'a>],
+) -> EvalAction<'a> {
     match selector {
         ArrayConcreteLibfunc::New(info) => eval_new(registry, info, args),
         ArrayConcreteLibfunc::SpanFromTuple(_) => todo!(),
@@ -30,23 +31,23 @@ pub fn eval(
     }
 }
 
-pub fn eval_new(
-    registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+pub fn eval_new<'a>(
+    registry: &'a ProgramRegistry<CoreType, CoreLibfunc>,
     info: &SignatureOnlyConcreteLibfunc,
-    args: &[Value],
-) -> (Option<usize>, Vec<Value>) {
+    args: &[Value<'a>],
+) -> EvalAction<'a> {
     assert!(args.is_empty());
 
     let type_info = registry
         .get_type(&info.signature.branch_signatures[0].vars[0].ty)
         .unwrap();
     let ty = match type_info {
-        CoreTypeConcrete::Array(info) => info.ty.clone(),
+        CoreTypeConcrete::Array(info) => &info.ty,
         _ => unreachable!(),
     };
 
-    (
-        Some(0),
+    EvalAction::NormalBranch(
+        0,
         vec![Value::Array {
             ty,
             data: Vec::new(),
@@ -54,21 +55,21 @@ pub fn eval_new(
     )
 }
 
-pub fn eval_append(
+pub fn eval_append<'a>(
     registry: &ProgramRegistry<CoreType, CoreLibfunc>,
     info: &SignatureAndTypeConcreteLibfunc,
-    args: &[Value],
-) -> (Option<usize>, Vec<Value>) {
+    args: &[Value<'a>],
+) -> EvalAction<'a> {
     assert_eq!(args.len(), 2);
 
     let (ty, mut data) = match &args[0] {
-        Value::Array { ty, data: values } => (ty.clone(), values.clone()),
+        Value::Array { ty, data: values } => (ty, values.clone()),
         _ => todo!(),
     };
 
-    assert_eq!(info.signature.param_signatures[1].ty, ty);
-    assert!(args[1].is(registry.get_type(&ty).unwrap()));
+    assert_eq!(&info.signature.param_signatures[1].ty, *ty);
+    assert!(args[1].is(registry.get_type(ty).unwrap()));
     data.push(args[1].clone());
 
-    (Some(0), vec![Value::Array { ty, data }])
+    EvalAction::NormalBranch(0, vec![Value::Array { ty, data }])
 }

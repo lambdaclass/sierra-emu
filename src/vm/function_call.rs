@@ -1,3 +1,4 @@
+use super::EvalAction;
 use cairo_lang_sierra::{
     extensions::{
         core::{CoreLibfunc, CoreType},
@@ -7,10 +8,10 @@ use cairo_lang_sierra::{
 };
 use sierra_emu::Value;
 
-pub fn eval(
+pub fn eval<'a>(
     _registry: &ProgramRegistry<CoreType, CoreLibfunc>,
     _selector: &SignatureAndFunctionConcreteLibfunc,
     _args: &[Value],
-) -> (Option<usize>, Vec<Value>) {
+) -> EvalAction<'a> {
     todo!()
 }

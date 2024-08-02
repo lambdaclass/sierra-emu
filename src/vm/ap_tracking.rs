@@ -1,3 +1,4 @@
+use super::EvalAction;
 use crate::Value;
 use cairo_lang_sierra::{
     extensions::{
@@ -8,23 +9,23 @@ use cairo_lang_sierra::{
     program_registry::ProgramRegistry,
 };
 
-pub fn eval(
+pub fn eval<'a>(
     registry: &ProgramRegistry<CoreType, CoreLibfunc>,
     selector: &ApTrackingConcreteLibfunc,
     args: &[Value],
-) -> (Option<usize>, Vec<Value>) {
+) -> EvalAction<'a> {
     match selector {
         ApTrackingConcreteLibfunc::Revoke(_) => todo!(),
         ApTrackingConcreteLibfunc::Enable(_) => todo!(),
-        ApTrackingConcreteLibfunc::Disable(info) => eval_disable(registry, info, args), // <-- Implement this.
+        ApTrackingConcreteLibfunc::Disable(info) => eval_disable(registry, info, args),
     }
 }
 
-pub fn eval_disable(
+pub fn eval_disable<'a>(
     _registry: &ProgramRegistry<CoreType, CoreLibfunc>,
     _info: &SignatureOnlyConcreteLibfunc,
     args: &[Value],
-) -> (Option<usize>, Vec<Value>) {
+) -> EvalAction<'a> {
     assert!(args.is_empty());
-    (Some(0), vec![])
+    EvalAction::NormalBranch(0, vec![])
 }

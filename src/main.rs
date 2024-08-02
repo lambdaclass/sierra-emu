@@ -36,7 +36,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let registry = ProgramRegistry::<CoreType, CoreLibfunc>::new(&program).unwrap();
 
     info!("Preparing the virtual machine.");
-    let mut vm = VirtualMachine::new(&program);
+    let mut vm = VirtualMachine::new(&program, &registry);
 
     debug!("Pushing the entry point's frame.");
     let function = program

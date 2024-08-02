@@ -21,15 +21,13 @@ mod snapshot_take;
 
 pub struct VirtualMachine<'a> {
     program: &'a Program,
-    registry: ProgramRegistry<CoreType, CoreLibfunc>,
+    registry: &'a ProgramRegistry<CoreType, CoreLibfunc>,
 
     frames: Vec<SierraFrame<'a>>,
 }
 
 impl<'a> VirtualMachine<'a> {
-    pub fn new(program: &'a Program) -> Self {
-        let registry = ProgramRegistry::new(program).unwrap();
-
+    pub fn new(program: &'a Program, registry: &'a ProgramRegistry<CoreType, CoreLibfunc>) -> Self {
         Self {
             program,
             registry,
@@ -41,7 +39,7 @@ impl<'a> VirtualMachine<'a> {
     /// Effectively a function call (for entry points).
     pub fn push_frame<I>(&mut self, function_id: &'a FunctionId, args: I)
     where
-        I: IntoIterator<Item = Value>,
+        I: IntoIterator<Item = Value<'a>>,
         I::IntoIter: ExactSizeIterator,
     {
         let function = self.registry.get_function(function_id).unwrap();
@@ -66,7 +64,7 @@ impl<'a> VirtualMachine<'a> {
     }
 
     /// Run a single statement and return the state before its execution.
-    pub fn step(&mut self) -> Option<(StatementIdx, OrderedHashMap<VarId, Value>)> {
+    pub fn step(&mut self) -> Option<(StatementIdx, OrderedHashMap<VarId, Value<'a>>)> {
         let frame = self.frames.last_mut()?;
 
         let pc_snapshot = frame.pc;
@@ -77,8 +75,9 @@ impl<'a> VirtualMachine<'a> {
                 let (state, values) =
                     edit_state::take_args(frame.state.take(), invocation.args.iter()).unwrap();
 
-                let (branch_idx, results) = eval(&self.registry, &invocation.libfunc_id, &values);
-                if let Some(branch_idx) = branch_idx {
+                if let EvalAction::NormalBranch(branch_idx, results) =
+                    eval(self.registry, &invocation.libfunc_id, &values)
+                {
                     frame.pc = frame.pc.next(&invocation.branches[branch_idx].target);
                     frame.state.set(
                         edit_state::put_results(
@@ -124,15 +123,20 @@ impl<'a> VirtualMachine<'a> {
 struct SierraFrame<'a> {
     _function_id: &'a FunctionId,
 
-    state: Cell<OrderedHashMap<VarId, Value>>,
+    state: Cell<OrderedHashMap<VarId, Value<'a>>>,
     pc: StatementIdx,
 }
 
-fn eval(
-    registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+enum EvalAction<'a> {
+    NormalBranch(usize, Vec<Value<'a>>),
+    FunctionCall(&'a FunctionId),
+}
+
+fn eval<'a>(
+    registry: &'a ProgramRegistry<CoreType, CoreLibfunc>,
     id: &ConcreteLibfuncId,
-    args: &[Value],
-) -> (Option<usize>, Vec<Value>) {
+    args: &[Value<'a>],
+) -> EvalAction<'a> {
     match registry.get_libfunc(id).unwrap() {
         CoreConcreteLibfunc::ApTracking(selector) => {
             self::ap_tracking::eval(registry, selector, args)

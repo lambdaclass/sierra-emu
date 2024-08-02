@@ -5,29 +5,29 @@ use serde::{ser::SerializeMap, Serialize};
 use std::collections::BTreeMap;
 
 #[derive(Clone, Debug, Default, Serialize)]
-pub struct ProgramTrace {
-    states: Vec<StateDump>,
+pub struct ProgramTrace<'a> {
+    states: Vec<StateDump<'a>>,
     // TODO: Syscall data.
 }
 
-impl ProgramTrace {
+impl<'a> ProgramTrace<'a> {
     pub fn new() -> Self {
         Self { states: Vec::new() }
     }
 
-    pub fn push(&mut self, state: StateDump) {
+    pub fn push(&mut self, state: StateDump<'a>) {
         self.states.push(state);
     }
 }
 
 #[derive(Clone, Debug)]
-pub struct StateDump {
+pub struct StateDump<'a> {
     statement_idx: StatementIdx,
-    items: BTreeMap<u64, Value>,
+    items: BTreeMap<u64, Value<'a>>,
 }
 
-impl StateDump {
-    pub fn new(statement_idx: StatementIdx, state: OrderedHashMap<VarId, Value>) -> Self {
+impl<'a> StateDump<'a> {
+    pub fn new(statement_idx: StatementIdx, state: OrderedHashMap<VarId, Value<'a>>) -> Self {
         Self {
             statement_idx,
             items: state
@@ -38,7 +38,7 @@ impl StateDump {
     }
 }
 
-impl Serialize for StateDump {
+impl<'a> Serialize for StateDump<'a> {
     fn serialize<S>(&self, s: S) -> Result<S::Ok, S::Error>
     where
         S: serde::Serializer,

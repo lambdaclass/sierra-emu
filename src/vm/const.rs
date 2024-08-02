@@ -1,3 +1,4 @@
+use super::EvalAction;
 use crate::Value;
 use cairo_lang_sierra::{
     extensions::{
@@ -11,22 +12,22 @@ use num_bigint::{BigUint, Sign};
 use starknet_types_core::felt::Felt;
 use std::str::FromStr;
 
-pub fn eval(
+pub fn eval<'a>(
     registry: &ProgramRegistry<CoreType, CoreLibfunc>,
     selector: &ConstConcreteLibfunc,
-    args: &[Value],
-) -> (Option<usize>, Vec<Value>) {
+    args: &[Value<'a>],
+) -> EvalAction<'a> {
     match selector {
         ConstConcreteLibfunc::AsBox(_) => todo!(),
         ConstConcreteLibfunc::AsImmediate(info) => eval_as_immediate(registry, info, args),
     }
 }
 
-pub fn eval_as_immediate(
+pub fn eval_as_immediate<'a>(
     registry: &ProgramRegistry<CoreType, CoreLibfunc>,
     info: &ConstAsImmediateConcreteLibfunc,
-    _args: &[Value],
-) -> (Option<usize>, Vec<Value>) {
+    _args: &[Value<'a>],
+) -> EvalAction<'a> {
     let const_ty = match registry.get_type(&info.const_type).unwrap() {
         CoreTypeConcrete::Const(x) => x,
         _ => unreachable!(),
@@ -70,5 +71,5 @@ pub fn eval_as_immediate(
         _ => todo!("{:?}", &const_ty.inner_ty),
     };
 
-    (Some(0), vec![value])
+    EvalAction::NormalBranch(0, vec![value])
 }

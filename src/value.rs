@@ -4,32 +4,34 @@ use starknet_types_core::felt::Felt;
 use std::collections::HashMap;
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize)]
-pub enum Value {
+pub enum Value<'a> {
     Array {
-        ty: ConcreteTypeId,
+        ty: &'a ConcreteTypeId,
         data: Vec<Self>,
     },
     Felt(Felt),
     FeltDict {
-        ty: ConcreteTypeId,
-        data: HashMap<Felt, Value>,
+        ty: &'a ConcreteTypeId,
+        data: HashMap<Felt, Self>,
     },
     U128(u128),
     U32(u32),
     U8(u8),
-    Uninitialized(ConcreteTypeId),
+    Uninitialized {
+        ty: &'a ConcreteTypeId,
+    },
     Unit,
 }
 
-impl Value {
+impl<'a> Value<'a> {
     pub fn is(&self, type_info: &CoreTypeConcrete) -> bool {
         match type_info {
             CoreTypeConcrete::Array(info) => {
-                matches!(self, Self::Array { ty, .. } if ty == &info.ty)
+                matches!(self, Self::Array { ty, .. } if *ty == &info.ty)
             }
             CoreTypeConcrete::Felt252(_) => matches!(self, Self::Felt(_)),
             CoreTypeConcrete::Felt252Dict(info) => {
-                matches!(self, Self::FeltDict { ty, .. } if ty == &info.ty)
+                matches!(self, Self::FeltDict { ty, .. } if *ty == &info.ty)
             }
             CoreTypeConcrete::GasBuiltin(_) => matches!(self, Self::U128(_)),
             CoreTypeConcrete::Uint8(_) => matches!(self, Self::U8(_)),
