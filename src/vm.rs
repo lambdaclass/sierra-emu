@@ -7,6 +7,7 @@ use cairo_lang_sierra::{
     program_registry::ProgramRegistry,
 };
 use cairo_lang_utils::ordered_hash_map::OrderedHashMap;
+use smallvec::SmallVec;
 use std::cell::Cell;
 
 mod ap_tracking;
@@ -128,7 +129,7 @@ struct SierraFrame<'a> {
 }
 
 enum EvalAction<'a> {
-    NormalBranch(usize, Vec<Value<'a>>),
+    NormalBranch(usize, SmallVec<[Value<'a>; 2]>),
     FunctionCall(&'a FunctionId),
 }
 

@@ -8,6 +8,7 @@ use cairo_lang_sierra::{
     program_registry::ProgramRegistry,
 };
 use sierra_emu::Value;
+use smallvec::smallvec;
 
 pub fn eval<'a>(
     registry: &'a ProgramRegistry<CoreType, CoreLibfunc>,
@@ -48,7 +49,7 @@ pub fn eval_new<'a>(
 
     EvalAction::NormalBranch(
         0,
-        vec![Value::Array {
+        smallvec![Value::Array {
             ty,
             data: Vec::new(),
         }],
@@ -71,5 +72,5 @@ pub fn eval_append<'a>(
     assert!(args[1].is(registry.get_type(ty).unwrap()));
     data.push(args[1].clone());
 
-    EvalAction::NormalBranch(0, vec![Value::Array { ty, data }])
+    EvalAction::NormalBranch(0, smallvec![Value::Array { ty, data }])
 }

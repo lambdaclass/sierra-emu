@@ -7,6 +7,7 @@ use cairo_lang_sierra::{
     program_registry::ProgramRegistry,
 };
 use sierra_emu::Value;
+use smallvec::smallvec;
 
 pub fn eval<'a>(
     _registry: &'a ProgramRegistry<CoreType, CoreLibfunc>,
@@ -14,5 +15,5 @@ pub fn eval<'a>(
     args: &[Value<'a>],
 ) -> EvalAction<'a> {
     assert_eq!(args.len(), 1);
-    EvalAction::NormalBranch(0, vec![args[0].clone(), args[0].clone()])
+    EvalAction::NormalBranch(0, smallvec![args[0].clone(), args[0].clone()])
 }

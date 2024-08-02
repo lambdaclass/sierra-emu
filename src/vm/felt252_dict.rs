@@ -8,6 +8,7 @@ use cairo_lang_sierra::{
     program_registry::ProgramRegistry,
 };
 use sierra_emu::Value;
+use smallvec::smallvec;
 use std::collections::HashMap;
 
 pub fn eval<'a>(
@@ -39,7 +40,7 @@ pub fn eval_new<'a>(
 
     EvalAction::NormalBranch(
         0,
-        vec![
+        smallvec![
             args[0].clone(),
             Value::FeltDict {
                 ty,

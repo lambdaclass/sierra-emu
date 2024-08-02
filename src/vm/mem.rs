@@ -8,6 +8,7 @@ use cairo_lang_sierra::{
     },
     program_registry::ProgramRegistry,
 };
+use smallvec::smallvec;
 
 pub fn eval<'a>(
     registry: &'a ProgramRegistry<CoreType, CoreLibfunc>,
@@ -29,7 +30,7 @@ pub fn eval_store_temp<'a>(
     args: &[Value<'a>],
 ) -> EvalAction<'a> {
     assert_eq!(args.len(), 1);
-    EvalAction::NormalBranch(0, args.to_vec())
+    EvalAction::NormalBranch(0, args.iter().cloned().collect())
 }
 
 pub fn eval_store_local<'a>(
@@ -50,7 +51,7 @@ pub fn eval_store_local<'a>(
         type_id
     );
 
-    EvalAction::NormalBranch(0, vec![args[1].clone()])
+    EvalAction::NormalBranch(0, smallvec![args[1].clone()])
 }
 
 pub fn eval_finalize_locals<'a>(
@@ -59,7 +60,7 @@ pub fn eval_finalize_locals<'a>(
     args: &[Value<'a>],
 ) -> EvalAction<'a> {
     assert!(args.is_empty());
-    EvalAction::NormalBranch(0, vec![])
+    EvalAction::NormalBranch(0, smallvec![])
 }
 
 pub fn eval_alloc_local<'a>(
@@ -68,5 +69,5 @@ pub fn eval_alloc_local<'a>(
     args: &[Value<'a>],
 ) -> EvalAction<'a> {
     assert!(args.is_empty());
-    EvalAction::NormalBranch(0, vec![Value::Uninitialized { ty: &info.ty }])
+    EvalAction::NormalBranch(0, smallvec![Value::Uninitialized { ty: &info.ty }])
 }

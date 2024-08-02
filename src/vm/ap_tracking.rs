@@ -8,6 +8,7 @@ use cairo_lang_sierra::{
     },
     program_registry::ProgramRegistry,
 };
+use smallvec::smallvec;
 
 pub fn eval<'a>(
     registry: &'a ProgramRegistry<CoreType, CoreLibfunc>,
@@ -27,5 +28,5 @@ pub fn eval_disable<'a>(
     args: &[Value<'a>],
 ) -> EvalAction<'a> {
     assert!(args.is_empty());
-    EvalAction::NormalBranch(0, vec![])
+    EvalAction::NormalBranch(0, smallvec![])
 }

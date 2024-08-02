@@ -9,6 +9,7 @@ use cairo_lang_sierra::{
     program_registry::ProgramRegistry,
 };
 use num_bigint::{BigUint, Sign};
+use smallvec::smallvec;
 use starknet_types_core::felt::Felt;
 use std::str::FromStr;
 
@@ -71,5 +72,5 @@ pub fn eval_as_immediate<'a>(
         _ => todo!("{:?}", &const_ty.inner_ty),
     };
 
-    EvalAction::NormalBranch(0, vec![value])
+    EvalAction::NormalBranch(0, smallvec![value])
 }
