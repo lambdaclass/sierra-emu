@@ -12,13 +12,17 @@ use std::cell::Cell;
 
 mod ap_tracking;
 mod array;
+mod r#box;
+mod branch_align;
 mod r#const;
 mod drop;
 mod dup;
 mod felt252_dict;
 mod function_call;
+mod gas;
 mod mem;
 mod snapshot_take;
+mod uint32;
 
 pub struct VirtualMachine<'a> {
     program: &'a Program,
@@ -160,8 +164,8 @@ fn eval<'a>(
         CoreConcreteLibfunc::Array(selector) => self::array::eval(registry, selector, args),
         CoreConcreteLibfunc::Bool(_) => todo!(),
         CoreConcreteLibfunc::BoundedInt(_) => todo!(),
-        CoreConcreteLibfunc::Box(_) => todo!(),
-        CoreConcreteLibfunc::BranchAlign(_) => todo!(),
+        CoreConcreteLibfunc::Box(selector) => self::r#box::eval(registry, selector, args),
+        CoreConcreteLibfunc::BranchAlign(info) => self::branch_align::eval(registry, info, args),
         CoreConcreteLibfunc::Bytes31(_) => todo!(),
         CoreConcreteLibfunc::Cast(_) => todo!(),
         CoreConcreteLibfunc::Circuit(_) => todo!(),
@@ -179,7 +183,7 @@ fn eval<'a>(
         }
         CoreConcreteLibfunc::Felt252DictEntry(_) => todo!(),
         CoreConcreteLibfunc::FunctionCall(info) => self::function_call::eval(registry, info, args),
-        CoreConcreteLibfunc::Gas(_) => todo!(),
+        CoreConcreteLibfunc::Gas(selector) => self::gas::eval(registry, selector, args),
         CoreConcreteLibfunc::Mem(selector) => self::mem::eval(registry, selector, args),
         CoreConcreteLibfunc::Nullable(_) => todo!(),
         CoreConcreteLibfunc::Pedersen(_) => todo!(),
@@ -195,7 +199,7 @@ fn eval<'a>(
         CoreConcreteLibfunc::Uint128(_) => todo!(),
         CoreConcreteLibfunc::Uint16(_) => todo!(),
         CoreConcreteLibfunc::Uint256(_) => todo!(),
-        CoreConcreteLibfunc::Uint32(_) => todo!(),
+        CoreConcreteLibfunc::Uint32(selector) => self::uint32::eval(registry, selector, args),
         CoreConcreteLibfunc::Uint512(_) => todo!(),
         CoreConcreteLibfunc::Uint64(_) => todo!(),
         CoreConcreteLibfunc::Uint8(_) => todo!(),

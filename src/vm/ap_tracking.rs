@@ -17,9 +17,19 @@ pub fn eval<'a>(
 ) -> EvalAction<'a> {
     match selector {
         ApTrackingConcreteLibfunc::Revoke(_) => todo!(),
-        ApTrackingConcreteLibfunc::Enable(_) => todo!(),
+        ApTrackingConcreteLibfunc::Enable(info) => eval_disable(registry, info, args),
         ApTrackingConcreteLibfunc::Disable(info) => eval_disable(registry, info, args),
     }
+}
+
+pub fn eval_enable<'a>(
+    _registry: &'a ProgramRegistry<CoreType, CoreLibfunc>,
+    _info: &'a SignatureOnlyConcreteLibfunc,
+    args: Vec<Value<'a>>,
+) -> EvalAction<'a> {
+    let [] = args.try_into().unwrap();
+
+    EvalAction::NormalBranch(0, smallvec![])
 }
 
 pub fn eval_disable<'a>(

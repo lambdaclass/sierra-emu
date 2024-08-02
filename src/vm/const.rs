@@ -8,10 +8,7 @@ use cairo_lang_sierra::{
     program::GenericArg,
     program_registry::ProgramRegistry,
 };
-use num_bigint::{BigUint, Sign};
 use smallvec::smallvec;
-use starknet_types_core::felt::Felt;
-use std::str::FromStr;
 
 pub fn eval<'a>(
     registry: &'a ProgramRegistry<CoreType, CoreLibfunc>,

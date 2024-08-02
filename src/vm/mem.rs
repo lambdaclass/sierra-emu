@@ -20,7 +20,7 @@ pub fn eval<'a>(
         MemConcreteLibfunc::StoreLocal(info) => eval_store_local(registry, info, args),
         MemConcreteLibfunc::FinalizeLocals(info) => eval_finalize_locals(registry, info, args),
         MemConcreteLibfunc::AllocLocal(info) => eval_alloc_local(registry, info, args),
-        MemConcreteLibfunc::Rename(_) => todo!(),
+        MemConcreteLibfunc::Rename(info) => eval_rename(registry, info, args),
     }
 }
 
@@ -65,4 +65,14 @@ pub fn eval_alloc_local<'a>(
     let [] = args.try_into().unwrap();
 
     EvalAction::NormalBranch(0, smallvec![Value::Uninitialized { ty: &info.ty }])
+}
+
+pub fn eval_rename<'a>(
+    _registry: &'a ProgramRegistry<CoreType, CoreLibfunc>,
+    _info: &'a SignatureOnlyConcreteLibfunc,
+    args: Vec<Value<'a>>,
+) -> EvalAction<'a> {
+    let [value] = args.try_into().unwrap();
+
+    EvalAction::NormalBranch(0, smallvec![value])
 }
