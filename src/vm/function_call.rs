@@ -9,9 +9,9 @@ use cairo_lang_sierra::{
 use sierra_emu::Value;
 
 pub fn eval<'a>(
-    _registry: &ProgramRegistry<CoreType, CoreLibfunc>,
-    _selector: &SignatureAndFunctionConcreteLibfunc,
-    _args: &[Value],
+    _registry: &'a ProgramRegistry<CoreType, CoreLibfunc>,
+    _selector: &'a SignatureAndFunctionConcreteLibfunc,
+    _args: &[Value<'a>],
 ) -> EvalAction<'a> {
     todo!()
 }

@@ -13,8 +13,8 @@ use starknet_types_core::felt::Felt;
 use std::str::FromStr;
 
 pub fn eval<'a>(
-    registry: &ProgramRegistry<CoreType, CoreLibfunc>,
-    selector: &ConstConcreteLibfunc,
+    registry: &'a ProgramRegistry<CoreType, CoreLibfunc>,
+    selector: &'a ConstConcreteLibfunc,
     args: &[Value<'a>],
 ) -> EvalAction<'a> {
     match selector {
@@ -24,8 +24,8 @@ pub fn eval<'a>(
 }
 
 pub fn eval_as_immediate<'a>(
-    registry: &ProgramRegistry<CoreType, CoreLibfunc>,
-    info: &ConstAsImmediateConcreteLibfunc,
+    registry: &'a ProgramRegistry<CoreType, CoreLibfunc>,
+    info: &'a ConstAsImmediateConcreteLibfunc,
     _args: &[Value<'a>],
 ) -> EvalAction<'a> {
     let const_ty = match registry.get_type(&info.const_type).unwrap() {

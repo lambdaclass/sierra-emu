@@ -134,7 +134,7 @@ enum EvalAction<'a> {
 
 fn eval<'a>(
     registry: &'a ProgramRegistry<CoreType, CoreLibfunc>,
-    id: &ConcreteLibfuncId,
+    id: &'a ConcreteLibfuncId,
     args: &[Value<'a>],
 ) -> EvalAction<'a> {
     match registry.get_libfunc(id).unwrap() {

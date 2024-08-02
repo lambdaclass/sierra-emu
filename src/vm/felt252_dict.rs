@@ -12,7 +12,7 @@ use std::collections::HashMap;
 
 pub fn eval<'a>(
     registry: &'a ProgramRegistry<CoreType, CoreLibfunc>,
-    selector: &Felt252DictConcreteLibfunc,
+    selector: &'a Felt252DictConcreteLibfunc,
     args: &[Value<'a>],
 ) -> EvalAction<'a> {
     match selector {
@@ -23,7 +23,7 @@ pub fn eval<'a>(
 
 pub fn eval_new<'a>(
     registry: &'a ProgramRegistry<CoreType, CoreLibfunc>,
-    info: &SignatureOnlyConcreteLibfunc,
+    info: &'a SignatureOnlyConcreteLibfunc,
     args: &[Value<'a>],
 ) -> EvalAction<'a> {
     assert_eq!(args.len(), 1);

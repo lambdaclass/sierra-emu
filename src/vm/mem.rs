@@ -10,7 +10,7 @@ use cairo_lang_sierra::{
 };
 
 pub fn eval<'a>(
-    registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    registry: &'a ProgramRegistry<CoreType, CoreLibfunc>,
     selector: &'a MemConcreteLibfunc,
     args: &[Value<'a>],
 ) -> EvalAction<'a> {
@@ -24,8 +24,8 @@ pub fn eval<'a>(
 }
 
 pub fn eval_store_temp<'a>(
-    _registry: &ProgramRegistry<CoreType, CoreLibfunc>,
-    _info: &SignatureAndTypeConcreteLibfunc,
+    _registry: &'a ProgramRegistry<CoreType, CoreLibfunc>,
+    _info: &'a SignatureAndTypeConcreteLibfunc,
     args: &[Value<'a>],
 ) -> EvalAction<'a> {
     assert_eq!(args.len(), 1);
@@ -33,8 +33,8 @@ pub fn eval_store_temp<'a>(
 }
 
 pub fn eval_store_local<'a>(
-    registry: &ProgramRegistry<CoreType, CoreLibfunc>,
-    _info: &SignatureAndTypeConcreteLibfunc,
+    registry: &'a ProgramRegistry<CoreType, CoreLibfunc>,
+    _info: &'a SignatureAndTypeConcreteLibfunc,
     args: &[Value<'a>],
 ) -> EvalAction<'a> {
     assert_eq!(args.len(), 2);
@@ -54,8 +54,8 @@ pub fn eval_store_local<'a>(
 }
 
 pub fn eval_finalize_locals<'a>(
-    _registry: &ProgramRegistry<CoreType, CoreLibfunc>,
-    _info: &SignatureOnlyConcreteLibfunc,
+    _registry: &'a ProgramRegistry<CoreType, CoreLibfunc>,
+    _info: &'a SignatureOnlyConcreteLibfunc,
     args: &[Value<'a>],
 ) -> EvalAction<'a> {
     assert!(args.is_empty());
@@ -63,7 +63,7 @@ pub fn eval_finalize_locals<'a>(
 }
 
 pub fn eval_alloc_local<'a>(
-    _registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    _registry: &'a ProgramRegistry<CoreType, CoreLibfunc>,
     info: &'a SignatureAndTypeConcreteLibfunc,
     args: &[Value<'a>],
 ) -> EvalAction<'a> {

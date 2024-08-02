@@ -10,9 +10,9 @@ use cairo_lang_sierra::{
 };
 
 pub fn eval<'a>(
-    registry: &ProgramRegistry<CoreType, CoreLibfunc>,
-    selector: &ApTrackingConcreteLibfunc,
-    args: &[Value],
+    registry: &'a ProgramRegistry<CoreType, CoreLibfunc>,
+    selector: &'a ApTrackingConcreteLibfunc,
+    args: &[Value<'a>],
 ) -> EvalAction<'a> {
     match selector {
         ApTrackingConcreteLibfunc::Revoke(_) => todo!(),
@@ -22,9 +22,9 @@ pub fn eval<'a>(
 }
 
 pub fn eval_disable<'a>(
-    _registry: &ProgramRegistry<CoreType, CoreLibfunc>,
-    _info: &SignatureOnlyConcreteLibfunc,
-    args: &[Value],
+    _registry: &'a ProgramRegistry<CoreType, CoreLibfunc>,
+    _info: &'a SignatureOnlyConcreteLibfunc,
+    args: &[Value<'a>],
 ) -> EvalAction<'a> {
     assert!(args.is_empty());
     EvalAction::NormalBranch(0, vec![])

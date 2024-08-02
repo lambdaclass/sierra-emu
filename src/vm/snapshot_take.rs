@@ -9,8 +9,8 @@ use cairo_lang_sierra::{
 use sierra_emu::Value;
 
 pub fn eval<'a>(
-    _registry: &ProgramRegistry<CoreType, CoreLibfunc>,
-    _info: &SignatureOnlyConcreteLibfunc,
+    _registry: &'a ProgramRegistry<CoreType, CoreLibfunc>,
+    _info: &'a SignatureOnlyConcreteLibfunc,
     args: &[Value<'a>],
 ) -> EvalAction<'a> {
     assert_eq!(args.len(), 1);

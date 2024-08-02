@@ -11,7 +11,7 @@ use sierra_emu::Value;
 
 pub fn eval<'a>(
     registry: &'a ProgramRegistry<CoreType, CoreLibfunc>,
-    selector: &ArrayConcreteLibfunc,
+    selector: &'a ArrayConcreteLibfunc,
     args: &[Value<'a>],
 ) -> EvalAction<'a> {
     match selector {
