@@ -8,26 +8,26 @@ use starknet_types_core::felt::Felt;
 use std::collections::HashMap;
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize)]
-pub enum Value<'a> {
+pub enum Value {
     Array {
-        ty: &'a ConcreteTypeId,
+        ty: ConcreteTypeId,
         data: Vec<Self>,
     },
     Felt(Felt),
     FeltDict {
-        ty: &'a ConcreteTypeId,
+        ty: ConcreteTypeId,
         data: HashMap<Felt, Self>,
     },
     U128(u128),
     U32(u32),
     U8(u8),
     Uninitialized {
-        ty: &'a ConcreteTypeId,
+        ty: ConcreteTypeId,
     },
     Unit,
 }
 
-impl<'a> Value<'a> {
+impl Value {
     pub fn is(
         &self,
         registry: &ProgramRegistry<CoreType, CoreLibfunc>,
@@ -35,11 +35,11 @@ impl<'a> Value<'a> {
     ) -> bool {
         match registry.get_type(type_id).unwrap() {
             CoreTypeConcrete::Array(info) => {
-                matches!(self, Self::Array { ty, .. } if *ty == &info.ty)
+                matches!(self, Self::Array { ty, .. } if *ty == info.ty)
             }
             CoreTypeConcrete::Felt252(_) => matches!(self, Self::Felt(_)),
             CoreTypeConcrete::Felt252Dict(info) => {
-                matches!(self, Self::FeltDict { ty, .. } if *ty == &info.ty)
+                matches!(self, Self::FeltDict { ty, .. } if *ty == info.ty)
             }
             CoreTypeConcrete::GasBuiltin(_) => matches!(self, Self::U128(_)),
             CoreTypeConcrete::Snapshot(info) => self.is(registry, &info.ty),
