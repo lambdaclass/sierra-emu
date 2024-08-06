@@ -9,6 +9,7 @@ use cairo_lang_sierra::{
 use cairo_lang_utils::ordered_hash_map::OrderedHashMap;
 use smallvec::SmallVec;
 use std::cell::Cell;
+use tracing::debug;
 
 mod ap_tracking;
 mod array;
@@ -18,11 +19,13 @@ mod r#const;
 mod drop;
 mod dup;
 mod felt252_dict;
+mod felt252_dict_entry;
 mod function_call;
 mod gas;
 mod mem;
 mod snapshot_take;
 mod uint32;
+mod uint8;
 
 pub struct VirtualMachine<'a> {
     program: &'a Program,
@@ -75,6 +78,10 @@ impl<'a> VirtualMachine<'a> {
         let pc_snapshot = frame.pc;
         let state_snapshot = frame.state.get_mut().clone();
 
+        debug!(
+            "Evaluating statement {} ({})",
+            frame.pc.0, &self.program.statements[frame.pc.0]
+        );
         match &self.program.statements[frame.pc.0] {
             GenStatement::Invocation(invocation) => {
                 let (state, values) =
@@ -181,7 +188,9 @@ fn eval<'a>(
         CoreConcreteLibfunc::Felt252Dict(selector) => {
             self::felt252_dict::eval(registry, selector, args)
         }
-        CoreConcreteLibfunc::Felt252DictEntry(_) => todo!(),
+        CoreConcreteLibfunc::Felt252DictEntry(selector) => {
+            self::felt252_dict_entry::eval(registry, selector, args)
+        }
         CoreConcreteLibfunc::FunctionCall(info) => self::function_call::eval(registry, info, args),
         CoreConcreteLibfunc::Gas(selector) => self::gas::eval(registry, selector, args),
         CoreConcreteLibfunc::Mem(selector) => self::mem::eval(registry, selector, args),
@@ -202,7 +211,7 @@ fn eval<'a>(
         CoreConcreteLibfunc::Uint32(selector) => self::uint32::eval(registry, selector, args),
         CoreConcreteLibfunc::Uint512(_) => todo!(),
         CoreConcreteLibfunc::Uint64(_) => todo!(),
-        CoreConcreteLibfunc::Uint8(_) => todo!(),
+        CoreConcreteLibfunc::Uint8(selector) => self::uint8::eval(registry, selector, args),
         CoreConcreteLibfunc::UnconditionalJump(_) => todo!(),
         CoreConcreteLibfunc::UnwrapNonZero(_) => todo!(),
     }

@@ -9,7 +9,7 @@ use cairo_lang_sierra::{
 };
 use sierra_emu::Value;
 use smallvec::smallvec;
-use std::collections::HashMap;
+use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
 pub fn eval<'a>(
     registry: &'a ProgramRegistry<CoreType, CoreLibfunc>,
@@ -45,7 +45,7 @@ pub fn eval_new<'a>(
             segment_arena,
             Value::FeltDict {
                 ty,
-                data: HashMap::new(),
+                data: Rc::new(RefCell::new(HashMap::new())),
             },
         ],
     )

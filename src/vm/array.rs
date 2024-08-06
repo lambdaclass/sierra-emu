@@ -77,17 +77,15 @@ pub fn eval_get<'a>(
     _info: &SignatureAndTypeConcreteLibfunc,
     args: Vec<Value<'a>>,
 ) -> EvalAction<'a> {
-    let [range_check @ Value::Unit, Value::Array { ty, data }, Value::U32(index)]: [Value<'a>; 3] =
+    let [range_check @ Value::Unit, Value::Array { data, .. }, Value::U32(index)]: [Value<'a>; 3] =
         args.try_into().unwrap()
     else {
         panic!()
     };
 
     match data.get(index as usize).cloned() {
-        Some(value) => {
-            EvalAction::NormalBranch(0, smallvec![range_check, Value::Array { ty, data }, value])
-        }
-        None => EvalAction::NormalBranch(0, smallvec![range_check, Value::Array { ty, data }]),
+        Some(value) => EvalAction::NormalBranch(0, smallvec![range_check, value]),
+        None => EvalAction::NormalBranch(0, smallvec![range_check]),
     }
 }
 

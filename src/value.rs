@@ -3,11 +3,11 @@ use cairo_lang_sierra::{
     ids::ConcreteTypeId,
     program_registry::ProgramRegistry,
 };
-use serde::Serialize;
+use serde::{Serialize, Serializer};
 use starknet_types_core::felt::Felt;
-use std::collections::HashMap;
+use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
-#[derive(Clone, Debug, Eq, PartialEq, Serialize)]
+#[derive(Debug, Eq, PartialEq, Serialize)]
 pub enum Value {
     Array {
         ty: ConcreteTypeId,
@@ -16,7 +16,14 @@ pub enum Value {
     Felt(Felt),
     FeltDict {
         ty: ConcreteTypeId,
-        data: HashMap<Felt, Self>,
+        #[serde(serialize_with = "serialize_dict_data")]
+        data: Rc<RefCell<HashMap<Felt, Self>>>,
+    },
+    FeltDictEntry {
+        ty: ConcreteTypeId,
+        #[serde(serialize_with = "serialize_dict_data")]
+        data: Rc<RefCell<HashMap<Felt, Self>>>,
+        key: Felt,
     },
     U128(u128),
     U32(u32),
@@ -95,4 +102,38 @@ impl Value {
             Felt::from_dec_str(value).unwrap()
         })
     }
+}
+
+impl<'a> Clone for Value<'a> {
+    fn clone(&self) -> Self {
+        // We need this implementation, otherwise cloning wouldn't deep-clone the dictionaries's
+        // data.
+        match self {
+            Self::Array { ty, data } => Self::Array {
+                ty,
+                data: data.clone(),
+            },
+            Self::Felt(arg0) => Self::Felt(*arg0),
+            Self::FeltDict { ty, data } => Self::FeltDict {
+                ty,
+                data: Rc::new((**data).clone()),
+            },
+            Self::FeltDictEntry { .. } => todo!(),
+            Self::U128(arg0) => Self::U128(*arg0),
+            Self::U32(arg0) => Self::U32(*arg0),
+            Self::U8(arg0) => Self::U8(*arg0),
+            Self::Uninitialized { ty } => Self::Uninitialized { ty },
+            Self::Unit => Self::Unit,
+        }
+    }
+}
+
+fn serialize_dict_data<S>(
+    value: &Rc<RefCell<HashMap<Felt, Value>>>,
+    serializer: S,
+) -> Result<S::Ok, S::Error>
+where
+    S: Serializer,
+{
+    value.borrow().serialize(serializer)
 }

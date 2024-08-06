@@ -3,6 +3,7 @@ use cairo_lang_sierra::{
     extensions::{
         core::{CoreLibfunc, CoreType},
         int::{unsigned::Uint32Concrete, IntOperationConcreteLibfunc, IntOperator},
+        lib_func::SignatureOnlyConcreteLibfunc,
     },
     program_registry::ProgramRegistry,
 };
@@ -19,7 +20,7 @@ pub fn eval<'a>(
         Uint32Concrete::Operation(info) => eval_operation(registry, info, args),
         Uint32Concrete::SquareRoot(_) => todo!(),
         Uint32Concrete::Equal(_) => todo!(),
-        Uint32Concrete::ToFelt252(_) => todo!(),
+        Uint32Concrete::ToFelt252(info) => eval_to_felt252(registry, info, args),
         Uint32Concrete::FromFelt252(_) => todo!(),
         Uint32Concrete::IsZero(_) => todo!(),
         Uint32Concrete::Divmod(_) => todo!(),
@@ -48,4 +49,16 @@ pub fn eval_operation<'a>(
         has_overflow as usize,
         smallvec![range_check, Value::U32(result)],
     )
+}
+
+pub fn eval_to_felt252<'a>(
+    _registry: &'a ProgramRegistry<CoreType, CoreLibfunc>,
+    _info: &'a SignatureOnlyConcreteLibfunc,
+    args: Vec<Value<'a>>,
+) -> EvalAction<'a> {
+    let [Value::U32(value)]: [Value<'a>; 1] = args.try_into().unwrap() else {
+        panic!()
+    };
+
+    EvalAction::NormalBranch(0, smallvec![Value::Felt(value.into())])
 }
