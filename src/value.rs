@@ -23,6 +23,7 @@ pub enum Value {
         data: HashMap<Felt, Self>,
         key: Felt,
     },
+    Struct(Vec<Self>),
     U128(u128),
     U32(u32),
     U8(u8),
@@ -58,6 +59,15 @@ impl Value {
             }
             CoreTypeConcrete::GasBuiltin(_) => matches!(self, Self::U128(_)),
             CoreTypeConcrete::Snapshot(info) => self.is(registry, &info.ty),
+            CoreTypeConcrete::Struct(info) => {
+                matches!(self, Self::Struct(members)
+                    if members.len() == info.members.len()
+                        && members
+                            .iter()
+                            .zip(&info.members)
+                            .all(|(value, ty)| value.is(registry, ty))
+                )
+            }
             CoreTypeConcrete::Uint8(_) => matches!(self, Self::U8(_)),
             CoreTypeConcrete::Uint32(_) => matches!(self, Self::U32(_)),
 
@@ -90,7 +100,6 @@ impl Value {
             CoreTypeConcrete::RangeCheck96(_) => todo!(),
             CoreTypeConcrete::Uninitialized(_) => todo!(),
             CoreTypeConcrete::Enum(_) => todo!(),
-            CoreTypeConcrete::Struct(_) => todo!(),
             CoreTypeConcrete::Felt252DictEntry(_) => todo!(),
             CoreTypeConcrete::SquashedFelt252Dict(_) => todo!(),
             CoreTypeConcrete::Pedersen(_) => todo!(),
