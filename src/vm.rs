@@ -109,6 +109,7 @@ impl<'a> VirtualMachine<'a> {
                     }
                     EvalAction::FunctionCall(function_id, args) => {
                         let function = self.registry.get_function(&function_id).unwrap();
+                        frame.state.set(state);
                         self.frames.push(SierraFrame {
                             _function_id: function_id,
                             state: Cell::new(
