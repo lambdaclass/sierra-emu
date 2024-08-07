@@ -1,14 +1,11 @@
 use self::{args::CmdArgs, vm::VirtualMachine};
-use cairo_lang_sierra::{
-    extensions::core::{CoreLibfunc, CoreType, CoreTypeConcrete},
-    program_registry::ProgramRegistry,
-    ProgramParser,
-};
+use cairo_lang_sierra::{extensions::core::CoreTypeConcrete, ProgramParser};
 use clap::Parser;
 use sierra_emu::{ProgramTrace, StateDump, Value};
 use std::{
     fs::{self, File},
     io::stdout,
+    sync::Arc,
 };
 use tracing::{debug, info, Level};
 use tracing_subscriber::{EnvFilter, FmtSubscriber};
@@ -30,13 +27,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let source_code = fs::read_to_string(args.program)?;
 
     info!("Parsing the Sierra program.");
-    let program = ProgramParser::new()
-        .parse(&source_code)
-        .map_err(|e| e.to_string())?;
-    let registry = ProgramRegistry::<CoreType, CoreLibfunc>::new(&program).unwrap();
+    let program = Arc::new(
+        ProgramParser::new()
+            .parse(&source_code)
+            .map_err(|e| e.to_string())?,
+    );
 
     info!("Preparing the virtual machine.");
-    let mut vm = VirtualMachine::new(&program, &registry);
+    let mut vm = VirtualMachine::new(program.clone());
 
     debug!("Pushing the entry point's frame.");
     let function = program
@@ -60,7 +58,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             .param_types
             .iter()
             .map(|type_id| {
-                let type_info = registry.get_type(type_id).unwrap();
+                let type_info = vm.registry().get_type(type_id).unwrap();
                 match type_info {
                     CoreTypeConcrete::Felt252(_) => Value::parse_felt(&iter.next().unwrap()),
                     CoreTypeConcrete::GasBuiltin(_) => Value::U128(args.available_gas.unwrap()),

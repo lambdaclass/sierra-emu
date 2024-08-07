@@ -8,7 +8,7 @@ use cairo_lang_sierra::{
 };
 use cairo_lang_utils::ordered_hash_map::OrderedHashMap;
 use smallvec::SmallVec;
-use std::cell::Cell;
+use std::{cell::Cell, sync::Arc};
 use tracing::debug;
 
 mod ap_tracking;
@@ -31,21 +31,26 @@ mod r#struct;
 mod uint32;
 mod uint8;
 
-pub struct VirtualMachine<'a> {
-    program: &'a Program,
-    registry: &'a ProgramRegistry<CoreType, CoreLibfunc>,
+pub struct VirtualMachine {
+    program: Arc<Program>,
+    registry: ProgramRegistry<CoreType, CoreLibfunc>,
 
     frames: Vec<SierraFrame>,
 }
 
-impl<'a> VirtualMachine<'a> {
-    pub fn new(program: &'a Program, registry: &'a ProgramRegistry<CoreType, CoreLibfunc>) -> Self {
+impl VirtualMachine {
+    pub fn new(program: Arc<Program>) -> Self {
+        let registry = ProgramRegistry::new(&program).unwrap();
         Self {
             program,
             registry,
 
             frames: Vec::new(),
         }
+    }
+
+    pub fn registry(&self) -> &ProgramRegistry<CoreType, CoreLibfunc> {
+        &self.registry
     }
 
     /// Effectively a function call (for entry points).
@@ -66,7 +71,7 @@ impl<'a> VirtualMachine<'a> {
                     .iter()
                     .zip(args)
                     .map(|(param, value)| {
-                        assert!(value.is(self.registry, &param.ty));
+                        assert!(value.is(&self.registry, &param.ty));
                         (param.id.clone(), value)
                     })
                     .collect(),
@@ -91,7 +96,7 @@ impl<'a> VirtualMachine<'a> {
                 let (state, values) =
                     edit_state::take_args(frame.state.take(), invocation.args.iter()).unwrap();
 
-                match eval(self.registry, &invocation.libfunc_id, values) {
+                match eval(&self.registry, &invocation.libfunc_id, values) {
                     EvalAction::NormalBranch(branch_idx, results) => {
                         assert_eq!(
                             results.len(),
