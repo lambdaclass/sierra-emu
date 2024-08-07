@@ -81,8 +81,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     match args.output {
-        Some(path) => serde_json::to_writer_pretty(File::create(path)?, &trace)?,
-        None => serde_json::to_writer_pretty(stdout().lock(), &trace)?,
+        Some(path) => serde_json::to_writer(File::create(path)?, &trace)?,
+        None => serde_json::to_writer(stdout().lock(), &trace)?,
     };
 
     Ok(())

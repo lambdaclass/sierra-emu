@@ -19,6 +19,7 @@ mod r#const;
 mod drop;
 mod dup;
 mod r#enum;
+mod felt252;
 mod felt252_dict;
 mod felt252_dict_entry;
 mod function_call;
@@ -194,7 +195,7 @@ fn eval<'a>(
         CoreConcreteLibfunc::Dup(info) => self::dup::eval(registry, info, args),
         CoreConcreteLibfunc::Ec(_) => todo!(),
         CoreConcreteLibfunc::Enum(selector) => self::r#enum::eval(registry, selector, args),
-        CoreConcreteLibfunc::Felt252(_) => todo!(),
+        CoreConcreteLibfunc::Felt252(selector) => self::felt252::eval(registry, selector, args),
         CoreConcreteLibfunc::Felt252Dict(selector) => {
             self::felt252_dict::eval(registry, selector, args)
         }

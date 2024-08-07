@@ -17,7 +17,7 @@ pub fn eval(
 ) -> EvalAction {
     match selector {
         StructConcreteLibfunc::Construct(info) => eval_construct(registry, info, args),
-        StructConcreteLibfunc::Deconstruct(_) => todo!(),
+        StructConcreteLibfunc::Deconstruct(info) => eval_deconstruct(registry, info, args),
         StructConcreteLibfunc::SnapshotDeconstruct(_) => todo!(),
     }
 }
@@ -40,4 +40,28 @@ pub fn eval_construct(
         .all(|(value, ty)| value.is(registry, ty)));
 
     EvalAction::NormalBranch(0, smallvec![Value::Struct(args)])
+}
+
+pub fn eval_deconstruct(
+    registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    info: &SignatureOnlyConcreteLibfunc,
+    args: Vec<Value>,
+) -> EvalAction {
+    let [Value::Struct(values)]: [Value; 1] = args.try_into().unwrap() else {
+        panic!()
+    };
+
+    let CoreTypeConcrete::Struct(StructConcreteType { members, .. }) = registry
+        .get_type(&info.signature.param_signatures[0].ty)
+        .unwrap()
+    else {
+        panic!()
+    };
+    assert_eq!(values.len(), members.len());
+    assert!(values
+        .iter()
+        .zip(members)
+        .all(|(value, ty)| value.is(registry, ty)));
+
+    EvalAction::NormalBranch(0, values.into())
 }

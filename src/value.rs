@@ -58,6 +58,9 @@ impl Value {
             CoreTypeConcrete::Array(info) => {
                 matches!(self, Self::Array { ty, .. } if *ty == info.ty)
             }
+            CoreTypeConcrete::Enum(_) => {
+                matches!(self, Self::Enum { self_ty, .. } if self_ty == type_id)
+            }
             CoreTypeConcrete::Felt252(_) => matches!(self, Self::Felt(_)),
             CoreTypeConcrete::Felt252Dict(info) => {
                 matches!(self, Self::FeltDict { ty, .. } if *ty == info.ty)
@@ -104,7 +107,6 @@ impl Value {
             CoreTypeConcrete::Nullable(_) => todo!(),
             CoreTypeConcrete::RangeCheck96(_) => todo!(),
             CoreTypeConcrete::Uninitialized(_) => todo!(),
-            CoreTypeConcrete::Enum(_) => todo!(),
             CoreTypeConcrete::Felt252DictEntry(_) => todo!(),
             CoreTypeConcrete::SquashedFelt252Dict(_) => todo!(),
             CoreTypeConcrete::Pedersen(_) => todo!(),

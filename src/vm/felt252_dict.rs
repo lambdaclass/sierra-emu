@@ -18,7 +18,7 @@ pub fn eval(
 ) -> EvalAction {
     match selector {
         Felt252DictConcreteLibfunc::New(info) => eval_new(registry, info, args),
-        Felt252DictConcreteLibfunc::Squash(_) => todo!(),
+        Felt252DictConcreteLibfunc::Squash(info) => eval_squash(registry, info, args),
     }
 }
 
@@ -47,6 +47,28 @@ pub fn eval_new(
                 ty: ty.clone(),
                 data: HashMap::new(),
             },
+        ],
+    )
+}
+
+pub fn eval_squash(
+    _registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    _info: &SignatureOnlyConcreteLibfunc,
+    args: Vec<Value>,
+) -> EvalAction {
+    let [range_check @ Value::Unit, Value::U128(gas_builtin), segment_arena @ Value::Unit, Value::FeltDict { ty, data }]: [Value; 4] =
+        args.try_into().unwrap()
+    else {
+        panic!()
+    };
+
+    EvalAction::NormalBranch(
+        0,
+        smallvec![
+            range_check,
+            Value::U128(gas_builtin),
+            segment_arena,
+            Value::FeltDict { ty, data }
         ],
     )
 }
