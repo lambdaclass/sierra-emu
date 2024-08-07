@@ -16,13 +16,11 @@ pub enum Value {
     Felt(Felt),
     FeltDict {
         ty: ConcreteTypeId,
-        #[serde(serialize_with = "serialize_dict_data")]
-        data: Rc<RefCell<HashMap<Felt, Self>>>,
+        data: HashMap<Felt, Self>,
     },
     FeltDictEntry {
         ty: ConcreteTypeId,
-        #[serde(serialize_with = "serialize_dict_data")]
-        data: Rc<RefCell<HashMap<Felt, Self>>>,
+        data: HashMap<Felt, Self>,
         key: Felt,
     },
     U128(u128),
@@ -35,6 +33,16 @@ pub enum Value {
 }
 
 impl Value {
+    pub fn default_for_type(
+        registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+        type_id: &ConcreteTypeId,
+    ) -> Self {
+        match registry.get_type(type_id).unwrap() {
+            CoreTypeConcrete::Uint32(_) => Value::U32(0),
+            _ => panic!("type {type_id} has no default value implementation"),
+        }
+    }
+
     pub fn is(
         &self,
         registry: &ProgramRegistry<CoreType, CoreLibfunc>,

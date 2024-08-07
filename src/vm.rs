@@ -89,6 +89,12 @@ impl<'a> VirtualMachine<'a> {
 
                 match eval(self.registry, &invocation.libfunc_id, values) {
                     EvalAction::NormalBranch(branch_idx, results) => {
+                        assert_eq!(
+                            results.len(),
+                            invocation.branches[branch_idx].results.len(),
+                            "invocation of {invocation} returned the wrong number of values"
+                        );
+
                         frame.pc = frame.pc.next(&invocation.branches[branch_idx].target);
                         frame.state.set(
                             edit_state::put_results(

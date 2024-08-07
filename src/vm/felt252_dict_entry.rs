@@ -17,24 +17,43 @@ pub fn eval(
 ) -> EvalAction {
     match selector {
         Felt252DictEntryConcreteLibfunc::Get(info) => eval_get(registry, info, args),
-        Felt252DictEntryConcreteLibfunc::Finalize(_) => todo!(),
+        Felt252DictEntryConcreteLibfunc::Finalize(info) => eval_finalize(registry, info, args),
     }
 }
 
 pub fn eval_get(
-    _registry: &ProgramRegistry<CoreType, CoreLibfunc>,
-    _info: &SignatureAndTypeConcreteLibfunc,
+    registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    info: &SignatureAndTypeConcreteLibfunc,
     args: Vec<Value>,
 ) -> EvalAction {
-    dbg!(_info.signature.param_signatures.len());
-    dbg!(&_info.signature.param_signatures[0].ty);
-    dbg!(&_info.signature.param_signatures[1].ty);
-    dbg!(_info.signature.branch_signatures.len());
-
     let [Value::FeltDict { ty, data }, Value::Felt(key)]: [Value; 2] = args.try_into().unwrap()
     else {
         panic!()
     };
+    assert_eq!(info.ty, ty);
 
-    EvalAction::NormalBranch(0, smallvec![Value::FeltDictEntry { ty, data, key }])
+    EvalAction::NormalBranch(
+        0,
+        smallvec![
+            Value::FeltDictEntry { ty, data, key },
+            Value::default_for_type(registry, &info.ty),
+        ],
+    )
+}
+
+pub fn eval_finalize(
+    registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    info: &SignatureAndTypeConcreteLibfunc,
+    args: Vec<Value>,
+) -> EvalAction {
+    let [Value::FeltDictEntry { ty, mut data, key }, value]: [Value; 2] = args.try_into().unwrap()
+    else {
+        panic!()
+    };
+    assert_eq!(info.ty, ty);
+    assert!(value.is(registry, &ty));
+
+    data.insert(key, value);
+
+    EvalAction::NormalBranch(0, smallvec![Value::FeltDict { ty, data }])
 }
