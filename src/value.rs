@@ -13,6 +13,11 @@ pub enum Value {
         ty: ConcreteTypeId,
         data: Vec<Self>,
     },
+    Enum {
+        self_ty: ConcreteTypeId,
+        index: usize,
+        payload: Box<Self>,
+    },
     Felt(Felt),
     FeltDict {
         ty: ConcreteTypeId,
