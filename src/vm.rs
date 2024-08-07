@@ -22,6 +22,7 @@ mod felt252_dict;
 mod felt252_dict_entry;
 mod function_call;
 mod gas;
+mod jump;
 mod mem;
 mod snapshot_take;
 mod uint32;
@@ -218,7 +219,7 @@ fn eval<'a>(
         CoreConcreteLibfunc::Uint512(_) => todo!(),
         CoreConcreteLibfunc::Uint64(_) => todo!(),
         CoreConcreteLibfunc::Uint8(selector) => self::uint8::eval(registry, selector, args),
-        CoreConcreteLibfunc::UnconditionalJump(_) => todo!(),
+        CoreConcreteLibfunc::UnconditionalJump(info) => self::jump::eval(registry, info, args),
         CoreConcreteLibfunc::UnwrapNonZero(_) => todo!(),
     }
 }
