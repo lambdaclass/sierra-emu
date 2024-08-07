@@ -54,7 +54,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     );
     let mut iter = args.args.into_iter();
     vm.push_frame(
-        &function.id,
+        function.id.clone(),
         function
             .signature
             .param_types
