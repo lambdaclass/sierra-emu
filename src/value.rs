@@ -3,9 +3,9 @@ use cairo_lang_sierra::{
     ids::ConcreteTypeId,
     program_registry::ProgramRegistry,
 };
-use serde::{Serialize, Serializer};
+use serde::Serialize;
 use starknet_types_core::felt::Felt;
-use std::{cell::RefCell, collections::HashMap, rc::Rc};
+use std::collections::HashMap;
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize)]
 pub enum Value {
@@ -119,14 +119,4 @@ impl Value {
             Felt::from_dec_str(value).unwrap()
         })
     }
-}
-
-fn serialize_dict_data<S>(
-    value: &Rc<RefCell<HashMap<Felt, Value>>>,
-    serializer: S,
-) -> Result<S::Ok, S::Error>
-where
-    S: Serializer,
-{
-    value.borrow().serialize(serializer)
 }
