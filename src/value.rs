@@ -7,7 +7,7 @@ use serde::{Serialize, Serializer};
 use starknet_types_core::felt::Felt;
 use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
-#[derive(Debug, Eq, PartialEq, Serialize)]
+#[derive(Clone, Debug, Eq, PartialEq, Serialize)]
 pub enum Value {
     Array {
         ty: ConcreteTypeId,
@@ -101,30 +101,6 @@ impl Value {
         } else {
             Felt::from_dec_str(value).unwrap()
         })
-    }
-}
-
-impl<'a> Clone for Value<'a> {
-    fn clone(&self) -> Self {
-        // We need this implementation, otherwise cloning wouldn't deep-clone the dictionaries's
-        // data.
-        match self {
-            Self::Array { ty, data } => Self::Array {
-                ty,
-                data: data.clone(),
-            },
-            Self::Felt(arg0) => Self::Felt(*arg0),
-            Self::FeltDict { ty, data } => Self::FeltDict {
-                ty,
-                data: Rc::new((**data).clone()),
-            },
-            Self::FeltDictEntry { .. } => todo!(),
-            Self::U128(arg0) => Self::U128(*arg0),
-            Self::U32(arg0) => Self::U32(*arg0),
-            Self::U8(arg0) => Self::U8(*arg0),
-            Self::Uninitialized { ty } => Self::Uninitialized { ty },
-            Self::Unit => Self::Unit,
-        }
     }
 }
 

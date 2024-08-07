@@ -9,11 +9,11 @@ use cairo_lang_sierra::{
 use sierra_emu::Value;
 use smallvec::smallvec;
 
-pub fn eval<'a>(
-    _registry: &'a ProgramRegistry<CoreType, CoreLibfunc>,
-    _info: &'a SignatureOnlyConcreteLibfunc,
-    args: Vec<Value<'a>>,
-) -> EvalAction<'a> {
+pub fn eval(
+    _registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    _info: &SignatureOnlyConcreteLibfunc,
+    args: Vec<Value>,
+) -> EvalAction {
     let [value] = args.try_into().unwrap();
 
     EvalAction::NormalBranch(0, smallvec![value.clone(), value])

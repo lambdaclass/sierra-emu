@@ -10,22 +10,22 @@ use cairo_lang_sierra::{
 };
 use smallvec::smallvec;
 
-pub fn eval<'a>(
-    registry: &'a ProgramRegistry<CoreType, CoreLibfunc>,
-    selector: &'a ConstConcreteLibfunc,
-    args: Vec<Value<'a>>,
-) -> EvalAction<'a> {
+pub fn eval(
+    registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    selector: &ConstConcreteLibfunc,
+    args: Vec<Value>,
+) -> EvalAction {
     match selector {
         ConstConcreteLibfunc::AsBox(_) => todo!(),
         ConstConcreteLibfunc::AsImmediate(info) => eval_as_immediate(registry, info, args),
     }
 }
 
-pub fn eval_as_immediate<'a>(
-    registry: &'a ProgramRegistry<CoreType, CoreLibfunc>,
-    info: &'a ConstAsImmediateConcreteLibfunc,
-    args: Vec<Value<'a>>,
-) -> EvalAction<'a> {
+pub fn eval_as_immediate(
+    registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    info: &ConstAsImmediateConcreteLibfunc,
+    args: Vec<Value>,
+) -> EvalAction {
     let [] = args.try_into().unwrap();
 
     let const_ty = match registry.get_type(&info.const_type).unwrap() {

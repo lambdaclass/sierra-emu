@@ -10,11 +10,11 @@ use cairo_lang_sierra::{
 };
 use smallvec::smallvec;
 
-pub fn eval<'a>(
-    registry: &'a ProgramRegistry<CoreType, CoreLibfunc>,
-    selector: &'a MemConcreteLibfunc,
-    args: Vec<Value<'a>>,
-) -> EvalAction<'a> {
+pub fn eval(
+    registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    selector: &MemConcreteLibfunc,
+    args: Vec<Value>,
+) -> EvalAction {
     match selector {
         MemConcreteLibfunc::StoreTemp(info) => eval_store_temp(registry, info, args),
         MemConcreteLibfunc::StoreLocal(info) => eval_store_local(registry, info, args),
@@ -24,54 +24,59 @@ pub fn eval<'a>(
     }
 }
 
-pub fn eval_store_temp<'a>(
-    _registry: &'a ProgramRegistry<CoreType, CoreLibfunc>,
-    _info: &'a SignatureAndTypeConcreteLibfunc,
-    args: Vec<Value<'a>>,
-) -> EvalAction<'a> {
+pub fn eval_store_temp(
+    _registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    _info: &SignatureAndTypeConcreteLibfunc,
+    args: Vec<Value>,
+) -> EvalAction {
     let [value] = args.try_into().unwrap();
 
     EvalAction::NormalBranch(0, smallvec![value])
 }
 
-pub fn eval_store_local<'a>(
-    registry: &'a ProgramRegistry<CoreType, CoreLibfunc>,
-    _info: &'a SignatureAndTypeConcreteLibfunc,
-    args: Vec<Value<'a>>,
-) -> EvalAction<'a> {
-    let [Value::Uninitialized { ty }, value]: [Value<'a>; 2] = args.try_into().unwrap() else {
+pub fn eval_store_local(
+    registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    _info: &SignatureAndTypeConcreteLibfunc,
+    args: Vec<Value>,
+) -> EvalAction {
+    let [Value::Uninitialized { ty }, value]: [Value; 2] = args.try_into().unwrap() else {
         panic!()
     };
-    assert!(value.is(registry, ty));
+    assert!(value.is(registry, &ty));
 
     EvalAction::NormalBranch(0, smallvec![value])
 }
 
-pub fn eval_finalize_locals<'a>(
-    _registry: &'a ProgramRegistry<CoreType, CoreLibfunc>,
-    _info: &'a SignatureOnlyConcreteLibfunc,
-    args: Vec<Value<'a>>,
-) -> EvalAction<'a> {
+pub fn eval_finalize_locals(
+    _registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    _info: &SignatureOnlyConcreteLibfunc,
+    args: Vec<Value>,
+) -> EvalAction {
     let [] = args.try_into().unwrap();
 
     EvalAction::NormalBranch(0, smallvec![])
 }
 
-pub fn eval_alloc_local<'a>(
-    _registry: &'a ProgramRegistry<CoreType, CoreLibfunc>,
-    info: &'a SignatureAndTypeConcreteLibfunc,
-    args: Vec<Value<'a>>,
-) -> EvalAction<'a> {
+pub fn eval_alloc_local(
+    _registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    info: &SignatureAndTypeConcreteLibfunc,
+    args: Vec<Value>,
+) -> EvalAction {
     let [] = args.try_into().unwrap();
 
-    EvalAction::NormalBranch(0, smallvec![Value::Uninitialized { ty: &info.ty }])
+    EvalAction::NormalBranch(
+        0,
+        smallvec![Value::Uninitialized {
+            ty: info.ty.clone()
+        }],
+    )
 }
 
-pub fn eval_rename<'a>(
-    _registry: &'a ProgramRegistry<CoreType, CoreLibfunc>,
-    _info: &'a SignatureOnlyConcreteLibfunc,
-    args: Vec<Value<'a>>,
-) -> EvalAction<'a> {
+pub fn eval_rename(
+    _registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    _info: &SignatureOnlyConcreteLibfunc,
+    args: Vec<Value>,
+) -> EvalAction {
     let [value] = args.try_into().unwrap();
 
     EvalAction::NormalBranch(0, smallvec![value])

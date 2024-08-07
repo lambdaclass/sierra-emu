@@ -10,11 +10,11 @@ use cairo_lang_sierra::{
 use sierra_emu::Value;
 use smallvec::smallvec;
 
-pub fn eval<'a>(
-    registry: &'a ProgramRegistry<CoreType, CoreLibfunc>,
-    selector: &'a Uint8Concrete,
-    args: Vec<Value<'a>>,
-) -> EvalAction<'a> {
+pub fn eval(
+    registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    selector: &Uint8Concrete,
+    args: Vec<Value>,
+) -> EvalAction {
     match selector {
         Uint8Concrete::Const(_) => todo!(),
         Uint8Concrete::Operation(_) => todo!(),
@@ -29,12 +29,12 @@ pub fn eval<'a>(
     }
 }
 
-pub fn eval_equal<'a>(
-    _registry: &'a ProgramRegistry<CoreType, CoreLibfunc>,
-    _info: &'a SignatureOnlyConcreteLibfunc,
-    args: Vec<Value<'a>>,
-) -> EvalAction<'a> {
-    let [Value::U8(lhs), Value::U8(rhs)]: [Value<'a>; 2] = args.try_into().unwrap() else {
+pub fn eval_equal(
+    _registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    _info: &SignatureOnlyConcreteLibfunc,
+    args: Vec<Value>,
+) -> EvalAction {
+    let [Value::U8(lhs), Value::U8(rhs)]: [Value; 2] = args.try_into().unwrap() else {
         panic!()
     };
 

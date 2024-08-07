@@ -8,16 +8,16 @@ use cairo_lang_sierra::{
 };
 use sierra_emu::Value;
 
-pub fn eval<'a>(
-    registry: &'a ProgramRegistry<CoreType, CoreLibfunc>,
-    info: &'a SignatureAndFunctionConcreteLibfunc,
-    args: Vec<Value<'a>>,
-) -> EvalAction<'a> {
+pub fn eval(
+    registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    info: &SignatureAndFunctionConcreteLibfunc,
+    args: Vec<Value>,
+) -> EvalAction {
     assert_eq!(args.len(), info.function.params.len());
     assert!(args
         .iter()
         .zip(&info.function.params)
         .all(|(value, param)| value.is(registry, &param.ty)));
 
-    EvalAction::FunctionCall(&info.function.id, args.into_iter().collect())
+    EvalAction::FunctionCall(info.function.id.clone(), args.into_iter().collect())
 }

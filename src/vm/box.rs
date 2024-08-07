@@ -10,11 +10,11 @@ use cairo_lang_sierra::{
 use sierra_emu::Value;
 use smallvec::smallvec;
 
-pub fn eval<'a>(
-    registry: &'a ProgramRegistry<CoreType, CoreLibfunc>,
-    selector: &'a BoxConcreteLibfunc,
-    args: Vec<Value<'a>>,
-) -> EvalAction<'a> {
+pub fn eval(
+    registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    selector: &BoxConcreteLibfunc,
+    args: Vec<Value>,
+) -> EvalAction {
     match selector {
         BoxConcreteLibfunc::Into(_) => todo!(),
         BoxConcreteLibfunc::Unbox(info) => eval_unbox(registry, info, args),
@@ -22,11 +22,11 @@ pub fn eval<'a>(
     }
 }
 
-pub fn eval_unbox<'a>(
-    _registry: &'a ProgramRegistry<CoreType, CoreLibfunc>,
+pub fn eval_unbox(
+    _registry: &ProgramRegistry<CoreType, CoreLibfunc>,
     _info: &SignatureAndTypeConcreteLibfunc,
-    args: Vec<Value<'a>>,
-) -> EvalAction<'a> {
+    args: Vec<Value>,
+) -> EvalAction {
     let [value] = args.try_into().unwrap();
 
     EvalAction::NormalBranch(0, smallvec![value])

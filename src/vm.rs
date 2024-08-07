@@ -31,7 +31,7 @@ pub struct VirtualMachine<'a> {
     program: &'a Program,
     registry: &'a ProgramRegistry<CoreType, CoreLibfunc>,
 
-    frames: Vec<SierraFrame<'a>>,
+    frames: Vec<SierraFrame>,
 }
 
 impl<'a> VirtualMachine<'a> {
@@ -45,12 +45,12 @@ impl<'a> VirtualMachine<'a> {
     }
 
     /// Effectively a function call (for entry points).
-    pub fn push_frame<I>(&mut self, function_id: &'a FunctionId, args: I)
+    pub fn push_frame<I>(&mut self, function_id: FunctionId, args: I)
     where
-        I: IntoIterator<Item = Value<'a>>,
+        I: IntoIterator<Item = Value>,
         I::IntoIter: ExactSizeIterator,
     {
-        let function = self.registry.get_function(function_id).unwrap();
+        let function = self.registry.get_function(&function_id).unwrap();
 
         let args = args.into_iter();
         assert_eq!(args.len(), function.params.len());
@@ -72,7 +72,7 @@ impl<'a> VirtualMachine<'a> {
     }
 
     /// Run a single statement and return the state before its execution.
-    pub fn step(&mut self) -> Option<(StatementIdx, OrderedHashMap<VarId, Value<'a>>)> {
+    pub fn step(&mut self) -> Option<(StatementIdx, OrderedHashMap<VarId, Value>)> {
         let frame = self.frames.last_mut()?;
 
         let pc_snapshot = frame.pc;
@@ -99,9 +99,9 @@ impl<'a> VirtualMachine<'a> {
                         );
                     }
                     EvalAction::FunctionCall(function_id, args) => {
-                        let function = self.registry.get_function(function_id).unwrap();
+                        let function = self.registry.get_function(&function_id).unwrap();
                         self.frames.push(SierraFrame {
-                            _function_id: &function.id,
+                            _function_id: function_id,
                             state: Cell::new(
                                 function
                                     .params
@@ -147,23 +147,23 @@ impl<'a> VirtualMachine<'a> {
     }
 }
 
-struct SierraFrame<'a> {
-    _function_id: &'a FunctionId,
+struct SierraFrame {
+    _function_id: FunctionId,
 
-    state: Cell<OrderedHashMap<VarId, Value<'a>>>,
+    state: Cell<OrderedHashMap<VarId, Value>>,
     pc: StatementIdx,
 }
 
-enum EvalAction<'a> {
-    NormalBranch(usize, SmallVec<[Value<'a>; 2]>),
-    FunctionCall(&'a FunctionId, SmallVec<[Value<'a>; 2]>),
+enum EvalAction {
+    NormalBranch(usize, SmallVec<[Value; 2]>),
+    FunctionCall(FunctionId, SmallVec<[Value; 2]>),
 }
 
 fn eval<'a>(
     registry: &'a ProgramRegistry<CoreType, CoreLibfunc>,
     id: &'a ConcreteLibfuncId,
-    args: Vec<Value<'a>>,
-) -> EvalAction<'a> {
+    args: Vec<Value>,
+) -> EvalAction {
     match registry.get_libfunc(id).unwrap() {
         CoreConcreteLibfunc::ApTracking(selector) => {
             self::ap_tracking::eval(registry, selector, args)

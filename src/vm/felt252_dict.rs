@@ -11,23 +11,23 @@ use sierra_emu::Value;
 use smallvec::smallvec;
 use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
-pub fn eval<'a>(
-    registry: &'a ProgramRegistry<CoreType, CoreLibfunc>,
-    selector: &'a Felt252DictConcreteLibfunc,
-    args: Vec<Value<'a>>,
-) -> EvalAction<'a> {
+pub fn eval(
+    registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    selector: &Felt252DictConcreteLibfunc,
+    args: Vec<Value>,
+) -> EvalAction {
     match selector {
         Felt252DictConcreteLibfunc::New(info) => eval_new(registry, info, args),
         Felt252DictConcreteLibfunc::Squash(_) => todo!(),
     }
 }
 
-pub fn eval_new<'a>(
-    registry: &'a ProgramRegistry<CoreType, CoreLibfunc>,
-    info: &'a SignatureOnlyConcreteLibfunc,
-    args: Vec<Value<'a>>,
-) -> EvalAction<'a> {
-    let [segment_arena @ Value::Unit]: [Value<'a>; 1] = args.try_into().unwrap() else {
+pub fn eval_new(
+    registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    info: &SignatureOnlyConcreteLibfunc,
+    args: Vec<Value>,
+) -> EvalAction {
+    let [segment_arena @ Value::Unit]: [Value; 1] = args.try_into().unwrap() else {
         panic!()
     };
 
@@ -44,7 +44,7 @@ pub fn eval_new<'a>(
         smallvec![
             segment_arena,
             Value::FeltDict {
-                ty,
+                ty: ty.clone(),
                 data: Rc::new(RefCell::new(HashMap::new())),
             },
         ],

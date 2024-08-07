@@ -10,11 +10,11 @@ use cairo_lang_sierra::{
 use sierra_emu::Value;
 use smallvec::smallvec;
 
-pub fn eval<'a>(
-    registry: &'a ProgramRegistry<CoreType, CoreLibfunc>,
-    selector: &'a ArrayConcreteLibfunc,
-    args: Vec<Value<'a>>,
-) -> EvalAction<'a> {
+pub fn eval(
+    registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    selector: &ArrayConcreteLibfunc,
+    args: Vec<Value>,
+) -> EvalAction {
     match selector {
         ArrayConcreteLibfunc::New(info) => eval_new(registry, info, args),
         ArrayConcreteLibfunc::SpanFromTuple(_) => todo!(),
@@ -32,11 +32,11 @@ pub fn eval<'a>(
     }
 }
 
-pub fn eval_new<'a>(
-    registry: &'a ProgramRegistry<CoreType, CoreLibfunc>,
+pub fn eval_new(
+    registry: &ProgramRegistry<CoreType, CoreLibfunc>,
     info: &SignatureOnlyConcreteLibfunc,
-    args: Vec<Value<'a>>,
-) -> EvalAction<'a> {
+    args: Vec<Value>,
+) -> EvalAction {
     let [] = args.try_into().unwrap();
 
     let type_info = registry
@@ -50,34 +50,34 @@ pub fn eval_new<'a>(
     EvalAction::NormalBranch(
         0,
         smallvec![Value::Array {
-            ty,
+            ty: ty.clone(),
             data: Vec::new(),
         }],
     )
 }
 
-pub fn eval_append<'a>(
+pub fn eval_append(
     registry: &ProgramRegistry<CoreType, CoreLibfunc>,
     info: &SignatureAndTypeConcreteLibfunc,
-    args: Vec<Value<'a>>,
-) -> EvalAction<'a> {
-    let [Value::Array { ty, mut data }, item]: [Value<'a>; 2] = args.try_into().unwrap() else {
+    args: Vec<Value>,
+) -> EvalAction {
+    let [Value::Array { ty, mut data }, item]: [Value; 2] = args.try_into().unwrap() else {
         panic!()
     };
 
-    assert_eq!(&info.signature.param_signatures[1].ty, ty);
-    assert!(item.is(registry, ty));
+    assert_eq!(info.signature.param_signatures[1].ty, ty);
+    assert!(item.is(registry, &ty));
     data.push(item.clone());
 
     EvalAction::NormalBranch(0, smallvec![Value::Array { ty, data }])
 }
 
-pub fn eval_get<'a>(
+pub fn eval_get(
     _registry: &ProgramRegistry<CoreType, CoreLibfunc>,
     _info: &SignatureAndTypeConcreteLibfunc,
-    args: Vec<Value<'a>>,
-) -> EvalAction<'a> {
-    let [range_check @ Value::Unit, Value::Array { data, .. }, Value::U32(index)]: [Value<'a>; 3] =
+    args: Vec<Value>,
+) -> EvalAction {
+    let [range_check @ Value::Unit, Value::Array { data, .. }, Value::U32(index)]: [Value; 3] =
         args.try_into().unwrap()
     else {
         panic!()
@@ -89,12 +89,12 @@ pub fn eval_get<'a>(
     }
 }
 
-pub fn eval_len<'a>(
+pub fn eval_len(
     _registry: &ProgramRegistry<CoreType, CoreLibfunc>,
     _info: &SignatureAndTypeConcreteLibfunc,
-    args: Vec<Value<'a>>,
-) -> EvalAction<'a> {
-    let [Value::Array { data, .. }]: [Value<'a>; 1] = args.try_into().unwrap() else {
+    args: Vec<Value>,
+) -> EvalAction {
+    let [Value::Array { data, .. }]: [Value; 1] = args.try_into().unwrap() else {
         panic!()
     };
 
