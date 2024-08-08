@@ -5,7 +5,7 @@ use cairo_lang_sierra::{
 };
 use serde::Serialize;
 use starknet_types_core::felt::Felt;
-use std::collections::HashMap;
+use std::{collections::HashMap, fmt::Debug};
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize)]
 pub enum Value {
@@ -30,7 +30,9 @@ pub enum Value {
     },
     Struct(Vec<Self>),
     U128(u128),
+    U256(u128, u128),
     U32(u32),
+    U64(u64),
     U8(u8),
     Uninitialized {
         ty: ConcreteTypeId,

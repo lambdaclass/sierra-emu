@@ -27,6 +27,7 @@ mod gas;
 mod jump;
 mod mem;
 mod snapshot_take;
+mod starknet;
 mod r#struct;
 mod uint32;
 mod uint8;
@@ -219,7 +220,7 @@ fn eval<'a>(
         CoreConcreteLibfunc::Sint64(_) => todo!(),
         CoreConcreteLibfunc::Sint8(_) => todo!(),
         CoreConcreteLibfunc::SnapshotTake(info) => self::snapshot_take::eval(registry, info, args),
-        CoreConcreteLibfunc::StarkNet(_) => todo!(),
+        CoreConcreteLibfunc::StarkNet(selector) => self::starknet::eval(registry, selector, args),
         CoreConcreteLibfunc::Struct(selector) => self::r#struct::eval(registry, selector, args),
         CoreConcreteLibfunc::Uint128(_) => todo!(),
         CoreConcreteLibfunc::Uint16(_) => todo!(),

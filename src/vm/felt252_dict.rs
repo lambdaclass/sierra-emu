@@ -1,4 +1,5 @@
 use super::EvalAction;
+use crate::Value;
 use cairo_lang_sierra::{
     extensions::{
         core::{CoreLibfunc, CoreType, CoreTypeConcrete},
@@ -7,7 +8,6 @@ use cairo_lang_sierra::{
     },
     program_registry::ProgramRegistry,
 };
-use sierra_emu::Value;
 use smallvec::smallvec;
 use std::collections::HashMap;
 

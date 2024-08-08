@@ -1,7 +1,7 @@
-use self::{args::CmdArgs, vm::VirtualMachine};
+use self::args::CmdArgs;
 use cairo_lang_sierra::{extensions::core::CoreTypeConcrete, ProgramParser};
 use clap::Parser;
-use sierra_emu::{ProgramTrace, StateDump, Value};
+use sierra_emu::{ProgramTrace, StateDump, Value, VirtualMachine};
 use std::{
     fs::{self, File},
     io::stdout,
@@ -11,7 +11,6 @@ use tracing::{debug, info, Level};
 use tracing_subscriber::{EnvFilter, FmtSubscriber};
 
 mod args;
-mod vm;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = CmdArgs::parse();

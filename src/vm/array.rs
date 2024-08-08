@@ -1,4 +1,5 @@
 use super::EvalAction;
+use crate::Value;
 use cairo_lang_sierra::{
     extensions::{
         array::ArrayConcreteLibfunc,
@@ -7,7 +8,6 @@ use cairo_lang_sierra::{
     },
     program_registry::ProgramRegistry,
 };
-use sierra_emu::Value;
 use smallvec::smallvec;
 
 pub fn eval(
