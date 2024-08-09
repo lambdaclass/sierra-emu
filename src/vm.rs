@@ -13,8 +13,10 @@ use tracing::debug;
 
 mod ap_tracking;
 mod array;
+mod bounded_int;
 mod r#box;
 mod branch_align;
+mod cast;
 mod r#const;
 mod drop;
 mod dup;
@@ -187,11 +189,13 @@ fn eval<'a>(
         }
         CoreConcreteLibfunc::Array(selector) => self::array::eval(registry, selector, args),
         CoreConcreteLibfunc::Bool(_) => todo!(),
-        CoreConcreteLibfunc::BoundedInt(_) => todo!(),
+        CoreConcreteLibfunc::BoundedInt(selector) => {
+            self::bounded_int::eval(registry, selector, args)
+        }
         CoreConcreteLibfunc::Box(selector) => self::r#box::eval(registry, selector, args),
         CoreConcreteLibfunc::BranchAlign(info) => self::branch_align::eval(registry, info, args),
         CoreConcreteLibfunc::Bytes31(_) => todo!(),
-        CoreConcreteLibfunc::Cast(_) => todo!(),
+        CoreConcreteLibfunc::Cast(selector) => self::cast::eval(registry, selector, args),
         CoreConcreteLibfunc::Circuit(_) => todo!(),
         CoreConcreteLibfunc::Const(selector) => self::r#const::eval(registry, selector, args),
         CoreConcreteLibfunc::Coupon(_) => todo!(),

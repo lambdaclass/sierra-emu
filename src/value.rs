@@ -3,15 +3,20 @@ use cairo_lang_sierra::{
     ids::ConcreteTypeId,
     program_registry::ProgramRegistry,
 };
+use num_bigint::BigInt;
 use serde::Serialize;
 use starknet_types_core::felt::Felt;
-use std::{collections::HashMap, fmt::Debug};
+use std::{collections::HashMap, fmt::Debug, ops::Range};
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize)]
 pub enum Value {
     Array {
         ty: ConcreteTypeId,
         data: Vec<Self>,
+    },
+    BoundedInt {
+        range: Range<BigInt>,
+        value: BigInt,
     },
     Enum {
         self_ty: ConcreteTypeId,
@@ -28,6 +33,7 @@ pub enum Value {
         data: HashMap<Felt, Self>,
         key: Felt,
     },
+    I8(i8),
     Struct(Vec<Self>),
     U128(u128),
     U256(u128, u128),
@@ -68,6 +74,8 @@ impl Value {
                 matches!(self, Self::FeltDict { ty, .. } if *ty == info.ty)
             }
             CoreTypeConcrete::GasBuiltin(_) => matches!(self, Self::U128(_)),
+            CoreTypeConcrete::NonZero(info) => self.is(registry, &info.ty),
+            CoreTypeConcrete::Sint8(_) => matches!(self, Self::I8(_)),
             CoreTypeConcrete::Snapshot(info) => self.is(registry, &info.ty),
             CoreTypeConcrete::Struct(info) => {
                 matches!(self, Self::Struct(members)
@@ -100,12 +108,10 @@ impl Value {
             CoreTypeConcrete::Uint64(_) => todo!(),
             CoreTypeConcrete::Uint128(_) => todo!(),
             CoreTypeConcrete::Uint128MulGuarantee(_) => todo!(),
-            CoreTypeConcrete::Sint8(_) => todo!(),
             CoreTypeConcrete::Sint16(_) => todo!(),
             CoreTypeConcrete::Sint32(_) => todo!(),
             CoreTypeConcrete::Sint64(_) => todo!(),
             CoreTypeConcrete::Sint128(_) => todo!(),
-            CoreTypeConcrete::NonZero(_) => todo!(),
             CoreTypeConcrete::Nullable(_) => todo!(),
             CoreTypeConcrete::RangeCheck96(_) => todo!(),
             CoreTypeConcrete::Uninitialized(_) => todo!(),
