@@ -155,6 +155,13 @@ pub trait StarknetSyscallHandler {
         remaining_gas: &mut u128,
     ) -> SyscallResult<(U256, U256)>;
 
+    fn sha256_process_block(
+        &mut self,
+        prev_state: [u32; 8],
+        current_block: [u32; 16],
+        remaining_gas: &mut u128,
+    ) -> SyscallResult<[u32; 8]>;
+
     fn cheatcode(&mut self, _selector: Felt, _input: Vec<Felt>) -> Vec<Felt> {
         unimplemented!()
     }
@@ -343,6 +350,15 @@ impl StarknetSyscallHandler for NoSyscallHandler {
         _p: Secp256r1Point,
         _remaining_gas: &mut u128,
     ) -> SyscallResult<(U256, U256)> {
+        unimplemented!()
+    }
+
+    fn sha256_process_block(
+        &mut self,
+        _prev_state: [u32; 8],
+        _current_block: [u32; 16],
+        _remaining_gas: &mut u128,
+    ) -> SyscallResult<[u32; 8]> {
         unimplemented!()
     }
 }
