@@ -1,4 +1,7 @@
-use crate::Value;
+use crate::{
+    starknet::{NoSyscallHandler, StarknetSyscallHandler},
+    Value,
+};
 use cairo_lang_sierra::{
     edit_state,
     extensions::core::{CoreConcreteLibfunc, CoreLibfunc, CoreType},
@@ -34,10 +37,10 @@ mod r#struct;
 mod uint32;
 mod uint8;
 
-pub struct VirtualMachine {
+pub struct VirtualMachine<S: StarknetSyscallHandler = NoSyscallHandler> {
     program: Arc<Program>,
     registry: ProgramRegistry<CoreType, CoreLibfunc>,
-
+    syscall_handler: S,
     frames: Vec<SierraFrame>,
 }
 
@@ -47,7 +50,19 @@ impl VirtualMachine {
         Self {
             program,
             registry,
+            syscall_handler: NoSyscallHandler,
+            frames: Vec::new(),
+        }
+    }
+}
 
+impl<S: StarknetSyscallHandler> VirtualMachine<S> {
+    pub fn new_starknet(program: Arc<Program>, syscall_handler: S) -> Self {
+        let registry = ProgramRegistry::new(&program).unwrap();
+        Self {
+            program,
+            registry,
+            syscall_handler,
             frames: Vec::new(),
         }
     }

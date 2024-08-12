@@ -3,6 +3,7 @@ pub use self::{
     resource_bounds::ResourceBounds, secp256k1_point::Secp256k1Point,
     secp256r1_point::Secp256r1Point, tx_info::TxInfo, tx_v2_info::TxV2Info, u256::U256,
 };
+use serde::Serialize;
 use starknet_types_core::felt::Felt;
 
 mod block_info;
@@ -167,7 +168,8 @@ pub trait StarknetSyscallHandler {
     }
 }
 
-struct NoSyscallHandler;
+#[derive(Debug, PartialEq, Eq, Clone, Serialize)]
+pub struct NoSyscallHandler;
 
 impl StarknetSyscallHandler for NoSyscallHandler {
     fn get_block_hash(
