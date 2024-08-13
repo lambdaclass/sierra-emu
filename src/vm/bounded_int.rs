@@ -162,6 +162,12 @@ pub fn eval_constrain(
             CoreTypeConcrete::BoundedInt(info) => {
                 info.range.lower.clone()..info.range.upper.clone()
             }
+            CoreTypeConcrete::NonZero(info) => match registry.get_type(&info.ty).unwrap() {
+                CoreTypeConcrete::BoundedInt(info) => {
+                    info.range.lower.clone()..info.range.upper.clone()
+                }
+                _ => unreachable!(),
+            },
             _ => unreachable!(),
         };
 
