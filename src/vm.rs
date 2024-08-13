@@ -1,13 +1,20 @@
-use crate::Value;
+use crate::{
+    starknet::{StarknetSyscallHandler, StubSyscallHandler},
+    Value,
+};
 use cairo_lang_sierra::{
     edit_state,
-    extensions::core::{CoreConcreteLibfunc, CoreLibfunc, CoreType},
+    extensions::{
+        core::{CoreConcreteLibfunc, CoreLibfunc, CoreType, CoreTypeConcrete},
+        starknet::StarkNetTypeConcrete,
+    },
     ids::{ConcreteLibfuncId, FunctionId, VarId},
-    program::{GenStatement, Invocation, Program, StatementIdx},
+    program::{GenFunction, GenStatement, Invocation, Program, StatementIdx},
     program_registry::ProgramRegistry,
 };
 use cairo_lang_utils::ordered_hash_map::OrderedHashMap;
 use smallvec::SmallVec;
+use starknet_types_core::felt::Felt;
 use std::{cell::Cell, sync::Arc};
 use tracing::debug;
 
@@ -34,10 +41,10 @@ mod r#struct;
 mod uint32;
 mod uint8;
 
-pub struct VirtualMachine {
+pub struct VirtualMachine<S: StarknetSyscallHandler = StubSyscallHandler> {
     program: Arc<Program>,
     registry: ProgramRegistry<CoreType, CoreLibfunc>,
-
+    syscall_handler: S,
     frames: Vec<SierraFrame>,
 }
 
@@ -47,13 +54,81 @@ impl VirtualMachine {
         Self {
             program,
             registry,
+            syscall_handler: StubSyscallHandler::default(),
+            frames: Vec::new(),
+        }
+    }
+}
 
+impl<S: StarknetSyscallHandler> VirtualMachine<S> {
+    pub fn new_starknet(program: Arc<Program>, syscall_handler: S) -> Self {
+        let registry = ProgramRegistry::new(&program).unwrap();
+        Self {
+            program,
+            registry,
+            syscall_handler,
             frames: Vec::new(),
         }
     }
 
     pub fn registry(&self) -> &ProgramRegistry<CoreType, CoreLibfunc> {
         &self.registry
+    }
+
+    /// Utility to call a contract.
+    pub fn call_contract<I>(
+        &mut self,
+        function: &GenFunction<StatementIdx>,
+        initial_gas: u128,
+        calldata: I,
+    ) where
+        I: IntoIterator<Item = Felt>,
+        I::IntoIter: ExactSizeIterator,
+    {
+        let args: Vec<_> = calldata.into_iter().map(Value::Felt).collect();
+
+        self.push_frame(
+            function.id.clone(),
+            function
+                .signature
+                .param_types
+                .iter()
+                .map(|type_id| {
+                    let type_info = self.registry().get_type(type_id).unwrap();
+                    match type_info {
+                        CoreTypeConcrete::GasBuiltin(_) => Value::U128(initial_gas),
+                        // Add the calldata structure
+                        CoreTypeConcrete::Struct(inner) => {
+                            let member = self.registry().get_type(&inner.members[0]).unwrap();
+                            match member {
+                                CoreTypeConcrete::Snapshot(inner) => {
+                                    let inner = self.registry().get_type(&inner.ty).unwrap();
+                                    match inner {
+                                        CoreTypeConcrete::Array(inner) => {
+                                            let felt_ty = &inner.ty;
+                                            Value::Struct(vec![Value::Array {
+                                                ty: felt_ty.clone(),
+                                                data: args.clone(),
+                                            }])
+                                        }
+                                        _ => unreachable!(),
+                                    }
+                                }
+                                _ => unreachable!(),
+                            }
+                        }
+                        CoreTypeConcrete::StarkNet(StarkNetTypeConcrete::System(_)) => Value::Unit,
+                        CoreTypeConcrete::RangeCheck(_)
+                        | CoreTypeConcrete::Pedersen(_)
+                        | CoreTypeConcrete::Poseidon(_)
+                        | CoreTypeConcrete::Bitwise(_)
+                        | CoreTypeConcrete::BuiltinCosts(_)
+                        | CoreTypeConcrete::SegmentArena(_) => Value::Unit,
+                        _ => unreachable!(),
+                    }
+                })
+                .collect::<Vec<_>>(),
+        );
     }
 
     /// Effectively a function call (for entry points).
@@ -99,7 +174,12 @@ impl VirtualMachine {
                 let (state, values) =
                     edit_state::take_args(frame.state.take(), invocation.args.iter()).unwrap();
 
-                match eval(&self.registry, &invocation.libfunc_id, values) {
+                match eval(
+                    &self.registry,
+                    &invocation.libfunc_id,
+                    values,
+                    &mut self.syscall_handler,
+                ) {
                     EvalAction::NormalBranch(branch_idx, results) => {
                         assert_eq!(
                             results.len(),
@@ -182,6 +262,7 @@ fn eval<'a>(
     registry: &'a ProgramRegistry<CoreType, CoreLibfunc>,
     id: &'a ConcreteLibfuncId,
     args: Vec<Value>,
+    syscall_handler: &mut impl StarknetSyscallHandler,
 ) -> EvalAction {
     match registry.get_libfunc(id).unwrap() {
         CoreConcreteLibfunc::ApTracking(selector) => {
@@ -224,7 +305,9 @@ fn eval<'a>(
         CoreConcreteLibfunc::Sint64(_) => todo!(),
         CoreConcreteLibfunc::Sint8(_) => todo!(),
         CoreConcreteLibfunc::SnapshotTake(info) => self::snapshot_take::eval(registry, info, args),
-        CoreConcreteLibfunc::StarkNet(selector) => self::starknet::eval(registry, selector, args),
+        CoreConcreteLibfunc::StarkNet(selector) => {
+            self::starknet::eval(registry, selector, args, syscall_handler)
+        }
         CoreConcreteLibfunc::Struct(selector) => self::r#struct::eval(registry, selector, args),
         CoreConcreteLibfunc::Uint128(_) => todo!(),
         CoreConcreteLibfunc::Uint16(_) => todo!(),

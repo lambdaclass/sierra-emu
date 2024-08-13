@@ -1,5 +1,8 @@
 use self::args::CmdArgs;
-use cairo_lang_sierra::{extensions::core::CoreTypeConcrete, ProgramParser};
+use cairo_lang_sierra::{
+    extensions::{core::CoreTypeConcrete, starknet::StarkNetTypeConcrete},
+    ProgramParser,
+};
 use clap::Parser;
 use sierra_emu::{ProgramTrace, StateDump, Value, VirtualMachine};
 use std::{
@@ -61,9 +64,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 match type_info {
                     CoreTypeConcrete::Felt252(_) => Value::parse_felt(&iter.next().unwrap()),
                     CoreTypeConcrete::GasBuiltin(_) => Value::U128(args.available_gas.unwrap()),
-                    CoreTypeConcrete::RangeCheck(_) | CoreTypeConcrete::SegmentArena(_) => {
-                        Value::Unit
-                    }
+                    CoreTypeConcrete::RangeCheck(_)
+                    | CoreTypeConcrete::Bitwise(_)
+                    | CoreTypeConcrete::Pedersen(_)
+                    | CoreTypeConcrete::Poseidon(_)
+                    | CoreTypeConcrete::SegmentArena(_) => Value::Unit,
+                    CoreTypeConcrete::StarkNet(inner) => match inner {
+                        StarkNetTypeConcrete::System(_) => Value::Unit,
+                        _ => todo!(),
+                    },
                     _ => todo!(),
                 }
             })
@@ -83,4 +92,96 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     };
 
     Ok(())
+}
+
+#[cfg(test)]
+mod test {
+    use std::path::Path;
+
+    use cairo_lang_compiler::CompilerConfig;
+    use cairo_lang_sierra::program::{GenFunction, Program, StatementIdx};
+    use cairo_lang_starknet::compile::compile_path;
+    use sierra_emu::{ProgramTrace, StateDump, VirtualMachine};
+
+    #[test]
+    fn test_contract() {
+        let path = Path::new("programs/hello_starknet.cairo");
+
+        let contract = compile_path(
+            path,
+            None,
+            CompilerConfig {
+                replace_ids: true,
+                ..Default::default()
+            },
+        )
+        .unwrap();
+
+        let sierra_program = contract.extract_sierra_program().unwrap();
+
+        let entry_point = contract.entry_points_by_type.external.first().unwrap();
+        let function = find_entry_point_by_idx(&sierra_program, entry_point.function_idx).unwrap();
+
+        let mut vm = VirtualMachine::new(sierra_program.clone().into());
+
+        let calldata = [2.into()];
+        let initial_gas = 1000000;
+
+        vm.call_contract(function, initial_gas, calldata);
+
+        let mut trace = ProgramTrace::new();
+
+        while let Some((statement_idx, state)) = vm.step() {
+            trace.push(StateDump::new(statement_idx, state));
+        }
+
+        // let trace_str = serde_json::to_string_pretty(&trace).unwrap();
+        // std::fs::write("contract_trace.json", trace_str).unwrap();
+    }
+
+    #[test]
+    fn test_contract_constructor() {
+        let path = Path::new("programs/hello_starknet.cairo");
+
+        let contract = compile_path(
+            path,
+            None,
+            CompilerConfig {
+                replace_ids: true,
+                ..Default::default()
+            },
+        )
+        .unwrap();
+
+        let sierra_program = contract.extract_sierra_program().unwrap();
+
+        let entry_point = contract.entry_points_by_type.constructor.first().unwrap();
+        let function = find_entry_point_by_idx(&sierra_program, entry_point.function_idx).unwrap();
+
+        let mut vm = VirtualMachine::new(sierra_program.clone().into());
+
+        let calldata = [2.into()];
+        let initial_gas = 1000000;
+
+        vm.call_contract(function, initial_gas, calldata);
+
+        let mut trace = ProgramTrace::new();
+
+        while let Some((statement_idx, state)) = vm.step() {
+            trace.push(StateDump::new(statement_idx, state));
+        }
+
+        // let trace_str = serde_json::to_string_pretty(&trace).unwrap();
+        // std::fs::write("contract_trace.json", trace_str).unwrap();
+    }
+
+    pub fn find_entry_point_by_idx(
+        program: &Program,
+        entry_point_idx: usize,
+    ) -> Option<&GenFunction<StatementIdx>> {
+        program
+            .funcs
+            .iter()
+            .find(|x| x.id.id == entry_point_idx as u64)
+    }
 }
