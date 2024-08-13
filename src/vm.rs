@@ -114,7 +114,12 @@ impl<S: StarknetSyscallHandler> VirtualMachine<S> {
                 let (state, values) =
                     edit_state::take_args(frame.state.take(), invocation.args.iter()).unwrap();
 
-                match eval(&self.registry, &invocation.libfunc_id, values) {
+                match eval(
+                    &self.registry,
+                    &invocation.libfunc_id,
+                    values,
+                    &mut self.syscall_handler,
+                ) {
                     EvalAction::NormalBranch(branch_idx, results) => {
                         assert_eq!(
                             results.len(),
@@ -197,6 +202,7 @@ fn eval<'a>(
     registry: &'a ProgramRegistry<CoreType, CoreLibfunc>,
     id: &'a ConcreteLibfuncId,
     args: Vec<Value>,
+    syscall_handler: &mut impl StarknetSyscallHandler,
 ) -> EvalAction {
     match registry.get_libfunc(id).unwrap() {
         CoreConcreteLibfunc::ApTracking(selector) => {
@@ -239,7 +245,9 @@ fn eval<'a>(
         CoreConcreteLibfunc::Sint64(_) => todo!(),
         CoreConcreteLibfunc::Sint8(_) => todo!(),
         CoreConcreteLibfunc::SnapshotTake(info) => self::snapshot_take::eval(registry, info, args),
-        CoreConcreteLibfunc::StarkNet(selector) => self::starknet::eval(registry, selector, args),
+        CoreConcreteLibfunc::StarkNet(selector) => {
+            self::starknet::eval(registry, selector, args, syscall_handler)
+        }
         CoreConcreteLibfunc::Struct(selector) => self::r#struct::eval(registry, selector, args),
         CoreConcreteLibfunc::Uint128(_) => todo!(),
         CoreConcreteLibfunc::Uint16(_) => todo!(),

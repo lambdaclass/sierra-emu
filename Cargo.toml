@@ -4,8 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-cairo-lang-sierra = "2.7.0-rc.3"
-cairo-lang-utils = "2.7.0-rc.3"
+cairo-lang-sierra = "2.7.0"
+cairo-lang-utils = "2.7.0"
 clap = { version = "4.5.11", features = ["derive"] }
 num-bigint = "0.4.6"
 serde = { version = "1.0.204", features = ["derive"] }
@@ -14,3 +14,7 @@ smallvec = "1.13.2"
 starknet-types-core = "0.1.2"
 tracing = "0.1.40"
 tracing-subscriber = { version = "0.3.18", features = ["env-filter"] }
+
+[dev-dependencies]
+cairo-lang-compiler = "2.7.0"
+cairo-lang-starknet = "2.7.0"

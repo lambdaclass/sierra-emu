@@ -1,5 +1,5 @@
 use super::EvalAction;
-use crate::Value;
+use crate::{starknet::StarknetSyscallHandler, Value};
 use cairo_lang_sierra::{
     extensions::{
         core::{CoreLibfunc, CoreType},
@@ -13,6 +13,7 @@ pub fn eval(
     registry: &ProgramRegistry<CoreType, CoreLibfunc>,
     selector: &StarkNetConcreteLibfunc,
     args: Vec<Value>,
+    syscall_handler: &mut impl StarknetSyscallHandler,
 ) -> EvalAction {
     match selector {
         StarkNetConcreteLibfunc::CallContract(info) => {
@@ -24,8 +25,12 @@ pub fn eval(
         StarkNetConcreteLibfunc::ContractAddressConst(_) => todo!(),
         StarkNetConcreteLibfunc::ContractAddressTryFromFelt252(_) => todo!(),
         StarkNetConcreteLibfunc::ContractAddressToFelt252(_) => todo!(),
-        StarkNetConcreteLibfunc::StorageRead(info) => eval_storage_read(registry, info, args),
-        StarkNetConcreteLibfunc::StorageWrite(info) => eval_storage_write(registry, info, args),
+        StarkNetConcreteLibfunc::StorageRead(info) => {
+            eval_storage_read(registry, info, args, syscall_handler)
+        }
+        StarkNetConcreteLibfunc::StorageWrite(info) => {
+            eval_storage_write(registry, info, args, syscall_handler)
+        }
         StarkNetConcreteLibfunc::StorageBaseAddressConst(_) => todo!(),
         StarkNetConcreteLibfunc::StorageBaseAddressFromFelt252(_) => todo!(),
         StarkNetConcreteLibfunc::StorageAddressFromBase(_) => todo!(),
@@ -67,6 +72,7 @@ fn eval_storage_read(
     registry: &ProgramRegistry<CoreType, CoreLibfunc>,
     info: &SignatureOnlyConcreteLibfunc,
     args: Vec<Value>,
+    syscall_handler: &mut impl StarknetSyscallHandler,
 ) -> EvalAction {
     todo!()
 }
@@ -75,6 +81,7 @@ fn eval_storage_write(
     registry: &ProgramRegistry<CoreType, CoreLibfunc>,
     info: &SignatureOnlyConcreteLibfunc,
     args: Vec<Value>,
+    syscall_handler: &mut impl StarknetSyscallHandler,
 ) -> EvalAction {
     todo!()
 }
