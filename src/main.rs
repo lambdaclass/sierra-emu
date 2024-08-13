@@ -99,12 +99,9 @@ mod test {
     use std::path::Path;
 
     use cairo_lang_compiler::CompilerConfig;
-    use cairo_lang_sierra::{
-        extensions::{core::CoreTypeConcrete, starknet::StarkNetTypeConcrete},
-        program::{GenFunction, Program, StatementIdx},
-    };
+    use cairo_lang_sierra::program::{GenFunction, Program, StatementIdx};
     use cairo_lang_starknet::compile::compile_path;
-    use sierra_emu::{ProgramTrace, StateDump, Value, VirtualMachine};
+    use sierra_emu::{ProgramTrace, StateDump, VirtualMachine};
 
     #[test]
     fn test_contract() {
@@ -130,63 +127,43 @@ mod test {
         let calldata = [2.into()];
         let initial_gas = 1000000;
 
-        vm.push_frame(
-            function.id.clone(),
-            function
-                .signature
-                .param_types
-                .iter()
-                .map(|type_id| {
-                    let type_info = vm.registry().get_type(type_id).unwrap();
-                    match type_info {
-                        CoreTypeConcrete::GasBuiltin(_) => Value::U128(initial_gas),
-                        CoreTypeConcrete::Struct(inner) => {
-                            let member = vm.registry().get_type(&inner.members[0]).unwrap();
-                            match member {
-                                CoreTypeConcrete::Snapshot(inner) => {
-                                    let inner = vm.registry().get_type(&inner.ty).unwrap();
-                                    match inner {
-                                        CoreTypeConcrete::Array(inner) => {
-                                            let felt_ty = &inner.ty;
-                                            Value::Struct(vec![Value::Array {
-                                                ty: felt_ty.clone(),
-                                                data: {
-                                                    let mut v = Vec::new();
+        vm.call_contract(function, initial_gas, calldata);
 
-                                                    for x in calldata.iter() {
-                                                        v.push(Value::Felt(*x));
-                                                    }
-                                                    v
-                                                },
-                                            }])
-                                        }
-                                        _ => unreachable!(),
-                                    }
-                                }
-                                _ => unreachable!(),
-                            }
-                        }
-                        CoreTypeConcrete::StarkNet(inner) => match inner {
-                            StarkNetTypeConcrete::ClassHash(_) => todo!(),
-                            StarkNetTypeConcrete::ContractAddress(_) => todo!(),
-                            StarkNetTypeConcrete::StorageBaseAddress(_) => todo!(),
-                            StarkNetTypeConcrete::StorageAddress(_) => todo!(),
-                            // todo: add syscall handler
-                            StarkNetTypeConcrete::System(_) => Value::Unit,
-                            StarkNetTypeConcrete::Secp256Point(_) => todo!(),
-                            StarkNetTypeConcrete::Sha256StateHandle(_) => todo!(),
-                        },
-                        CoreTypeConcrete::RangeCheck(_)
-                        | CoreTypeConcrete::Pedersen(_)
-                        | CoreTypeConcrete::Poseidon(_)
-                        | CoreTypeConcrete::Bitwise(_)
-                        | CoreTypeConcrete::BuiltinCosts(_)
-                        | CoreTypeConcrete::SegmentArena(_) => Value::Unit,
-                        _ => todo!(),
-                    }
-                })
-                .collect::<Vec<_>>(),
-        );
+        let mut trace = ProgramTrace::new();
+
+        while let Some((statement_idx, state)) = vm.step() {
+            trace.push(StateDump::new(statement_idx, state));
+        }
+
+        // let trace_str = serde_json::to_string_pretty(&trace).unwrap();
+        // std::fs::write("contract_trace.json", trace_str).unwrap();
+    }
+
+    #[test]
+    fn test_contract_constructor() {
+        let path = Path::new("programs/hello_starknet.cairo");
+
+        let contract = compile_path(
+            path,
+            None,
+            CompilerConfig {
+                replace_ids: true,
+                ..Default::default()
+            },
+        )
+        .unwrap();
+
+        let sierra_program = contract.extract_sierra_program().unwrap();
+
+        let entry_point = contract.entry_points_by_type.constructor.first().unwrap();
+        let function = find_entry_point_by_idx(&sierra_program, entry_point.function_idx).unwrap();
+
+        let mut vm = VirtualMachine::new(sierra_program.clone().into());
+
+        let calldata = [2.into()];
+        let initial_gas = 1000000;
+
+        vm.call_contract(function, initial_gas, calldata);
 
         let mut trace = ProgramTrace::new();
 
@@ -195,7 +172,7 @@ mod test {
         }
 
         let trace_str = serde_json::to_string_pretty(&trace).unwrap();
-        println!("{}", trace_str)
+        std::fs::write("contract_trace.json", trace_str).unwrap();
     }
 
     pub fn find_entry_point_by_idx(
