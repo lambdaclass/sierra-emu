@@ -1,7 +1,8 @@
 use crate::Value;
+use serde::Serialize;
 use starknet_types_core::felt::Felt;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize)]
 pub struct BlockInfo {
     pub block_number: u64,
     pub block_timestamp: u64,

@@ -1,9 +1,10 @@
 use super::{BlockInfo, TxV2Info};
 use crate::Value;
 use cairo_lang_sierra::ids::ConcreteTypeId;
+use serde::Serialize;
 use starknet_types_core::felt::Felt;
 
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize)]
 pub struct ExecutionInfoV2 {
     pub block_info: BlockInfo,
     pub tx_info: TxV2Info,

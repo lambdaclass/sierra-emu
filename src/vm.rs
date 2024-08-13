@@ -1,5 +1,5 @@
 use crate::{
-    starknet::{NoSyscallHandler, StarknetSyscallHandler},
+    starknet::{StarknetSyscallHandler, StubSyscallHandler},
     Value,
 };
 use cairo_lang_sierra::{
@@ -41,7 +41,7 @@ mod r#struct;
 mod uint32;
 mod uint8;
 
-pub struct VirtualMachine<S: StarknetSyscallHandler = NoSyscallHandler> {
+pub struct VirtualMachine<S: StarknetSyscallHandler = StubSyscallHandler> {
     program: Arc<Program>,
     registry: ProgramRegistry<CoreType, CoreLibfunc>,
     syscall_handler: S,
@@ -54,7 +54,7 @@ impl VirtualMachine {
         Self {
             program,
             registry,
-            syscall_handler: NoSyscallHandler,
+            syscall_handler: StubSyscallHandler::default(),
             frames: Vec::new(),
         }
     }

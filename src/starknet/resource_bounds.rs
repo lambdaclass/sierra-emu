@@ -1,7 +1,8 @@
 use crate::Value;
+use serde::Serialize;
 use starknet_types_core::felt::Felt;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize)]
 pub struct ResourceBounds {
     pub resource: Felt,
     pub max_amount: u64,

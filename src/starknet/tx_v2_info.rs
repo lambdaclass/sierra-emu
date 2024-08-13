@@ -1,9 +1,10 @@
 use super::ResourceBounds;
 use crate::Value;
 use cairo_lang_sierra::ids::ConcreteTypeId;
+use serde::Serialize;
 use starknet_types_core::felt::Felt;
 
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize)]
 pub struct TxV2Info {
     pub version: Felt,
     pub account_contract_address: Felt,
