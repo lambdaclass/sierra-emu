@@ -111,7 +111,7 @@ fn eval_storage_read(
     let args: [Value; 4] = args.try_into().unwrap();
     let error_felt_ty = {
         match registry
-            .get_type(&info.branch_signatures()[1].vars[0].ty)
+            .get_type(&info.branch_signatures()[1].vars[2].ty)
             .unwrap()
         {
             CoreTypeConcrete::Array(info) => info.ty.clone(),
@@ -154,7 +154,7 @@ fn eval_storage_write(
     let args: [Value; 5] = args.try_into().unwrap();
     let error_felt_ty = {
         match registry
-            .get_type(&info.branch_signatures()[1].vars[0].ty)
+            .get_type(&info.branch_signatures()[1].vars[2].ty)
             .unwrap()
         {
             CoreTypeConcrete::Array(info) => info.ty.clone(),
