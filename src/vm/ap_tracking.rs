@@ -16,10 +16,20 @@ pub fn eval(
     args: Vec<Value>,
 ) -> EvalAction {
     match selector {
-        ApTrackingConcreteLibfunc::Revoke(_) => todo!(),
+        ApTrackingConcreteLibfunc::Revoke(info) => eval_revoke(registry, info, args),
         ApTrackingConcreteLibfunc::Enable(info) => eval_enable(registry, info, args),
         ApTrackingConcreteLibfunc::Disable(info) => eval_disable(registry, info, args),
     }
+}
+
+pub fn eval_revoke(
+    _registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    _info: &SignatureOnlyConcreteLibfunc,
+    args: Vec<Value>,
+) -> EvalAction {
+    let [] = args.try_into().unwrap();
+
+    EvalAction::NormalBranch(0, smallvec![])
 }
 
 pub fn eval_enable(

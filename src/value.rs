@@ -1,5 +1,8 @@
 use cairo_lang_sierra::{
-    extensions::core::{CoreLibfunc, CoreType, CoreTypeConcrete},
+    extensions::{
+        core::{CoreLibfunc, CoreType, CoreTypeConcrete},
+        starknet::StarkNetTypeConcrete,
+    },
     ids::ConcreteTypeId,
     program_registry::ProgramRegistry,
 };
@@ -120,7 +123,15 @@ impl Value {
             CoreTypeConcrete::Pedersen(_) => todo!(),
             CoreTypeConcrete::Poseidon(_) => todo!(),
             CoreTypeConcrete::Span(_) => todo!(),
-            CoreTypeConcrete::StarkNet(_) => todo!(),
+            CoreTypeConcrete::StarkNet(inner) => match inner {
+                StarkNetTypeConcrete::ClassHash(_)
+                | StarkNetTypeConcrete::ContractAddress(_)
+                | StarkNetTypeConcrete::StorageBaseAddress(_)
+                | StarkNetTypeConcrete::StorageAddress(_) => matches!(self, Self::Felt(_)),
+                StarkNetTypeConcrete::System(_) => matches!(self, Self::Unit),
+                StarkNetTypeConcrete::Secp256Point(_) => todo!(),
+                StarkNetTypeConcrete::Sha256StateHandle(_) => todo!(),
+            },
             CoreTypeConcrete::Bytes31(_) => todo!(),
             CoreTypeConcrete::BoundedInt(_) => todo!(),
         }
