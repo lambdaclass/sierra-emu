@@ -20,12 +20,14 @@ pub fn eval(
         ArrayConcreteLibfunc::SpanFromTuple(_) => todo!(),
         ArrayConcreteLibfunc::TupleFromSpan(_) => todo!(),
         ArrayConcreteLibfunc::Append(info) => eval_append(registry, info, args),
-        ArrayConcreteLibfunc::PopFront(_) => todo!(),
+        ArrayConcreteLibfunc::PopFront(info) => eval_pop_front(registry, info, args),
         ArrayConcreteLibfunc::PopFrontConsume(_) => todo!(),
         ArrayConcreteLibfunc::Get(info) => eval_get(registry, info, args),
         ArrayConcreteLibfunc::Slice(_) => todo!(),
         ArrayConcreteLibfunc::Len(info) => eval_len(registry, info, args),
-        ArrayConcreteLibfunc::SnapshotPopFront(_) => todo!(),
+        ArrayConcreteLibfunc::SnapshotPopFront(info) => {
+            eval_snapshot_pop_front(registry, info, args)
+        }
         ArrayConcreteLibfunc::SnapshotPopBack(_) => todo!(),
         ArrayConcreteLibfunc::SnapshotMultiPopFront(_) => todo!(),
         ArrayConcreteLibfunc::SnapshotMultiPopBack(_) => todo!(),
@@ -100,4 +102,41 @@ pub fn eval_len(
 
     let array_len = data.len().try_into().unwrap();
     EvalAction::NormalBranch(0, smallvec![Value::U32(array_len)])
+}
+
+pub fn eval_pop_front(
+    _registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    _info: &SignatureAndTypeConcreteLibfunc,
+    args: Vec<Value>,
+) -> EvalAction {
+    let [Value::Array { mut data, ty }]: [Value; 1] = args.try_into().unwrap() else {
+        panic!()
+    };
+
+    if !data.is_empty() {
+        let new_data = data.split_off(1);
+        let value = data[0].clone();
+        EvalAction::NormalBranch(0, smallvec![Value::Array { data: new_data, ty }, value])
+    } else {
+        EvalAction::NormalBranch(1, smallvec![])
+    }
+}
+
+pub fn eval_snapshot_pop_front(
+    registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    info: &SignatureAndTypeConcreteLibfunc,
+    args: Vec<Value>,
+) -> EvalAction {
+    let [Value::Array { mut data, ty }]: [Value; 1] = args.try_into().unwrap() else {
+        panic!()
+    };
+
+    if !data.is_empty() {
+        let new_data = data.split_off(1);
+        let value = data[0].clone();
+        assert!(value.is(registry, &info.ty));
+        EvalAction::NormalBranch(0, smallvec![Value::Array { data: new_data, ty }, value])
+    } else {
+        EvalAction::NormalBranch(1, smallvec![Value::Array { data, ty }])
+    }
 }
