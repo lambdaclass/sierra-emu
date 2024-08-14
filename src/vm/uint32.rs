@@ -3,7 +3,10 @@ use crate::Value;
 use cairo_lang_sierra::{
     extensions::{
         core::{CoreLibfunc, CoreType},
-        int::{unsigned::Uint32Concrete, IntOperationConcreteLibfunc, IntOperator},
+        int::{
+            unsigned::{Uint32Concrete, Uint32Traits},
+            IntConstConcreteLibfunc, IntOperationConcreteLibfunc, IntOperator,
+        },
         lib_func::SignatureOnlyConcreteLibfunc,
     },
     program_registry::ProgramRegistry,
@@ -16,7 +19,7 @@ pub fn eval(
     args: Vec<Value>,
 ) -> EvalAction {
     match selector {
-        Uint32Concrete::Const(_) => todo!(),
+        Uint32Concrete::Const(info) => eval_const(registry, info, args),
         Uint32Concrete::Operation(info) => eval_operation(registry, info, args),
         Uint32Concrete::SquareRoot(_) => todo!(),
         Uint32Concrete::Equal(_) => todo!(),
@@ -61,4 +64,12 @@ pub fn eval_to_felt252(
     };
 
     EvalAction::NormalBranch(0, smallvec![Value::Felt(value.into())])
+}
+
+pub fn eval_const(
+    _registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    info: &IntConstConcreteLibfunc<Uint32Traits>,
+    _args: Vec<Value>,
+) -> EvalAction {
+    EvalAction::NormalBranch(0, smallvec![Value::U32(info.c)])
 }

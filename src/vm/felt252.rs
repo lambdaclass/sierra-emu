@@ -3,7 +3,10 @@ use crate::Value;
 use cairo_lang_sierra::{
     extensions::{
         core::{CoreLibfunc, CoreType},
-        felt252::{Felt252BinaryOperationConcrete, Felt252BinaryOperator, Felt252Concrete},
+        felt252::{
+            Felt252BinaryOperationConcrete, Felt252BinaryOperator, Felt252Concrete,
+            Felt252ConstConcreteLibfunc,
+        },
     },
     program_registry::ProgramRegistry,
 };
@@ -16,7 +19,7 @@ pub fn eval(
 ) -> EvalAction {
     match selector {
         Felt252Concrete::BinaryOperation(info) => eval_squash(registry, info, args),
-        Felt252Concrete::Const(_) => todo!(),
+        Felt252Concrete::Const(info) => eval_const(registry, info, args),
         Felt252Concrete::IsZero(_) => todo!(),
     }
 }
@@ -43,4 +46,12 @@ pub fn eval_squash(
     };
 
     EvalAction::NormalBranch(0, smallvec![Value::Felt(res)])
+}
+
+pub fn eval_const(
+    _registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    info: &Felt252ConstConcreteLibfunc,
+    _args: Vec<Value>,
+) -> EvalAction {
+    EvalAction::NormalBranch(0, smallvec![Value::Felt(info.c.clone().into())])
 }

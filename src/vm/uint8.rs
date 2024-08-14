@@ -3,7 +3,10 @@ use crate::Value;
 use cairo_lang_sierra::{
     extensions::{
         core::{CoreLibfunc, CoreType},
-        int::unsigned::Uint8Concrete,
+        int::{
+            unsigned::{Uint8Concrete, Uint8Traits},
+            IntConstConcreteLibfunc,
+        },
         lib_func::SignatureOnlyConcreteLibfunc,
     },
     program_registry::ProgramRegistry,
@@ -16,7 +19,7 @@ pub fn eval(
     args: Vec<Value>,
 ) -> EvalAction {
     match selector {
-        Uint8Concrete::Const(_) => todo!(),
+        Uint8Concrete::Const(info) => eval_const(registry, info, args),
         Uint8Concrete::Operation(_) => todo!(),
         Uint8Concrete::SquareRoot(_) => todo!(),
         Uint8Concrete::Equal(info) => eval_equal(registry, info, args),
@@ -39,4 +42,12 @@ pub fn eval_equal(
     };
 
     EvalAction::NormalBranch((lhs != rhs) as usize, smallvec![])
+}
+
+pub fn eval_const(
+    _registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    info: &IntConstConcreteLibfunc<Uint8Traits>,
+    _args: Vec<Value>,
+) -> EvalAction {
+    EvalAction::NormalBranch(0, smallvec![Value::U8(info.c)])
 }

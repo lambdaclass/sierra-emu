@@ -11,6 +11,7 @@ use cairo_lang_sierra::{
     program_registry::ProgramRegistry,
 };
 use smallvec::smallvec;
+use starknet_types_core::felt::Felt;
 
 pub fn eval(
     registry: &ProgramRegistry<CoreType, CoreLibfunc>,
@@ -28,7 +29,9 @@ pub fn eval(
         StarkNetConcreteLibfunc::ClassHashTryFromFelt252(_) => todo!(),
         StarkNetConcreteLibfunc::ClassHashToFelt252(_) => todo!(),
         StarkNetConcreteLibfunc::ContractAddressConst(_) => todo!(),
-        StarkNetConcreteLibfunc::ContractAddressTryFromFelt252(_) => todo!(),
+        StarkNetConcreteLibfunc::ContractAddressTryFromFelt252(info) => {
+            eval_contract_address_try_from_felt(registry, info, args)
+        }
         StarkNetConcreteLibfunc::ContractAddressToFelt252(_) => todo!(),
         StarkNetConcreteLibfunc::StorageRead(info) => {
             eval_storage_read(registry, info, args, syscall_handler)
@@ -83,6 +86,30 @@ fn eval_storage_base_address_const(
     _args: Vec<Value>,
 ) -> EvalAction {
     EvalAction::NormalBranch(0, smallvec![Value::Felt(info.c.clone().into())])
+}
+
+fn eval_contract_address_try_from_felt(
+    _registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    _info: &SignatureOnlyConcreteLibfunc,
+    args: Vec<Value>,
+) -> EvalAction {
+    // 2 ** 251 = 3618502788666131106986593281521497120414687020801267626233049500247285301248
+
+    let [range_check @ Value::Unit, Value::Felt(value)]: [Value; 2] = args.try_into().unwrap()
+    else {
+        panic!()
+    };
+
+    if value
+        < Felt::from_dec_str(
+            "3618502788666131106986593281521497120414687020801267626233049500247285301248",
+        )
+        .unwrap()
+    {
+        EvalAction::NormalBranch(0, smallvec![range_check, Value::Felt(value)])
+    } else {
+        EvalAction::NormalBranch(1, smallvec![range_check])
+    }
 }
 
 fn eval_storage_address_from_base(
