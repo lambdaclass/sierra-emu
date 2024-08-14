@@ -1,12 +1,13 @@
 use cairo_lang_sierra::{
     extensions::{
+        circuit::CircuitTypeConcrete,
         core::{CoreLibfunc, CoreType, CoreTypeConcrete},
         starknet::StarkNetTypeConcrete,
     },
     ids::ConcreteTypeId,
     program_registry::ProgramRegistry,
 };
-use num_bigint::BigInt;
+use num_bigint::{BigInt, BigUint};
 use serde::Serialize;
 use starknet_types_core::felt::Felt;
 use std::{collections::HashMap, fmt::Debug, ops::Range};
@@ -21,6 +22,8 @@ pub enum Value {
         range: Range<BigInt>,
         value: BigInt,
     },
+    Circuit(Vec<BigUint>),
+    CircuitModulus(BigUint),
     Enum {
         self_ty: ConcreteTypeId,
         index: usize,
@@ -69,6 +72,9 @@ impl Value {
             CoreTypeConcrete::Array(info) => {
                 matches!(self, Self::Array { ty, .. } if *ty == info.ty)
             }
+            CoreTypeConcrete::BoundedInt(info) => {
+                matches!(self, Self::BoundedInt { range, .. } if range.start == info.range.lower && range.end == info.range.upper)
+            }
             CoreTypeConcrete::Enum(_) => {
                 matches!(self, Self::Enum { self_ty, .. } if self_ty == type_id)
             }
@@ -80,6 +86,12 @@ impl Value {
             CoreTypeConcrete::NonZero(info) => self.is(registry, &info.ty),
             CoreTypeConcrete::Sint8(_) => matches!(self, Self::I8(_)),
             CoreTypeConcrete::Snapshot(info) => self.is(registry, &info.ty),
+            CoreTypeConcrete::StarkNet(
+                StarkNetTypeConcrete::ClassHash(_)
+                | StarkNetTypeConcrete::ContractAddress(_)
+                | StarkNetTypeConcrete::StorageBaseAddress(_)
+                | StarkNetTypeConcrete::StorageAddress(_),
+            ) => matches!(self, Self::Felt(_)),
             CoreTypeConcrete::Struct(info) => {
                 matches!(self, Self::Struct(members)
                     if members.len() == info.members.len()
@@ -91,49 +103,24 @@ impl Value {
             }
             CoreTypeConcrete::Uint8(_) => matches!(self, Self::U8(_)),
             CoreTypeConcrete::Uint32(_) => matches!(self, Self::U32(_)),
+            CoreTypeConcrete::Uint128(_)
+            | CoreTypeConcrete::Circuit(CircuitTypeConcrete::U96Guarantee(_)) => {
+                matches!(self, Self::U128(_))
+            }
 
             // Unused builtins (mapped to `Value::Unit`).
-            CoreTypeConcrete::RangeCheck(_) | CoreTypeConcrete::SegmentArena(_) => {
+            CoreTypeConcrete::RangeCheck(_)
+            | CoreTypeConcrete::SegmentArena(_)
+            | CoreTypeConcrete::RangeCheck96(_)
+            | CoreTypeConcrete::Circuit(
+                CircuitTypeConcrete::AddMod(_) | CircuitTypeConcrete::MulMod(_),
+            )
+            | CoreTypeConcrete::StarkNet(StarkNetTypeConcrete::System(_)) => {
                 matches!(self, Self::Unit)
             }
 
             // To do:
-            CoreTypeConcrete::Coupon(_) => todo!(),
-            CoreTypeConcrete::Bitwise(_) => todo!(),
-            CoreTypeConcrete::Box(_) => todo!(),
-            CoreTypeConcrete::Circuit(_) => todo!(),
-            CoreTypeConcrete::Const(_) => todo!(),
-            CoreTypeConcrete::EcOp(_) => todo!(),
-            CoreTypeConcrete::EcPoint(_) => todo!(),
-            CoreTypeConcrete::EcState(_) => todo!(),
-            CoreTypeConcrete::BuiltinCosts(_) => todo!(),
-            CoreTypeConcrete::Uint16(_) => todo!(),
-            CoreTypeConcrete::Uint64(_) => todo!(),
-            CoreTypeConcrete::Uint128(_) => todo!(),
-            CoreTypeConcrete::Uint128MulGuarantee(_) => todo!(),
-            CoreTypeConcrete::Sint16(_) => todo!(),
-            CoreTypeConcrete::Sint32(_) => todo!(),
-            CoreTypeConcrete::Sint64(_) => todo!(),
-            CoreTypeConcrete::Sint128(_) => todo!(),
-            CoreTypeConcrete::Nullable(_) => todo!(),
-            CoreTypeConcrete::RangeCheck96(_) => todo!(),
-            CoreTypeConcrete::Uninitialized(_) => todo!(),
-            CoreTypeConcrete::Felt252DictEntry(_) => todo!(),
-            CoreTypeConcrete::SquashedFelt252Dict(_) => todo!(),
-            CoreTypeConcrete::Pedersen(_) => todo!(),
-            CoreTypeConcrete::Poseidon(_) => todo!(),
-            CoreTypeConcrete::Span(_) => todo!(),
-            CoreTypeConcrete::StarkNet(inner) => match inner {
-                StarkNetTypeConcrete::ClassHash(_)
-                | StarkNetTypeConcrete::ContractAddress(_)
-                | StarkNetTypeConcrete::StorageBaseAddress(_)
-                | StarkNetTypeConcrete::StorageAddress(_) => matches!(self, Self::Felt(_)),
-                StarkNetTypeConcrete::System(_) => matches!(self, Self::Unit),
-                StarkNetTypeConcrete::Secp256Point(_) => todo!(),
-                StarkNetTypeConcrete::Sha256StateHandle(_) => todo!(),
-            },
-            CoreTypeConcrete::Bytes31(_) => todo!(),
-            CoreTypeConcrete::BoundedInt(_) => todo!(),
+            _ => todo!("implement `Value::is` for type {type_id}"),
         }
     }
 

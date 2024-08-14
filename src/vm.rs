@@ -24,6 +24,7 @@ mod bounded_int;
 mod r#box;
 mod branch_align;
 mod cast;
+mod circuit;
 mod r#const;
 mod drop;
 mod dup;
@@ -238,6 +239,8 @@ impl<S: StarknetSyscallHandler> VirtualMachine<S> {
                         )
                         .unwrap(),
                     );
+                } else {
+                    dbg!(&curr_frame.state.take());
                 }
             }
         }
@@ -277,7 +280,7 @@ fn eval<'a>(
         CoreConcreteLibfunc::BranchAlign(info) => self::branch_align::eval(registry, info, args),
         CoreConcreteLibfunc::Bytes31(_) => todo!(),
         CoreConcreteLibfunc::Cast(selector) => self::cast::eval(registry, selector, args),
-        CoreConcreteLibfunc::Circuit(_) => todo!(),
+        CoreConcreteLibfunc::Circuit(selector) => self::circuit::eval(registry, selector, args),
         CoreConcreteLibfunc::Const(selector) => self::r#const::eval(registry, selector, args),
         CoreConcreteLibfunc::Coupon(_) => todo!(),
         CoreConcreteLibfunc::CouponCall(_) => todo!(),
