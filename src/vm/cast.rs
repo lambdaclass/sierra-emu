@@ -8,6 +8,7 @@ use cairo_lang_sierra::{
     },
     program_registry::ProgramRegistry,
 };
+use num_bigint::BigInt;
 use smallvec::smallvec;
 
 pub fn eval(
@@ -32,6 +33,11 @@ pub fn eval_downcast(
 
     let value = match value {
         Value::BoundedInt { value, .. } => value,
+        Value::U128(value) => BigInt::from(value),
+        Value::U64(value) => BigInt::from(value),
+        Value::U32(value) => BigInt::from(value),
+        Value::U16(value) => BigInt::from(value),
+        Value::U8(value) => BigInt::from(value),
         _ => todo!(),
     };
 
@@ -43,6 +49,11 @@ pub fn eval_downcast(
                 range_check,
                 match registry.get_type(&info.to_ty).unwrap() {
                     CoreTypeConcrete::Sint8(_) => Value::I8(value.try_into().unwrap()),
+                    CoreTypeConcrete::Uint8(_) => Value::U8(value.try_into().unwrap()),
+                    CoreTypeConcrete::Uint16(_) => Value::U16(value.try_into().unwrap()),
+                    CoreTypeConcrete::Uint32(_) => Value::U32(value.try_into().unwrap()),
+                    CoreTypeConcrete::Uint64(_) => Value::U64(value.try_into().unwrap()),
+                    CoreTypeConcrete::Uint128(_) => Value::U128(value.try_into().unwrap()),
                     _ => todo!(),
                 }
             ],
@@ -57,24 +68,15 @@ pub fn eval_upcast(
     info: &SignatureOnlyConcreteLibfunc,
     args: Vec<Value>,
 ) -> EvalAction {
-    dbg!(info
-        .signature
-        .param_signatures
-        .iter()
-        .map(|x| x.ty.to_string())
-        .collect::<Vec<_>>());
-    dbg!(info
-        .signature
-        .branch_signatures
-        .iter()
-        .map(|x| x.vars.iter().map(|x| x.ty.to_string()).collect::<Vec<_>>())
-        .collect::<Vec<_>>());
-    dbg!(&args);
-
     let [value] = args.try_into().unwrap();
 
     let value = match value {
         Value::BoundedInt { value, .. } => value,
+        Value::U128(value) => BigInt::from(value),
+        Value::U64(value) => BigInt::from(value),
+        Value::U32(value) => BigInt::from(value),
+        Value::U16(value) => BigInt::from(value),
+        Value::U8(value) => BigInt::from(value),
         _ => todo!(),
     };
 
@@ -85,6 +87,11 @@ pub fn eval_upcast(
             .unwrap()
         {
             CoreTypeConcrete::Sint8(_) => Value::I8(value.try_into().unwrap()),
+            CoreTypeConcrete::Uint8(_) => Value::U8(value.try_into().unwrap()),
+            CoreTypeConcrete::Uint16(_) => Value::U16(value.try_into().unwrap()),
+            CoreTypeConcrete::Uint32(_) => Value::U32(value.try_into().unwrap()),
+            CoreTypeConcrete::Uint64(_) => Value::U64(value.try_into().unwrap()),
+            CoreTypeConcrete::Uint128(_) => Value::U128(value.try_into().unwrap()),
             _ => todo!(),
         }],
     )
