@@ -35,6 +35,8 @@ mod function_call;
 mod gas;
 mod jump;
 mod mem;
+mod pedersen;
+mod poseidon;
 mod snapshot_take;
 mod starknet;
 mod r#struct;
@@ -298,8 +300,8 @@ fn eval<'a>(
         CoreConcreteLibfunc::Gas(selector) => self::gas::eval(registry, selector, args),
         CoreConcreteLibfunc::Mem(selector) => self::mem::eval(registry, selector, args),
         CoreConcreteLibfunc::Nullable(_) => todo!(),
-        CoreConcreteLibfunc::Pedersen(_) => todo!(),
-        CoreConcreteLibfunc::Poseidon(_) => todo!(),
+        CoreConcreteLibfunc::Pedersen(selector) => self::pedersen::eval(registry, selector, args),
+        CoreConcreteLibfunc::Poseidon(selector) => self::poseidon::eval(registry, selector, args),
         CoreConcreteLibfunc::Sint128(_) => todo!(),
         CoreConcreteLibfunc::Sint16(_) => todo!(),
         CoreConcreteLibfunc::Sint32(_) => todo!(),

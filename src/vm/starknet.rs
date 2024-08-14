@@ -47,7 +47,9 @@ pub fn eval(
             eval_storage_address_from_base(registry, info, args)
         }
         StarkNetConcreteLibfunc::StorageAddressFromBaseAndOffset(_) => todo!(),
-        StarkNetConcreteLibfunc::StorageAddressToFelt252(_) => todo!(),
+        StarkNetConcreteLibfunc::StorageAddressToFelt252(info) => {
+            eval_storage_address_to_felt(registry, info, args)
+        }
         StarkNetConcreteLibfunc::StorageAddressTryFromFelt252(_) => todo!(),
         StarkNetConcreteLibfunc::EmitEvent(info) => eval_emit_event(registry, info, args),
         StarkNetConcreteLibfunc::GetBlockHash(info) => eval_get_block_hash(registry, info, args),
@@ -110,6 +112,15 @@ fn eval_contract_address_try_from_felt(
     } else {
         EvalAction::NormalBranch(1, smallvec![range_check])
     }
+}
+
+fn eval_storage_address_to_felt(
+    _registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    _info: &SignatureOnlyConcreteLibfunc,
+    args: Vec<Value>,
+) -> EvalAction {
+    let [value] = args.try_into().unwrap();
+    EvalAction::NormalBranch(0, smallvec![value])
 }
 
 fn eval_storage_address_from_base(
