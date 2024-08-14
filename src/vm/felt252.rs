@@ -18,13 +18,13 @@ pub fn eval(
     args: Vec<Value>,
 ) -> EvalAction {
     match selector {
-        Felt252Concrete::BinaryOperation(info) => eval_squash(registry, info, args),
+        Felt252Concrete::BinaryOperation(info) => eval_operation(registry, info, args),
         Felt252Concrete::Const(info) => eval_const(registry, info, args),
         Felt252Concrete::IsZero(_) => todo!(),
     }
 }
 
-pub fn eval_squash(
+pub fn eval_operation(
     _registry: &ProgramRegistry<CoreType, CoreLibfunc>,
     info: &Felt252BinaryOperationConcrete,
     args: Vec<Value>,

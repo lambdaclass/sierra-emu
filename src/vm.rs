@@ -39,6 +39,7 @@ mod snapshot_take;
 mod starknet;
 mod r#struct;
 mod uint32;
+mod uint64;
 mod uint8;
 
 pub struct VirtualMachine<S: StarknetSyscallHandler = StubSyscallHandler> {
@@ -314,7 +315,7 @@ fn eval<'a>(
         CoreConcreteLibfunc::Uint256(_) => todo!(),
         CoreConcreteLibfunc::Uint32(selector) => self::uint32::eval(registry, selector, args),
         CoreConcreteLibfunc::Uint512(_) => todo!(),
-        CoreConcreteLibfunc::Uint64(_) => todo!(),
+        CoreConcreteLibfunc::Uint64(selector) => self::uint64::eval(registry, selector, args),
         CoreConcreteLibfunc::Uint8(selector) => self::uint8::eval(registry, selector, args),
         CoreConcreteLibfunc::UnconditionalJump(info) => self::jump::eval(registry, info, args),
         CoreConcreteLibfunc::UnwrapNonZero(_) => todo!(),
