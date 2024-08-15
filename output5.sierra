@@ -1,0 +1,287 @@
+type BoundedInt<0, 79228162514264337593543950335> = BoundedInt<0, 79228162514264337593543950335> [storable: true, drop: true, dup: true, zero_sized: false];
+type Const<felt252, 29721761890975875353235833581453094220424382983267374> = Const<felt252, 29721761890975875353235833581453094220424382983267374> [storable: false, drop: false, dup: false, zero_sized: false];
+type Const<felt252, 138583295661092166701491297054433349032460315956105119041111996301516236132> = Const<felt252, 138583295661092166701491297054433349032460315956105119041111996301516236132> [storable: false, drop: false, dup: false, zero_sized: false];
+type Const<felt252, 1> = Const<felt252, 1> [storable: false, drop: false, dup: false, zero_sized: false];
+type Const<felt252, 30828113188794245257250221355944970489240709081949230> = Const<felt252, 30828113188794245257250221355944970489240709081949230> [storable: false, drop: false, dup: false, zero_sized: false];
+type Unit = Struct<ut@Tuple> [storable: true, drop: true, dup: true, zero_sized: true];
+type Tuple<Unit> = Struct<ut@Tuple, Unit> [storable: true, drop: true, dup: true, zero_sized: true];
+type U96LimbsLtGuarantee<1> = U96LimbsLtGuarantee<1> [storable: true, drop: false, dup: false, zero_sized: false];
+type U96LimbsLtGuarantee<2> = U96LimbsLtGuarantee<2> [storable: true, drop: false, dup: false, zero_sized: false];
+type U96LimbsLtGuarantee<3> = U96LimbsLtGuarantee<3> [storable: true, drop: false, dup: false, zero_sized: false];
+type core::circuit::CircuitInput::<0> = CircuitInput<0> [storable: false, drop: false, dup: false, zero_sized: true];
+type U96LimbsLtGuarantee<4> = U96LimbsLtGuarantee<4> [storable: true, drop: false, dup: false, zero_sized: false];
+type core::circuit::u384 = Struct<ut@core::circuit::u384, BoundedInt<0, 79228162514264337593543950335>, BoundedInt<0, 79228162514264337593543950335>, BoundedInt<0, 79228162514264337593543950335>, BoundedInt<0, 79228162514264337593543950335>> [storable: true, drop: true, dup: true, zero_sized: false];
+type CircuitFailureGuarantee = CircuitFailureGuarantee [storable: true, drop: false, dup: false, zero_sized: false];
+type CircuitPartialOutputs<Circuit<(core::circuit::AddModGate::<core::circuit::InverseGate::<core::circuit::CircuitInput::<0>>, core::circuit::CircuitInput::<1>>,)>> = CircuitPartialOutputs<Circuit<(core::circuit::AddModGate::<core::circuit::InverseGate::<core::circuit::CircuitInput::<0>>, core::circuit::CircuitInput::<1>>,)>> [storable: true, drop: true, dup: false, zero_sized: false];
+type CircuitOutputs<Circuit<(core::circuit::AddModGate::<core::circuit::InverseGate::<core::circuit::CircuitInput::<0>>, core::circuit::CircuitInput::<1>>,)>> = CircuitOutputs<Circuit<(core::circuit::AddModGate::<core::circuit::InverseGate::<core::circuit::CircuitInput::<0>>, core::circuit::CircuitInput::<1>>,)>> [storable: true, drop: true, dup: true, zero_sized: false];
+type Const<BoundedInt<1, 1>, 1> = Const<BoundedInt<1, 1>, 1> [storable: false, drop: false, dup: false, zero_sized: false];
+type BoundedInt<1, 1> = BoundedInt<1, 1> [storable: true, drop: true, dup: true, zero_sized: false];
+type Const<BoundedInt<0, 0>, 0> = Const<BoundedInt<0, 0>, 0> [storable: false, drop: false, dup: false, zero_sized: false];
+type BoundedInt<0, 0> = BoundedInt<0, 0> [storable: true, drop: true, dup: true, zero_sized: false];
+type CircuitDescriptor<Circuit<(core::circuit::AddModGate::<core::circuit::InverseGate::<core::circuit::CircuitInput::<0>>, core::circuit::CircuitInput::<1>>,)>> = CircuitDescriptor<Circuit<(core::circuit::AddModGate::<core::circuit::InverseGate::<core::circuit::CircuitInput::<0>>, core::circuit::CircuitInput::<1>>,)>> [storable: true, drop: true, dup: true, zero_sized: false];
+type Const<BoundedInt<0, 79228162514264337593543950335>, 6> = Const<BoundedInt<0, 79228162514264337593543950335>, 6> [storable: false, drop: false, dup: false, zero_sized: false];
+type MulMod = MulMod [storable: true, drop: false, dup: false, zero_sized: false];
+type AddMod = AddMod [storable: true, drop: false, dup: false, zero_sized: false];
+type core::panics::Panic = Struct<ut@core::panics::Panic> [storable: true, drop: true, dup: true, zero_sized: true];
+type Array<felt252> = Array<felt252> [storable: true, drop: true, dup: false, zero_sized: false];
+type Tuple<core::panics::Panic, Array<felt252>> = Struct<ut@Tuple, core::panics::Panic, Array<felt252>> [storable: true, drop: true, dup: false, zero_sized: false];
+type core::panics::PanicResult::<((),)> = Enum<ut@core::panics::PanicResult::<((),)>, Tuple<Unit>, Tuple<core::panics::Panic, Array<felt252>>> [storable: true, drop: true, dup: false, zero_sized: false];
+type Const<felt252, 27> = Const<felt252, 27> [storable: false, drop: false, dup: false, zero_sized: false];
+type Const<felt252, 26913677086973030051406221357623718750637972950955665348321109348> = Const<felt252, 26913677086973030051406221357623718750637972950955665348321109348> [storable: false, drop: false, dup: false, zero_sized: false];
+type Const<felt252, 0> = Const<felt252, 0> [storable: false, drop: false, dup: false, zero_sized: false];
+type Const<felt252, 1997209042069643135709344952807065910992472029923670688473712229447419591075> = Const<felt252, 1997209042069643135709344952807065910992472029923670688473712229447419591075> [storable: false, drop: false, dup: false, zero_sized: false];
+type felt252 = felt252 [storable: true, drop: true, dup: true, zero_sized: false];
+type CircuitData<Circuit<(core::circuit::AddModGate::<core::circuit::InverseGate::<core::circuit::CircuitInput::<0>>, core::circuit::CircuitInput::<1>>,)>> = CircuitData<Circuit<(core::circuit::AddModGate::<core::circuit::InverseGate::<core::circuit::CircuitInput::<0>>, core::circuit::CircuitInput::<1>>,)>> [storable: true, drop: true, dup: false, zero_sized: false];
+type U96Guarantee = U96Guarantee [storable: true, drop: false, dup: false, zero_sized: false];
+type Tuple<U96Guarantee, U96Guarantee, U96Guarantee, U96Guarantee> = Struct<ut@Tuple, U96Guarantee, U96Guarantee, U96Guarantee, U96Guarantee> [storable: true, drop: false, dup: false, zero_sized: false];
+type Const<BoundedInt<0, 79228162514264337593543950335>, 3> = Const<BoundedInt<0, 79228162514264337593543950335>, 3> [storable: false, drop: false, dup: false, zero_sized: false];
+type Circuit<(core::circuit::AddModGate::<core::circuit::InverseGate::<core::circuit::CircuitInput::<0>>, core::circuit::CircuitInput::<1>>,)> = Circuit<(core::circuit::AddModGate::<core::circuit::InverseGate::<core::circuit::CircuitInput::<0>>, core::circuit::CircuitInput::<1>>,)> [storable: false, drop: false, dup: false, zero_sized: true];
+type core::circuit::AddModGate::<core::circuit::InverseGate::<core::circuit::CircuitInput::<0>>, core::circuit::CircuitInput::<1>> = AddModGate<core::circuit::InverseGate::<core::circuit::CircuitInput::<0>>, core::circuit::CircuitInput::<1>> [storable: false, drop: false, dup: false, zero_sized: true];
+type (core::circuit::AddModGate::<core::circuit::InverseGate::<core::circuit::CircuitInput::<0>>, core::circuit::CircuitInput::<1>>,) = Struct<ut@Tuple, core::circuit::AddModGate::<core::circuit::InverseGate::<core::circuit::CircuitInput::<0>>, core::circuit::CircuitInput::<1>>> [storable: false, drop: false, dup: false, zero_sized: true];
+type CircuitInputAccumulator<Circuit<(core::circuit::AddModGate::<core::circuit::InverseGate::<core::circuit::CircuitInput::<0>>, core::circuit::CircuitInput::<1>>,)>> = CircuitInputAccumulator<Circuit<(core::circuit::AddModGate::<core::circuit::InverseGate::<core::circuit::CircuitInput::<0>>, core::circuit::CircuitInput::<1>>,)>> [storable: true, drop: true, dup: false, zero_sized: false];
+type core::circuit::CircuitInput::<1> = CircuitInput<1> [storable: false, drop: false, dup: false, zero_sized: true];
+type core::circuit::InverseGate::<core::circuit::CircuitInput::<0>> = InverseGate<core::circuit::CircuitInput::<0>> [storable: false, drop: false, dup: false, zero_sized: true];
+type RangeCheck96 = RangeCheck96 [storable: true, drop: false, dup: false, zero_sized: false];
+type CircuitModulus = CircuitModulus [storable: true, drop: true, dup: true, zero_sized: false];
+type Tuple<BoundedInt<0, 79228162514264337593543950335>, BoundedInt<0, 79228162514264337593543950335>, BoundedInt<0, 79228162514264337593543950335>, BoundedInt<0, 79228162514264337593543950335>> = Struct<ut@Tuple, BoundedInt<0, 79228162514264337593543950335>, BoundedInt<0, 79228162514264337593543950335>, BoundedInt<0, 79228162514264337593543950335>, BoundedInt<0, 79228162514264337593543950335>> [storable: true, drop: true, dup: true, zero_sized: false];
+type Const<BoundedInt<0, 79228162514264337593543950335>, 0> = Const<BoundedInt<0, 79228162514264337593543950335>, 0> [storable: false, drop: false, dup: false, zero_sized: false];
+type Const<BoundedInt<0, 79228162514264337593543950335>, 7> = Const<BoundedInt<0, 79228162514264337593543950335>, 7> [storable: false, drop: false, dup: false, zero_sized: false];
+
+libfunc const_as_immediate<Const<BoundedInt<0, 79228162514264337593543950335>, 7>> = const_as_immediate<Const<BoundedInt<0, 79228162514264337593543950335>, 7>>;
+libfunc const_as_immediate<Const<BoundedInt<0, 79228162514264337593543950335>, 0>> = const_as_immediate<Const<BoundedInt<0, 79228162514264337593543950335>, 0>>;
+libfunc struct_construct<Tuple<BoundedInt<0, 79228162514264337593543950335>, BoundedInt<0, 79228162514264337593543950335>, BoundedInt<0, 79228162514264337593543950335>, BoundedInt<0, 79228162514264337593543950335>>> = struct_construct<Tuple<BoundedInt<0, 79228162514264337593543950335>, BoundedInt<0, 79228162514264337593543950335>, BoundedInt<0, 79228162514264337593543950335>, BoundedInt<0, 79228162514264337593543950335>>>;
+libfunc store_temp<Tuple<BoundedInt<0, 79228162514264337593543950335>, BoundedInt<0, 79228162514264337593543950335>, BoundedInt<0, 79228162514264337593543950335>, BoundedInt<0, 79228162514264337593543950335>>> = store_temp<Tuple<BoundedInt<0, 79228162514264337593543950335>, BoundedInt<0, 79228162514264337593543950335>, BoundedInt<0, 79228162514264337593543950335>, BoundedInt<0, 79228162514264337593543950335>>>;
+libfunc try_into_circuit_modulus = try_into_circuit_modulus;
+libfunc branch_align = branch_align;
+libfunc init_circuit_data<Circuit<(core::circuit::AddModGate::<core::circuit::InverseGate::<core::circuit::CircuitInput::<0>>, core::circuit::CircuitInput::<1>>,)>> = init_circuit_data<Circuit<(core::circuit::AddModGate::<core::circuit::InverseGate::<core::circuit::CircuitInput::<0>>, core::circuit::CircuitInput::<1>>,)>>;
+libfunc const_as_immediate<Const<BoundedInt<0, 79228162514264337593543950335>, 3>> = const_as_immediate<Const<BoundedInt<0, 79228162514264337593543950335>, 3>>;
+libfunc into_u96_guarantee<BoundedInt<0, 79228162514264337593543950335>> = into_u96_guarantee<BoundedInt<0, 79228162514264337593543950335>>;
+libfunc struct_construct<Tuple<U96Guarantee, U96Guarantee, U96Guarantee, U96Guarantee>> = struct_construct<Tuple<U96Guarantee, U96Guarantee, U96Guarantee, U96Guarantee>>;
+libfunc store_temp<CircuitInputAccumulator<Circuit<(core::circuit::AddModGate::<core::circuit::InverseGate::<core::circuit::CircuitInput::<0>>, core::circuit::CircuitInput::<1>>,)>>> = store_temp<CircuitInputAccumulator<Circuit<(core::circuit::AddModGate::<core::circuit::InverseGate::<core::circuit::CircuitInput::<0>>, core::circuit::CircuitInput::<1>>,)>>>;
+libfunc store_temp<Tuple<U96Guarantee, U96Guarantee, U96Guarantee, U96Guarantee>> = store_temp<Tuple<U96Guarantee, U96Guarantee, U96Guarantee, U96Guarantee>>;
+libfunc store_temp<RangeCheck96> = store_temp<RangeCheck96>;
+libfunc add_circuit_input<Circuit<(core::circuit::AddModGate::<core::circuit::InverseGate::<core::circuit::CircuitInput::<0>>, core::circuit::CircuitInput::<1>>,)>> = add_circuit_input<Circuit<(core::circuit::AddModGate::<core::circuit::InverseGate::<core::circuit::CircuitInput::<0>>, core::circuit::CircuitInput::<1>>,)>>;
+libfunc drop<CircuitData<Circuit<(core::circuit::AddModGate::<core::circuit::InverseGate::<core::circuit::CircuitInput::<0>>, core::circuit::CircuitInput::<1>>,)>>> = drop<CircuitData<Circuit<(core::circuit::AddModGate::<core::circuit::InverseGate::<core::circuit::CircuitInput::<0>>, core::circuit::CircuitInput::<1>>,)>>>;
+libfunc drop<CircuitModulus> = drop<CircuitModulus>;
+libfunc array_new<felt252> = array_new<felt252>;
+libfunc const_as_immediate<Const<felt252, 1997209042069643135709344952807065910992472029923670688473712229447419591075>> = const_as_immediate<Const<felt252, 1997209042069643135709344952807065910992472029923670688473712229447419591075>>;
+libfunc store_temp<felt252> = store_temp<felt252>;
+libfunc array_append<felt252> = array_append<felt252>;
+libfunc const_as_immediate<Const<felt252, 0>> = const_as_immediate<Const<felt252, 0>>;
+libfunc const_as_immediate<Const<felt252, 26913677086973030051406221357623718750637972950955665348321109348>> = const_as_immediate<Const<felt252, 26913677086973030051406221357623718750637972950955665348321109348>>;
+libfunc const_as_immediate<Const<felt252, 27>> = const_as_immediate<Const<felt252, 27>>;
+libfunc struct_construct<core::panics::Panic> = struct_construct<core::panics::Panic>;
+libfunc struct_construct<Tuple<core::panics::Panic, Array<felt252>>> = struct_construct<Tuple<core::panics::Panic, Array<felt252>>>;
+libfunc enum_init<core::panics::PanicResult::<((),)>, 1> = enum_init<core::panics::PanicResult::<((),)>, 1>;
+libfunc store_temp<AddMod> = store_temp<AddMod>;
+libfunc store_temp<MulMod> = store_temp<MulMod>;
+libfunc store_temp<core::panics::PanicResult::<((),)>> = store_temp<core::panics::PanicResult::<((),)>>;
+libfunc const_as_immediate<Const<BoundedInt<0, 79228162514264337593543950335>, 6>> = const_as_immediate<Const<BoundedInt<0, 79228162514264337593543950335>, 6>>;
+libfunc get_circuit_descriptor<Circuit<(core::circuit::AddModGate::<core::circuit::InverseGate::<core::circuit::CircuitInput::<0>>, core::circuit::CircuitInput::<1>>,)>> = get_circuit_descriptor<Circuit<(core::circuit::AddModGate::<core::circuit::InverseGate::<core::circuit::CircuitInput::<0>>, core::circuit::CircuitInput::<1>>,)>>;
+libfunc const_as_immediate<Const<BoundedInt<0, 0>, 0>> = const_as_immediate<Const<BoundedInt<0, 0>, 0>>;
+libfunc const_as_immediate<Const<BoundedInt<1, 1>, 1>> = const_as_immediate<Const<BoundedInt<1, 1>, 1>>;
+libfunc store_temp<BoundedInt<0, 0>> = store_temp<BoundedInt<0, 0>>;
+libfunc store_temp<BoundedInt<1, 1>> = store_temp<BoundedInt<1, 1>>;
+libfunc eval_circuit<Circuit<(core::circuit::AddModGate::<core::circuit::InverseGate::<core::circuit::CircuitInput::<0>>, core::circuit::CircuitInput::<1>>,)>> = eval_circuit<Circuit<(core::circuit::AddModGate::<core::circuit::InverseGate::<core::circuit::CircuitInput::<0>>, core::circuit::CircuitInput::<1>>,)>>;
+libfunc get_circuit_output<Circuit<(core::circuit::AddModGate::<core::circuit::InverseGate::<core::circuit::CircuitInput::<0>>, core::circuit::CircuitInput::<1>>,)>, core::circuit::CircuitInput::<0>> = get_circuit_output<Circuit<(core::circuit::AddModGate::<core::circuit::InverseGate::<core::circuit::CircuitInput::<0>>, core::circuit::CircuitInput::<1>>,)>, core::circuit::CircuitInput::<0>>;
+libfunc drop<core::circuit::u384> = drop<core::circuit::u384>;
+libfunc u96_limbs_less_than_guarantee_verify<4> = u96_limbs_less_than_guarantee_verify<4>;
+libfunc u96_limbs_less_than_guarantee_verify<3> = u96_limbs_less_than_guarantee_verify<3>;
+libfunc u96_limbs_less_than_guarantee_verify<2> = u96_limbs_less_than_guarantee_verify<2>;
+libfunc u96_single_limb_less_than_guarantee_verify = u96_single_limb_less_than_guarantee_verify;
+libfunc store_temp<U96Guarantee> = store_temp<U96Guarantee>;
+libfunc jump = jump;
+libfunc u96_guarantee_verify = u96_guarantee_verify;
+libfunc struct_construct<Unit> = struct_construct<Unit>;
+libfunc struct_construct<Tuple<Unit>> = struct_construct<Tuple<Unit>>;
+libfunc enum_init<core::panics::PanicResult::<((),)>, 0> = enum_init<core::panics::PanicResult::<((),)>, 0>;
+libfunc drop<CircuitPartialOutputs<Circuit<(core::circuit::AddModGate::<core::circuit::InverseGate::<core::circuit::CircuitInput::<0>>, core::circuit::CircuitInput::<1>>,)>>> = drop<CircuitPartialOutputs<Circuit<(core::circuit::AddModGate::<core::circuit::InverseGate::<core::circuit::CircuitInput::<0>>, core::circuit::CircuitInput::<1>>,)>>>;
+libfunc const_as_immediate<Const<felt252, 30828113188794245257250221355944970489240709081949230>> = const_as_immediate<Const<felt252, 30828113188794245257250221355944970489240709081949230>>;
+libfunc circuit_failure_guarantee_verify = circuit_failure_guarantee_verify;
+libfunc store_temp<Array<felt252>> = store_temp<Array<felt252>>;
+libfunc drop<CircuitInputAccumulator<Circuit<(core::circuit::AddModGate::<core::circuit::InverseGate::<core::circuit::CircuitInput::<0>>, core::circuit::CircuitInput::<1>>,)>>> = drop<CircuitInputAccumulator<Circuit<(core::circuit::AddModGate::<core::circuit::InverseGate::<core::circuit::CircuitInput::<0>>, core::circuit::CircuitInput::<1>>,)>>>;
+libfunc const_as_immediate<Const<felt252, 1>> = const_as_immediate<Const<felt252, 1>>;
+libfunc const_as_immediate<Const<felt252, 138583295661092166701491297054433349032460315956105119041111996301516236132>> = const_as_immediate<Const<felt252, 138583295661092166701491297054433349032460315956105119041111996301516236132>>;
+libfunc const_as_immediate<Const<felt252, 29721761890975875353235833581453094220424382983267374>> = const_as_immediate<Const<felt252, 29721761890975875353235833581453094220424382983267374>>;
+
+const_as_immediate<Const<BoundedInt<0, 79228162514264337593543950335>, 7>>() -> ([3]); // 0
+const_as_immediate<Const<BoundedInt<0, 79228162514264337593543950335>, 0>>() -> ([4]); // 1
+const_as_immediate<Const<BoundedInt<0, 79228162514264337593543950335>, 0>>() -> ([5]); // 2
+const_as_immediate<Const<BoundedInt<0, 79228162514264337593543950335>, 0>>() -> ([6]); // 3
+struct_construct<Tuple<BoundedInt<0, 79228162514264337593543950335>, BoundedInt<0, 79228162514264337593543950335>, BoundedInt<0, 79228162514264337593543950335>, BoundedInt<0, 79228162514264337593543950335>>>([3], [4], [5], [6]) -> ([7]); // 4
+store_temp<Tuple<BoundedInt<0, 79228162514264337593543950335>, BoundedInt<0, 79228162514264337593543950335>, BoundedInt<0, 79228162514264337593543950335>, BoundedInt<0, 79228162514264337593543950335>>>([7]) -> ([7]); // 5
+try_into_circuit_modulus([7]) { fallthrough([8]) 165() }; // 6
+branch_align() -> (); // 7
+init_circuit_data<Circuit<(core::circuit::AddModGate::<core::circuit::InverseGate::<core::circuit::CircuitInput::<0>>, core::circuit::CircuitInput::<1>>,)>>([2]) -> ([9], [10]); // 8
+const_as_immediate<Const<BoundedInt<0, 79228162514264337593543950335>, 3>>() -> ([11]); // 9
+into_u96_guarantee<BoundedInt<0, 79228162514264337593543950335>>([11]) -> ([12]); // 10
+const_as_immediate<Const<BoundedInt<0, 79228162514264337593543950335>, 0>>() -> ([13]); // 11
+into_u96_guarantee<BoundedInt<0, 79228162514264337593543950335>>([13]) -> ([14]); // 12
+const_as_immediate<Const<BoundedInt<0, 79228162514264337593543950335>, 0>>() -> ([15]); // 13
+into_u96_guarantee<BoundedInt<0, 79228162514264337593543950335>>([15]) -> ([16]); // 14
+const_as_immediate<Const<BoundedInt<0, 79228162514264337593543950335>, 0>>() -> ([17]); // 15
+into_u96_guarantee<BoundedInt<0, 79228162514264337593543950335>>([17]) -> ([18]); // 16
+struct_construct<Tuple<U96Guarantee, U96Guarantee, U96Guarantee, U96Guarantee>>([12], [14], [16], [18]) -> ([19]); // 17
+store_temp<CircuitInputAccumulator<Circuit<(core::circuit::AddModGate::<core::circuit::InverseGate::<core::circuit::CircuitInput::<0>>, core::circuit::CircuitInput::<1>>,)>>>([10]) -> ([10]); // 18
+store_temp<Tuple<U96Guarantee, U96Guarantee, U96Guarantee, U96Guarantee>>([19]) -> ([19]); // 19
+store_temp<RangeCheck96>([9]) -> ([9]); // 20
+add_circuit_input<Circuit<(core::circuit::AddModGate::<core::circuit::InverseGate::<core::circuit::CircuitInput::<0>>, core::circuit::CircuitInput::<1>>,)>>([10], [19]) { fallthrough([20]) 46([21]) }; // 21
+branch_align() -> (); // 22
+drop<CircuitData<Circuit<(core::circuit::AddModGate::<core::circuit::InverseGate::<core::circuit::CircuitInput::<0>>, core::circuit::CircuitInput::<1>>,)>>>([20]) -> (); // 23
+drop<CircuitModulus>([8]) -> (); // 24
+array_new<felt252>() -> ([22]); // 25
+const_as_immediate<Const<felt252, 1997209042069643135709344952807065910992472029923670688473712229447419591075>>() -> ([23]); // 26
+store_temp<felt252>([23]) -> ([23]); // 27
+array_append<felt252>([22], [23]) -> ([24]); // 28
+const_as_immediate<Const<felt252, 0>>() -> ([25]); // 29
+store_temp<felt252>([25]) -> ([25]); // 30
+array_append<felt252>([24], [25]) -> ([26]); // 31
+const_as_immediate<Const<felt252, 26913677086973030051406221357623718750637972950955665348321109348>>() -> ([27]); // 32
+store_temp<felt252>([27]) -> ([27]); // 33
+array_append<felt252>([26], [27]) -> ([28]); // 34
+const_as_immediate<Const<felt252, 27>>() -> ([29]); // 35
+store_temp<felt252>([29]) -> ([29]); // 36
+array_append<felt252>([28], [29]) -> ([30]); // 37
+struct_construct<core::panics::Panic>() -> ([31]); // 38
+struct_construct<Tuple<core::panics::Panic, Array<felt252>>>([31], [30]) -> ([32]); // 39
+enum_init<core::panics::PanicResult::<((),)>, 1>([32]) -> ([33]); // 40
+store_temp<AddMod>([0]) -> ([0]); // 41
+store_temp<MulMod>([1]) -> ([1]); // 42
+store_temp<RangeCheck96>([9]) -> ([9]); // 43
+store_temp<core::panics::PanicResult::<((),)>>([33]) -> ([33]); // 44
+return([0], [1], [9], [33]); // 45
+branch_align() -> (); // 46
+const_as_immediate<Const<BoundedInt<0, 79228162514264337593543950335>, 6>>() -> ([34]); // 47
+into_u96_guarantee<BoundedInt<0, 79228162514264337593543950335>>([34]) -> ([35]); // 48
+const_as_immediate<Const<BoundedInt<0, 79228162514264337593543950335>, 0>>() -> ([36]); // 49
+into_u96_guarantee<BoundedInt<0, 79228162514264337593543950335>>([36]) -> ([37]); // 50
+const_as_immediate<Const<BoundedInt<0, 79228162514264337593543950335>, 0>>() -> ([38]); // 51
+into_u96_guarantee<BoundedInt<0, 79228162514264337593543950335>>([38]) -> ([39]); // 52
+const_as_immediate<Const<BoundedInt<0, 79228162514264337593543950335>, 0>>() -> ([40]); // 53
+into_u96_guarantee<BoundedInt<0, 79228162514264337593543950335>>([40]) -> ([41]); // 54
+struct_construct<Tuple<U96Guarantee, U96Guarantee, U96Guarantee, U96Guarantee>>([35], [37], [39], [41]) -> ([42]); // 55
+store_temp<Tuple<U96Guarantee, U96Guarantee, U96Guarantee, U96Guarantee>>([42]) -> ([42]); // 56
+add_circuit_input<Circuit<(core::circuit::AddModGate::<core::circuit::InverseGate::<core::circuit::CircuitInput::<0>>, core::circuit::CircuitInput::<1>>,)>>([21], [42]) { fallthrough([43]) 138([44]) }; // 57
+branch_align() -> (); // 58
+get_circuit_descriptor<Circuit<(core::circuit::AddModGate::<core::circuit::InverseGate::<core::circuit::CircuitInput::<0>>, core::circuit::CircuitInput::<1>>,)>>() -> ([45]); // 59
+const_as_immediate<Const<BoundedInt<0, 0>, 0>>() -> ([46]); // 60
+const_as_immediate<Const<BoundedInt<1, 1>, 1>>() -> ([47]); // 61
+store_temp<BoundedInt<0, 0>>([46]) -> ([46]); // 62
+store_temp<BoundedInt<1, 1>>([47]) -> ([47]); // 63
+eval_circuit<Circuit<(core::circuit::AddModGate::<core::circuit::InverseGate::<core::circuit::CircuitInput::<0>>, core::circuit::CircuitInput::<1>>,)>>([0], [1], [45], [43], [8], [46], [47]) { fallthrough([48], [49], [50]) 96([51], [52], [53], [54]) }; // 64
+branch_align() -> (); // 65
+get_circuit_output<Circuit<(core::circuit::AddModGate::<core::circuit::InverseGate::<core::circuit::CircuitInput::<0>>, core::circuit::CircuitInput::<1>>,)>, core::circuit::CircuitInput::<0>>([50]) -> ([55], [56]); // 66
+drop<core::circuit::u384>([55]) -> (); // 67
+store_temp<AddMod>([48]) -> ([48]); // 68
+store_temp<MulMod>([49]) -> ([49]); // 69
+u96_limbs_less_than_guarantee_verify<4>([56]) { fallthrough([57]) 85([58]) }; // 70
+branch_align() -> (); // 71
+u96_limbs_less_than_guarantee_verify<3>([57]) { fallthrough([59]) 82([60]) }; // 72
+branch_align() -> (); // 73
+u96_limbs_less_than_guarantee_verify<2>([59]) { fallthrough([61]) 79([62]) }; // 74
+branch_align() -> (); // 75
+u96_single_limb_less_than_guarantee_verify([61]) -> ([63]); // 76
+store_temp<U96Guarantee>([63]) -> ([64]); // 77
+jump() { 87() }; // 78
+branch_align() -> (); // 79
+store_temp<U96Guarantee>([62]) -> ([64]); // 80
+jump() { 87() }; // 81
+branch_align() -> (); // 82
+store_temp<U96Guarantee>([60]) -> ([64]); // 83
+jump() { 87() }; // 84
+branch_align() -> (); // 85
+store_temp<U96Guarantee>([58]) -> ([64]); // 86
+u96_guarantee_verify([9], [64]) -> ([65]); // 87
+struct_construct<Unit>() -> ([66]); // 88
+struct_construct<Tuple<Unit>>([66]) -> ([67]); // 89
+enum_init<core::panics::PanicResult::<((),)>, 0>([67]) -> ([68]); // 90
+store_temp<AddMod>([48]) -> ([48]); // 91
+store_temp<MulMod>([49]) -> ([49]); // 92
+store_temp<RangeCheck96>([65]) -> ([65]); // 93
+store_temp<core::panics::PanicResult::<((),)>>([68]) -> ([68]); // 94
+return([48], [49], [65], [68]); // 95
+branch_align() -> (); // 96
+drop<CircuitPartialOutputs<Circuit<(core::circuit::AddModGate::<core::circuit::InverseGate::<core::circuit::CircuitInput::<0>>, core::circuit::CircuitInput::<1>>,)>>>([53]) -> (); // 97
+array_new<felt252>() -> ([69]); // 98
+const_as_immediate<Const<felt252, 30828113188794245257250221355944970489240709081949230>>() -> ([70]); // 99
+store_temp<felt252>([70]) -> ([70]); // 100
+array_append<felt252>([69], [70]) -> ([71]); // 101
+const_as_immediate<Const<BoundedInt<0, 0>, 0>>() -> ([72]); // 102
+const_as_immediate<Const<BoundedInt<1, 1>, 1>>() -> ([73]); // 103
+store_temp<MulMod>([52]) -> ([52]); // 104
+store_temp<BoundedInt<0, 0>>([72]) -> ([72]); // 105
+store_temp<BoundedInt<1, 1>>([73]) -> ([73]); // 106
+circuit_failure_guarantee_verify([9], [52], [54], [72], [73]) -> ([74], [75], [76]); // 107
+store_temp<AddMod>([51]) -> ([51]); // 108
+store_temp<Array<felt252>>([71]) -> ([71]); // 109
+store_temp<RangeCheck96>([74]) -> ([74]); // 110
+store_temp<MulMod>([75]) -> ([75]); // 111
+u96_limbs_less_than_guarantee_verify<4>([76]) { fallthrough([77]) 127([78]) }; // 112
+branch_align() -> (); // 113
+u96_limbs_less_than_guarantee_verify<3>([77]) { fallthrough([79]) 124([80]) }; // 114
+branch_align() -> (); // 115
+u96_limbs_less_than_guarantee_verify<2>([79]) { fallthrough([81]) 121([82]) }; // 116
+branch_align() -> (); // 117
+u96_single_limb_less_than_guarantee_verify([81]) -> ([83]); // 118
+store_temp<U96Guarantee>([83]) -> ([84]); // 119
+jump() { 129() }; // 120
+branch_align() -> (); // 121
+store_temp<U96Guarantee>([82]) -> ([84]); // 122
+jump() { 129() }; // 123
+branch_align() -> (); // 124
+store_temp<U96Guarantee>([80]) -> ([84]); // 125
+jump() { 129() }; // 126
+branch_align() -> (); // 127
+store_temp<U96Guarantee>([78]) -> ([84]); // 128
+u96_guarantee_verify([74], [84]) -> ([85]); // 129
+struct_construct<core::panics::Panic>() -> ([86]); // 130
+struct_construct<Tuple<core::panics::Panic, Array<felt252>>>([86], [71]) -> ([87]); // 131
+enum_init<core::panics::PanicResult::<((),)>, 1>([87]) -> ([88]); // 132
+store_temp<AddMod>([51]) -> ([51]); // 133
+store_temp<MulMod>([75]) -> ([75]); // 134
+store_temp<RangeCheck96>([85]) -> ([85]); // 135
+store_temp<core::panics::PanicResult::<((),)>>([88]) -> ([88]); // 136
+return([51], [75], [85], [88]); // 137
+branch_align() -> (); // 138
+drop<CircuitInputAccumulator<Circuit<(core::circuit::AddModGate::<core::circuit::InverseGate::<core::circuit::CircuitInput::<0>>, core::circuit::CircuitInput::<1>>,)>>>([44]) -> (); // 139
+drop<CircuitModulus>([8]) -> (); // 140
+array_new<felt252>() -> ([89]); // 141
+const_as_immediate<Const<felt252, 1997209042069643135709344952807065910992472029923670688473712229447419591075>>() -> ([90]); // 142
+store_temp<felt252>([90]) -> ([90]); // 143
+array_append<felt252>([89], [90]) -> ([91]); // 144
+const_as_immediate<Const<felt252, 1>>() -> ([92]); // 145
+store_temp<felt252>([92]) -> ([92]); // 146
+array_append<felt252>([91], [92]) -> ([93]); // 147
+const_as_immediate<Const<felt252, 138583295661092166701491297054433349032460315956105119041111996301516236132>>() -> ([94]); // 148
+store_temp<felt252>([94]) -> ([94]); // 149
+array_append<felt252>([93], [94]) -> ([95]); // 150
+const_as_immediate<Const<felt252, 0>>() -> ([96]); // 151
+store_temp<felt252>([96]) -> ([96]); // 152
+array_append<felt252>([95], [96]) -> ([97]); // 153
+const_as_immediate<Const<felt252, 0>>() -> ([98]); // 154
+store_temp<felt252>([98]) -> ([98]); // 155
+array_append<felt252>([97], [98]) -> ([99]); // 156
+struct_construct<core::panics::Panic>() -> ([100]); // 157
+struct_construct<Tuple<core::panics::Panic, Array<felt252>>>([100], [99]) -> ([101]); // 158
+enum_init<core::panics::PanicResult::<((),)>, 1>([101]) -> ([102]); // 159
+store_temp<AddMod>([0]) -> ([0]); // 160
+store_temp<MulMod>([1]) -> ([1]); // 161
+store_temp<RangeCheck96>([9]) -> ([9]); // 162
+store_temp<core::panics::PanicResult::<((),)>>([102]) -> ([102]); // 163
+return([0], [1], [9], [102]); // 164
+branch_align() -> (); // 165
+array_new<felt252>() -> ([103]); // 166
+const_as_immediate<Const<felt252, 29721761890975875353235833581453094220424382983267374>>() -> ([104]); // 167
+store_temp<felt252>([104]) -> ([104]); // 168
+array_append<felt252>([103], [104]) -> ([105]); // 169
+struct_construct<core::panics::Panic>() -> ([106]); // 170
+struct_construct<Tuple<core::panics::Panic, Array<felt252>>>([106], [105]) -> ([107]); // 171
+enum_init<core::panics::PanicResult::<((),)>, 1>([107]) -> ([108]); // 172
+store_temp<AddMod>([0]) -> ([0]); // 173
+store_temp<MulMod>([1]) -> ([1]); // 174
+store_temp<RangeCheck96>([2]) -> ([2]); // 175
+store_temp<core::panics::PanicResult::<((),)>>([108]) -> ([108]); // 176
+return([0], [1], [2], [108]); // 177
+
+circuits::circuits::main@0([0]: AddMod, [1]: MulMod, [2]: RangeCheck96) -> (AddMod, MulMod, RangeCheck96, core::panics::PanicResult::<((),)>);
+

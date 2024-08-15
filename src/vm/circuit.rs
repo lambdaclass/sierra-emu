@@ -1,12 +1,13 @@
+use std::collections::HashMap;
+
 use super::EvalAction;
-use crate::Value;
+use crate::{vm::circuit, Value};
 use cairo_lang_sierra::{
     extensions::{
         circuit::{CircuitConcreteLibfunc, CircuitTypeConcrete},
         core::{CoreLibfunc, CoreType, CoreTypeConcrete},
         lib_func::{SignatureAndTypeConcreteLibfunc, SignatureOnlyConcreteLibfunc},
-    },
-    program_registry::ProgramRegistry,
+    }, ids::ConcreteTypeId, program_registry::ProgramRegistry
 };
 use num_bigint::{BigInt, BigUint};
 use smallvec::smallvec;
@@ -76,19 +77,84 @@ pub fn eval_eval(
     _info: &SignatureAndTypeConcreteLibfunc,
     _args: Vec<Value>,
 ) -> EvalAction {
-    // dbg!(info
-    //     .signature
-    //     .param_signatures
-    //     .iter()
-    //     .map(|x| &x.ty)
-    //     .collect::<Vec<_>>());
-    // dbg!(info
-    //     .signature
-    //     .branch_signatures
-    //     .iter()
-    //     .map(|x| x.vars.iter().map(|x| &x.ty).collect::<Vec<_>>())
-    //     .collect::<Vec<_>>());
-    // dbg!(&info.ty);
+    dbg!(
+        "PARAMS: {}",
+        _info.signature
+            .param_signatures
+            .iter()
+            .map(|x| &x.ty)
+            .collect::<Vec<_>>()
+    );
+    dbg!(
+        "BRANCH: {}",
+        _info.signature
+            .branch_signatures
+            .iter()
+            .map(|x| x.vars.iter().map(|x| &x.ty).collect::<Vec<_>>())
+            .collect::<Vec<_>>()
+    );
+    
+    let [add_mod @ Value::Unit, mul_mod @ Value::Unit, descripctor @ Value::Unit, Value::Circuit(inputs), Value::CircuitModulus(module), Value::BoundedInt {
+        range: r0,
+        value: v0,
+    }, Value::BoundedInt {
+        range: r1,
+        value: v1,
+    }]: [Value; 7] = _args.try_into().unwrap()
+    else {
+        panic!()
+    };
+    let circ_info = match _registry.get_type(&_info.ty).unwrap() {
+        CoreTypeConcrete::Circuit(CircuitTypeConcrete::Circuit(info)) => &info.circuit_info,
+        _ => todo!()
+    };
+    let mut outputs: HashMap<u64, BigUint> = inputs.into_iter().enumerate().map(|(i, input)| {
+        let gate = circ_info.mul_offsets[i].output as u64;
+        (gate, input)
+    }).collect::<HashMap<u64, BigUint>>();
+    
+    dbg!("ADD: {}", &circ_info.add_offsets);
+    dbg!("MUL: {}", &circ_info.mul_offsets);
+
+    let (mut add_gates, mut next_add_gate) = {
+        let mut iter = circ_info.add_offsets.iter().peekable();
+        let next = iter.next().unwrap();
+
+        (iter, next)
+    };
+    let (mut mul_gates, mut next_mul_gate) = {
+        let mut iter = circ_info.mul_offsets.iter().skip(circ_info.n_inputs).peekable();
+        let next = iter.next().unwrap();
+
+        (iter, next)
+    };
+
+    for _ in circ_info.n_inputs..circ_info.values.len() {
+        let sum_add_gate_args = next_add_gate.lhs + next_add_gate.rhs + next_add_gate.output;
+        let sum_mul_gate_args = next_mul_gate.lhs + next_mul_gate.rhs + next_mul_gate.output;
+        dbg!(&outputs);
+        if mul_gates.peek().is_none() || sum_add_gate_args < sum_mul_gate_args {
+            let lhs = outputs.get(&(next_add_gate.lhs as u64)).unwrap();
+            let rhs = outputs.get(&(next_add_gate.rhs as u64)).unwrap();
+            
+            outputs.insert(next_add_gate.output as u64, (lhs + rhs) % &module);
+            
+            next_add_gate = add_gates.next().unwrap();
+        } else if add_gates.peek().is_none() || sum_add_gate_args > sum_mul_gate_args {
+            dbg!(next_mul_gate.rhs);
+            let rhs = outputs.get(&(next_mul_gate.rhs as u64)).unwrap();
+            
+            if next_mul_gate.output == 0 {
+                outputs.insert(next_mul_gate.lhs as u64, (BigUint::from(1_u64) / rhs) % &module);
+            } else {
+                let lhs = outputs.get(&(next_mul_gate.lhs as u64)).unwrap();
+                outputs.insert(next_mul_gate.output as u64, (lhs * rhs) % &module);
+            }
+            next_mul_gate = mul_gates.next().unwrap();
+        } else {
+            break;
+        }
+    }
 
     // Params:
     //   - AddMod

@@ -24,6 +24,7 @@ pub enum Value {
     },
     Circuit(Vec<BigUint>),
     CircuitModulus(BigUint),
+    CircuitOutputs(HashMap<u64, BigUint>),
     Enum {
         self_ty: ConcreteTypeId,
         index: usize,
