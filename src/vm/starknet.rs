@@ -335,7 +335,6 @@ fn eval_emit_event(
     args: Vec<Value>,
     syscall_handler: &mut impl StarknetSyscallHandler,
 ) -> EvalAction {
-    dbg!(&args);
     let [Value::U128(mut gas), system, Value::Struct(key_arr), Value::Struct(data_arr)]: [Value;
         4] = args.try_into().unwrap()
     else {

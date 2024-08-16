@@ -20,6 +20,7 @@ use tracing::debug;
 
 mod ap_tracking;
 mod array;
+mod bool;
 mod bounded_int;
 mod r#box;
 mod branch_align;
@@ -273,7 +274,7 @@ fn eval<'a>(
             self::ap_tracking::eval(registry, selector, args)
         }
         CoreConcreteLibfunc::Array(selector) => self::array::eval(registry, selector, args),
-        CoreConcreteLibfunc::Bool(_) => todo!(),
+        CoreConcreteLibfunc::Bool(selector) => self::bool::eval(registry, selector, args),
         CoreConcreteLibfunc::BoundedInt(selector) => {
             self::bounded_int::eval(registry, selector, args)
         }
