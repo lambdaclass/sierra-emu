@@ -7,10 +7,9 @@ use core::circuit::{
 fn main() {
     let in1 = CircuitElement::<CircuitInput<0>> {};
     let in2 = CircuitElement::<CircuitInput<1>> {};
-    let add = circuit_inverse(in1);
-    let inv = circuit_add(add, in2);
+    let add = circuit_add(in1, in2);
 
-    let output_gates = (inv,);
+    let output_gates = (add,);
     
     let modulus = TryInto::<_, CircuitModulus>::try_into([7, 0, 0, 0]).unwrap();
 
@@ -22,4 +21,6 @@ fn main() {
         .unwrap();
 
     outputs.get_output(in1);
+    outputs.get_output(in2);
+    outputs.get_output(add);
 }
