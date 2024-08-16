@@ -335,7 +335,18 @@ fn eval_emit_event(
     args: Vec<Value>,
     syscall_handler: &mut impl StarknetSyscallHandler,
 ) -> EvalAction {
-    let [Value::U128(mut gas), system, Value::Array { ty: _, data: keys }, Value::Array { ty: _, data }]: [Value; 4] = args.try_into().unwrap() else {
+    dbg!(&args);
+    let [Value::U128(mut gas), system, Value::Struct(key_arr), Value::Struct(data_arr)]: [Value;
+        4] = args.try_into().unwrap()
+    else {
+        panic!()
+    };
+
+    let [Value::Array { ty: _, data: keys }]: [Value; 1] = key_arr.try_into().unwrap() else {
+        panic!()
+    };
+
+    let [Value::Array { ty: _, data }]: [Value; 1] = data_arr.try_into().unwrap() else {
         panic!()
     };
 
@@ -490,10 +501,24 @@ fn eval_get_execution_info_v2(
         .get_type(&info.branch_signatures()[0].vars[2].ty)
         .unwrap();
 
+    let out_ty = if let CoreTypeConcrete::Struct(inner) = out_ty {
+        let out_ty = registry.get_type(&inner.members[1]).unwrap();
+
+        if let CoreTypeConcrete::Struct(inner) = out_ty {
+            let out_ty = registry.get_type(&inner.members[7]).unwrap();
+            dbg!(inner.members[7].debug_name.as_ref());
+            inner.members[7].clone()
+        } else {
+            panic!()
+        }
+    } else {
+        panic!()
+    };
+
     match result {
         Ok(res) => EvalAction::NormalBranch(
             0,
-            smallvec![Value::U128(gas), system, res.into_value(felt_ty)],
+            smallvec![Value::U128(gas), system, res.into_value(felt_ty, out_ty)],
         ),
         Err(e) => EvalAction::NormalBranch(
             1,
