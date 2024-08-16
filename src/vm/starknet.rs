@@ -26,13 +26,21 @@ pub fn eval(
         StarkNetConcreteLibfunc::ClassHashConst(info) => {
             eval_class_hash_const(registry, info, args)
         }
-        StarkNetConcreteLibfunc::ClassHashTryFromFelt252(_) => todo!(),
-        StarkNetConcreteLibfunc::ClassHashToFelt252(_) => todo!(),
-        StarkNetConcreteLibfunc::ContractAddressConst(_) => todo!(),
+        StarkNetConcreteLibfunc::ClassHashTryFromFelt252(info) => {
+            eval_class_hash_try_from_felt(registry, info, args)
+        }
+        StarkNetConcreteLibfunc::ClassHashToFelt252(info) => {
+            eval_class_hash_to_felt(registry, info, args)
+        }
+        StarkNetConcreteLibfunc::ContractAddressConst(info) => {
+            eval_contract_address_const(registry, info, args)
+        }
         StarkNetConcreteLibfunc::ContractAddressTryFromFelt252(info) => {
             eval_contract_address_try_from_felt(registry, info, args)
         }
-        StarkNetConcreteLibfunc::ContractAddressToFelt252(_) => todo!(),
+        StarkNetConcreteLibfunc::ContractAddressToFelt252(info) => {
+            eval_contract_address_to_felt(registry, info, args)
+        }
         StarkNetConcreteLibfunc::StorageRead(info) => {
             eval_storage_read(registry, info, args, syscall_handler)
         }
@@ -42,11 +50,15 @@ pub fn eval(
         StarkNetConcreteLibfunc::StorageBaseAddressConst(info) => {
             eval_storage_base_address_const(registry, info, args)
         }
-        StarkNetConcreteLibfunc::StorageBaseAddressFromFelt252(_) => todo!(),
+        StarkNetConcreteLibfunc::StorageBaseAddressFromFelt252(info) => {
+            eval_storage_base_address_from_felt(registry, info, args)
+        }
         StarkNetConcreteLibfunc::StorageAddressFromBase(info) => {
             eval_storage_address_from_base(registry, info, args)
         }
-        StarkNetConcreteLibfunc::StorageAddressFromBaseAndOffset(_) => todo!(),
+        StarkNetConcreteLibfunc::StorageAddressFromBaseAndOffset(info) => {
+            eval_storage_address_from_base_and_offset(registry, info, args)
+        }
         StarkNetConcreteLibfunc::StorageAddressToFelt252(info) => {
             eval_storage_address_to_felt(registry, info, args)
         }
@@ -90,6 +102,38 @@ fn eval_storage_base_address_const(
     EvalAction::NormalBranch(0, smallvec![Value::Felt(info.c.clone().into())])
 }
 
+fn eval_contract_address_const(
+    _registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    info: &SignatureAndConstConcreteLibfunc,
+    _args: Vec<Value>,
+) -> EvalAction {
+    EvalAction::NormalBranch(0, smallvec![Value::Felt(info.c.clone().into())])
+}
+
+fn eval_class_hash_try_from_felt(
+    _registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    _info: &SignatureOnlyConcreteLibfunc,
+    args: Vec<Value>,
+) -> EvalAction {
+    // 2 ** 251 = 3618502788666131106986593281521497120414687020801267626233049500247285301248
+
+    let [range_check @ Value::Unit, Value::Felt(value)]: [Value; 2] = args.try_into().unwrap()
+    else {
+        panic!()
+    };
+
+    if value
+        < Felt::from_dec_str(
+            "3618502788666131106986593281521497120414687020801267626233049500247285301248",
+        )
+        .unwrap()
+    {
+        EvalAction::NormalBranch(0, smallvec![range_check, Value::Felt(value)])
+    } else {
+        EvalAction::NormalBranch(1, smallvec![range_check])
+    }
+}
+
 fn eval_contract_address_try_from_felt(
     _registry: &ProgramRegistry<CoreType, CoreLibfunc>,
     _info: &SignatureOnlyConcreteLibfunc,
@@ -114,7 +158,34 @@ fn eval_contract_address_try_from_felt(
     }
 }
 
+fn eval_storage_base_address_from_felt(
+    _registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    _info: &SignatureOnlyConcreteLibfunc,
+    args: Vec<Value>,
+) -> EvalAction {
+    let [range_check, value] = args.try_into().unwrap();
+    EvalAction::NormalBranch(0, smallvec![range_check, value])
+}
+
 fn eval_storage_address_to_felt(
+    _registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    _info: &SignatureOnlyConcreteLibfunc,
+    args: Vec<Value>,
+) -> EvalAction {
+    let [value] = args.try_into().unwrap();
+    EvalAction::NormalBranch(0, smallvec![value])
+}
+
+fn eval_contract_address_to_felt(
+    _registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    _info: &SignatureOnlyConcreteLibfunc,
+    args: Vec<Value>,
+) -> EvalAction {
+    let [value] = args.try_into().unwrap();
+    EvalAction::NormalBranch(0, smallvec![value])
+}
+
+fn eval_class_hash_to_felt(
     _registry: &ProgramRegistry<CoreType, CoreLibfunc>,
     _info: &SignatureOnlyConcreteLibfunc,
     args: Vec<Value>,
@@ -130,6 +201,18 @@ fn eval_storage_address_from_base(
 ) -> EvalAction {
     let [value] = args.try_into().unwrap();
     EvalAction::NormalBranch(0, smallvec![value])
+}
+
+fn eval_storage_address_from_base_and_offset(
+    _registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    _info: &SignatureOnlyConcreteLibfunc,
+    args: Vec<Value>,
+) -> EvalAction {
+    let [Value::Felt(value), Value::U8(offset)]: [Value; 2] = args.try_into().unwrap() else {
+        panic!()
+    };
+
+    EvalAction::NormalBranch(0, smallvec![Value::Felt(value + Felt::from(offset))])
 }
 
 fn eval_call_contract(

@@ -3,7 +3,6 @@ use cairo_lang_sierra::{
         core::{CoreLibfunc, CoreType},
         lib_func::SignatureOnlyConcreteLibfunc,
         pedersen::PedersenConcreteLibfunc,
-        poseidon::PoseidonConcreteLibfunc,
     },
     program_registry::ProgramRegistry,
 };
