@@ -40,6 +40,7 @@ mod poseidon;
 mod snapshot_take;
 mod starknet;
 mod r#struct;
+mod u128;
 mod uint32;
 mod uint64;
 mod uint8;
@@ -312,7 +313,7 @@ fn eval<'a>(
             self::starknet::eval(registry, selector, args, syscall_handler)
         }
         CoreConcreteLibfunc::Struct(selector) => self::r#struct::eval(registry, selector, args),
-        CoreConcreteLibfunc::Uint128(_) => todo!(),
+        CoreConcreteLibfunc::Uint128(selector) => self::u128::eval(registry, selector, args),
         CoreConcreteLibfunc::Uint16(_) => todo!(),
         CoreConcreteLibfunc::Uint256(_) => todo!(),
         CoreConcreteLibfunc::Uint32(selector) => self::uint32::eval(registry, selector, args),
