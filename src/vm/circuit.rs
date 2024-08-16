@@ -112,13 +112,15 @@ pub fn eval_eval(
                     outputs.insert(add_gate.output as u64, (l + r) % &modulus);
                 }
                 (None, Some(r)) => {
-                    dbg!(add_gate);
                     let res = match outputs.get(&(add_gate.output as u64)) {
                         Some(res) => res,
                         None => break,
                     };
+                    // if it is a sub_gate the output index is store in lhs 
                     outputs.insert(add_gate.lhs as u64, (res + &modulus - r) % &modulus);
                 }
+                 // there aren't enough gates computed for add_gate to compute 
+                // the next gate so we need to compute a mul_gate  
                 _ => break,
             };
 
@@ -138,12 +140,17 @@ pub fn eval_eval(
                         let res = match r.modinv(&modulus) {
                             Some(inv) => inv,
                             None => {
+                                // attempted to get the inverse of 0, 
+                                // so 0 is stored and a error has occurred
                                 outputs.insert(mul_gate.lhs as u64, BigUint::from(0_u8));
                                 break false;
                             },
                         };
+                        // if it is a inv_gate the output index is store in lhs 
                         outputs.insert(mul_gate.lhs as u64, res);
                     }
+                    // a mul_gate can always be computed because it is only computed
+                    // if an add_gate can't
                     _ => continue ,
                 }
             }
@@ -177,6 +184,7 @@ pub fn eval_eval(
             smallvec![add_mod, mul_mod, Value::CircuitOutputs(outputs)],
         )
     } else {
+        // still needs to calculate CircuitFailureGuarantee 
         EvalAction::NormalBranch(
             1,
             smallvec![add_mod, mul_mod, Value::CircuitOutputs(outputs)], 
@@ -196,29 +204,10 @@ pub fn eval_get_output(
     };
     let gate_offset = circuit_info.values.get(&_info.output_ty).unwrap().clone();
     let output = outputs.get(&(gate_offset as u64)).unwrap();
-    dbg!(output);
-    dbg!(
-        "BRANCH: {}",
-        _info
-            .signature
-            .branch_signatures
-            .iter()
-            .map(|x| x.vars.iter().map(|x| &x.ty).collect::<Vec<_>>())
-            .collect::<Vec<_>>()
-    );
-    dbg!(
-        "PARAMS: {}",
-        _info
-            .signature
-            .param_signatures
-            .iter()
-            .map(|x| &x.ty)
-            .collect::<Vec<_>>()
-    );
 
      // Params:
      //   - AddMod
-
+     //   - CircuitsOutputs 
     //
     // Branches:
     //   [0]:
