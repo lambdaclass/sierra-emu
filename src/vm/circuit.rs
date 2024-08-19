@@ -33,22 +33,18 @@ pub fn eval(
             eval_try_into_circuit_modulus(registry, info, args)
         }
         CircuitConcreteLibfunc::FailureGuaranteeVerify(info) => {
-            dbg!("FailureGuaranteeVerify");
             eval_failure_guarantee_verify(registry, info, args)
         }
         CircuitConcreteLibfunc::IntoU96Guarantee(info) => {
             eval_into_u96_guarantee(registry, info, args)
         }
         CircuitConcreteLibfunc::U96GuaranteeVerify(info) => {
-            dbg!("U96GuaranteeVerify");
             eval_u96_guarantee_verify(registry, info, args)
         }
         CircuitConcreteLibfunc::U96LimbsLessThanGuaranteeVerify(info) => {
-            dbg!("U96LimbsLessThanGuaranteeVerify");
             eval_u96_limbs_less_than_guarantee_verify(registry, info, args)
         }
         CircuitConcreteLibfunc::U96SingleLimbLessThanGuaranteeVerify(info) => {
-            dbg!("U96SingleLimbLessThanGuaranteeVerify");
             eval_u96_single_limb_less_than_guarantee_verify(registry, info, args)
         }
     }
