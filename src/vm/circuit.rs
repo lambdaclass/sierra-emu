@@ -117,8 +117,6 @@ pub fn eval_eval(
         .skip(circ_info.n_inputs)
         .peekable();
 
-    let mut actual_mul_gates = 0;
-
     let success = loop {
         while let Some(add_gate) = add_gates.peek() {
             let lhs = outputs.get(&(add_gate.lhs as u64));
@@ -140,7 +138,6 @@ pub fn eval_eval(
                 // the next gate so we need to compute a mul_gate
                 _ => break,
             };
-            actual_mul_gates += 1;
 
             add_gates.next();
         }
@@ -176,37 +173,12 @@ pub fn eval_eval(
         }
     };
 
-    // Params:
-    //   - AddMod
-    //   - MulMod
-    //   - CircuitDescriptor<Circuit<(AddModGate<CircuitInput<0>, CircuitInput<1>>)>>
-    //   - CircuitData<Circuit<(AddModGate<CircuitInput<0>, CircuitInput<1>>)>>
-    //   - CircuitModulus
-    //   - ???
-    //   - ???
-    //
-    // Branches:
-    //   [0]:
-    //     - AddMod []
-    //     - MulMod []
-    //     - CircuitOutputs<Circuit<(AddModGate<CircuitInput<0>, CircuitInput<1>>)>> [X]
-    //   [1]:
-    //     - AddMod []
-    //     - MulMod []
-    //     - CircuitOutputs<Circuit<(AddModGate<CircuitInput<0>, CircuitInput<1>>)>> [X]
-    //     - CircuitFailureGuarantee []
-
     if success {
         EvalAction::NormalBranch(
             0,
-            smallvec![
-                add_mod,
-                mul_mod,
-                Value::CircuitOutputs(outputs), /*Value::CircuitModulus(modulus)*/
-            ],
+            smallvec![add_mod, mul_mod, Value::CircuitOutputs(outputs),],
         )
     } else {
-        // still needs to calculate CircuitFailureGuarantee
         EvalAction::NormalBranch(
             1,
             smallvec![
@@ -233,13 +205,6 @@ pub fn eval_get_output(
     };
     let gate_offset = circuit_info.values.get(&_info.output_ty).unwrap().clone();
     let output = outputs.get(&(gate_offset as u64)).unwrap();
-    // Params:
-    //   - CircuitsOutputs
-    //
-    // Branches:
-    //   [0]:
-    //     - u384 [X]
-    //     - U96LimbsLtGuarantee [X]
 
     EvalAction::NormalBranch(0, smallvec![Value::U384(output.clone()), Value::Unit])
 }
@@ -249,15 +214,6 @@ pub fn eval_u96_limbs_less_than_guarantee_verify(
     _info: &ConcreteU96LimbsLessThanGuaranteeVerifyLibfunc,
     _args: Vec<Value>,
 ) -> EvalAction {
-    // Params:
-    //     - U96LimbsLTGuarantee<N>
-    //
-    // Branches:
-    //    [0]:
-    //     - U96LimbsLTGuarantee<N - 1>
-    //    [1]
-    //     - U96Guarantee
-
     EvalAction::NormalBranch(0, smallvec![Value::Unit])
 }
 
@@ -266,13 +222,6 @@ pub fn eval_u96_single_limb_less_than_guarantee_verify(
     _info: &SignatureOnlyConcreteLibfunc,
     _args: Vec<Value>,
 ) -> EvalAction {
-    // Params:
-    //  - U96LimbsLtGuarantee<1>
-    //
-    // Branches:
-    //   [0]:
-    //       - U96Guarantee
-
     EvalAction::NormalBranch(0, smallvec![Value::Unit])
 }
 
@@ -292,23 +241,11 @@ pub fn eval_failure_guarantee_verify(
     _info: &SignatureOnlyConcreteLibfunc,
     _args: Vec<Value>,
 ) -> EvalAction {
-    let [rc96 @ Value::Unit, mul_mod @ Value::Unit, outputs, zero, one]: [Value; 5] =
+    let [rc96 @ Value::Unit, mul_mod @ Value::Unit, _, _, _]: [Value; 5] =
         _args.try_into().unwrap()
     else {
         panic!()
     };
-
-    // Params:
-    //  - RangeCheck96
-    //  - MulMod
-    //  - CircuitFailureGarantee
-    //  - 0
-    //  - 1
-    // Branches:
-    //   [0]:
-    //   - RangeCheck96
-    //   - MulMod
-    //   - U96LimbsLtGuarantee<4>
 
     EvalAction::NormalBranch(0, smallvec![rc96, mul_mod, Value::Unit])
 }
