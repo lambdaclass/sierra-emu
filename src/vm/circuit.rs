@@ -4,9 +4,12 @@ use super::EvalAction;
 use crate::Value;
 use cairo_lang_sierra::{
     extensions::{
-        circuit::{CircuitConcreteLibfunc, CircuitTypeConcrete, ConcreteGetOutputLibFunc},
+        circuit::{
+            CircuitConcreteLibfunc, CircuitTypeConcrete, ConcreteGetOutputLibFunc,
+            ConcreteU96LimbsLessThanGuaranteeVerifyLibfunc,
+        },
         core::{CoreLibfunc, CoreType, CoreTypeConcrete},
-        lib_func::{SignatureAndTypeConcreteLibfunc, SignatureOnlyConcreteLibfunc},
+        lib_func::{SignatureAndTypeConcreteLibfunc, SignatureOnlyConcreteLibfunc}, SignatureBasedConcreteLibfunc,
     },
     program_registry::ProgramRegistry,
 };
@@ -29,13 +32,25 @@ pub fn eval(
         CircuitConcreteLibfunc::TryIntoCircuitModulus(info) => {
             eval_try_into_circuit_modulus(registry, info, args)
         }
-        CircuitConcreteLibfunc::FailureGuaranteeVerify(_) => todo!(),
+        CircuitConcreteLibfunc::FailureGuaranteeVerify(info) => {
+            dbg!("FailureGuaranteeVerify");
+            eval_failure_guarantee_verify(registry, info, args)
+        }
         CircuitConcreteLibfunc::IntoU96Guarantee(info) => {
             eval_into_u96_guarantee(registry, info, args)
         }
-        CircuitConcreteLibfunc::U96GuaranteeVerify(_) => todo!(),
-        CircuitConcreteLibfunc::U96LimbsLessThanGuaranteeVerify(_) => todo!(),
-        CircuitConcreteLibfunc::U96SingleLimbLessThanGuaranteeVerify(_) => todo!(),
+        CircuitConcreteLibfunc::U96GuaranteeVerify(info) => {
+            dbg!("U96GuaranteeVerify");
+            eval_u96_guarantee_verify(registry, info, args)
+        },
+        CircuitConcreteLibfunc::U96LimbsLessThanGuaranteeVerify(info) => {
+            dbg!("U96LimbsLessThanGuaranteeVerify");
+            eval_u96_limbs_less_than_guarantee_verify(registry, info, args)
+        }
+        CircuitConcreteLibfunc::U96SingleLimbLessThanGuaranteeVerify(info) => {
+            dbg!("U96SingleLimbLessThanGuaranteeVerify");
+            eval_u96_single_limb_less_than_guarantee_verify(registry, info, args)
+        },
     }
 }
 
@@ -102,6 +117,8 @@ pub fn eval_eval(
         .skip(circ_info.n_inputs)
         .peekable();
 
+    let mut actual_mul_gates = 0;
+
     let success = loop {
         while let Some(add_gate) = add_gates.peek() {
             let lhs = outputs.get(&(add_gate.lhs as u64));
@@ -116,13 +133,14 @@ pub fn eval_eval(
                         Some(res) => res,
                         None => break,
                     };
-                    // if it is a sub_gate the output index is store in lhs 
+                    // if it is a sub_gate the output index is store in lhs
                     outputs.insert(add_gate.lhs as u64, (res + &modulus - r) % &modulus);
                 }
-                 // there aren't enough gates computed for add_gate to compute 
-                // the next gate so we need to compute a mul_gate  
+                // there aren't enough gates computed for add_gate to compute
+                // the next gate so we need to compute a mul_gate
                 _ => break,
             };
+            actual_mul_gates += 1;
 
             add_gates.next();
         }
@@ -140,18 +158,18 @@ pub fn eval_eval(
                         let res = match r.modinv(&modulus) {
                             Some(inv) => inv,
                             None => {
-                                // attempted to get the inverse of 0, 
+                                // attempted to get the inverse of 0,
                                 // so 0 is stored and a error has occurred
                                 outputs.insert(mul_gate.lhs as u64, BigUint::from(0_u8));
                                 break false;
-                            },
+                            }
                         };
-                        // if it is a inv_gate the output index is store in lhs 
+                        // if it is a inv_gate the output index is store in lhs
                         outputs.insert(mul_gate.lhs as u64, res);
                     }
                     // a mul_gate can always be computed because it is only computed
                     // if an add_gate can't
-                    _ => continue ,
+                    _ => continue,
                 }
             }
             None => break true,
@@ -181,13 +199,22 @@ pub fn eval_eval(
     if success {
         EvalAction::NormalBranch(
             0,
-            smallvec![add_mod, mul_mod, Value::CircuitOutputs(outputs)],
+            smallvec![
+                add_mod,
+                mul_mod,
+                Value::CircuitOutputs(outputs), /*Value::CircuitModulus(modulus)*/
+            ],
         )
     } else {
-        // still needs to calculate CircuitFailureGuarantee 
+        // still needs to calculate CircuitFailureGuarantee
         EvalAction::NormalBranch(
             1,
-            smallvec![add_mod, mul_mod, Value::CircuitOutputs(outputs)], 
+            smallvec![
+                add_mod,
+                mul_mod,
+                Value::CircuitOutputs(outputs),
+                Value::Unit
+            ],
         )
     }
 }
@@ -197,24 +224,132 @@ pub fn eval_get_output(
     _info: &ConcreteGetOutputLibFunc,
     args: Vec<Value>,
 ) -> EvalAction {
-    let [Value::CircuitOutputs(outputs)]: [Value; 1] = args.try_into().unwrap() else {panic!()};
+    let [Value::CircuitOutputs(outputs)]: [Value; 1] = args.try_into().unwrap() else {
+        panic!()
+    };
     let circuit_info = match _registry.get_type(&_info.circuit_ty).unwrap() {
         CoreTypeConcrete::Circuit(CircuitTypeConcrete::Circuit(info)) => &info.circuit_info,
-        _ => todo!()
+        _ => todo!(),
     };
     let gate_offset = circuit_info.values.get(&_info.output_ty).unwrap().clone();
     let output = outputs.get(&(gate_offset as u64)).unwrap();
 
-     // Params:
-     //   - AddMod
-     //   - CircuitsOutputs 
+    // dbg!(
+    //     "BRANCHS",
+    //     _info
+    //         .signature
+    //         .branch_signatures
+    //         .iter()
+    //         .map(|b| b)
+    //         .collect::<Vec<_>>()
+    // );
+    // dbg!(
+    //     "PARAMS{}",
+    //     _info
+    //         .signature
+    //         .param_signatures
+    //         .iter()
+    //         .map(|p| &p.ty)
+    //         .collect::<Vec<_>>()
+    // );
+    // Params:
+    //   - CircuitsOutputs
     //
     // Branches:
     //   [0]:
     //     - u384 [X]
-    //     - U96LimbsLtGuarantee []
+    //     - U96LimbsLtGuarantee [X]
 
-    todo!()
+    EvalAction::NormalBranch(
+        0,
+        smallvec![Value::U384(output.clone()), Value::Unit],
+    )
+}
+
+pub fn eval_u96_limbs_less_than_guarantee_verify(
+    _registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    _info: &ConcreteU96LimbsLessThanGuaranteeVerifyLibfunc,
+    _args: Vec<Value>,
+) -> EvalAction {
+    // Params: 
+    //     - U96LimbsLTGuarantee<N>
+    //
+    // Branches: 
+    //    [0]:
+    //     - U96LimbsLTGuarantee<N - 1>        
+    //    [1] 
+    //     - U96Guarantee        
+
+    EvalAction::NormalBranch(0, smallvec![Value::Unit])
+}
+
+pub fn eval_u96_single_limb_less_than_guarantee_verify(
+    _registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    _info: &SignatureOnlyConcreteLibfunc,
+    _args: Vec<Value>,
+) -> EvalAction {
+    // Params:
+    //  - U96LimbsLtGuarantee<1>
+    //
+    // Branches:
+    //   [0]: 
+    //       - U96Guarantee
+
+    EvalAction::NormalBranch(0, smallvec![Value::Unit])
+}
+
+pub fn eval_u96_guarantee_verify(
+    _registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    _info: &SignatureOnlyConcreteLibfunc,
+    _args: Vec<Value>,
+) -> EvalAction {
+    let [range_check_96 @ Value::Unit, _]: [Value; 2] = _args.try_into().unwrap() else {
+        panic!()
+    };
+    EvalAction::NormalBranch(0, smallvec![range_check_96])
+}
+
+pub fn eval_failure_guarantee_verify(
+    _registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    _info: &SignatureOnlyConcreteLibfunc,
+    _args: Vec<Value>,
+) -> EvalAction {
+    let [rc96 @ Value::Unit, mul_mod @ Value::Unit, outputs, zero, one ]: [Value; 5] = _args.try_into().unwrap() else {
+        panic!()
+    };
+    dbg!(
+        "BRANCHS {}",
+        _info
+            .signature
+            .branch_signatures
+            .iter()
+            .map(|b| b)
+            .collect::<Vec<_>>()
+    );
+
+    dbg!(
+        "PARAMS {}",
+        _info
+            .signature
+            .param_signatures
+            .iter()
+            .map(|p| &p.ty)
+            .collect::<Vec<_>>()
+    );
+    
+    // Params:
+    //  - RangeCheck96
+    //  - MulMod
+    //  - CircuitFailureGarantee
+    //  - 0
+    //  - 1
+    // Branches:
+    //   [0]:
+    //   - RangeCheck96
+    //   - MulMod
+    //   - U96LimbsLtGuarantee<4>
+
+    EvalAction::NormalBranch(0, smallvec![rc96, mul_mod, Value::Unit])
 }
 
 pub fn eval_get_descriptor(
@@ -284,6 +419,11 @@ pub fn eval_try_into_circuit_modulus(
     let l3 = l3.to_biguint().unwrap();
 
     let value = l0 | (l1 << 96) | (l2 << 192) | (l3 << 288);
+
+    // a CircuitModulus must not be neither 0 nor 1
+    assert_ne!(value, 0_u8.into());
+    assert_ne!(value, 1_u8.into());
+
     EvalAction::NormalBranch(0, smallvec![Value::CircuitModulus(value)])
 }
 
