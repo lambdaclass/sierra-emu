@@ -24,3 +24,5 @@ cairo2/
 corelib
 
 *.tar
+
+*.json
