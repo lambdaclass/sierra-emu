@@ -49,7 +49,7 @@ mod uint8;
 pub struct VirtualMachine<S: StarknetSyscallHandler = StubSyscallHandler> {
     program: Arc<Program>,
     registry: ProgramRegistry<CoreType, CoreLibfunc>,
-    syscall_handler: S,
+    pub syscall_handler: S,
     frames: Vec<SierraFrame>,
 }
 

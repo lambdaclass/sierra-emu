@@ -22,7 +22,7 @@ usage:
 build:
 	cargo build --release --all-features
 
-check: check-llvm
+check:
 	cargo fmt --all -- --check
 	cargo clippy --all-targets --all-features -- -D warnings
 

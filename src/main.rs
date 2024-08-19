@@ -171,8 +171,10 @@ mod test {
             trace.push(StateDump::new(statement_idx, state));
         }
 
-        let trace_str = serde_json::to_string_pretty(&trace).unwrap();
-        std::fs::write("contract_trace.json", trace_str).unwrap();
+        assert!(!vm.syscall_handler.storage.is_empty());
+
+        // let trace_str = serde_json::to_string_pretty(&trace).unwrap();
+        // std::fs::write("contract_trace.json", trace_str).unwrap();
     }
 
     pub fn find_entry_point_by_idx(

@@ -87,8 +87,8 @@ pub fn eval(
         StarkNetConcreteLibfunc::SendMessageToL1(info) => {
             eval_send_message_to_l1(registry, info, args)
         }
-        StarkNetConcreteLibfunc::Testing(info) => todo!(),
-        StarkNetConcreteLibfunc::Secp256(info) => todo!(),
+        StarkNetConcreteLibfunc::Testing(_info) => todo!(),
+        StarkNetConcreteLibfunc::Secp256(_info) => todo!(),
     }
 }
 
@@ -246,9 +246,9 @@ fn eval_storage_address_from_base_and_offset(
 }
 
 fn eval_call_contract(
-    registry: &ProgramRegistry<CoreType, CoreLibfunc>,
-    info: &SignatureOnlyConcreteLibfunc,
-    args: Vec<Value>,
+    _registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    _info: &SignatureOnlyConcreteLibfunc,
+    _args: Vec<Value>,
 ) -> EvalAction {
     todo!()
 }
@@ -504,8 +504,7 @@ fn eval_get_execution_info_v2(
         let out_ty = registry.get_type(&inner.members[1]).unwrap();
 
         if let CoreTypeConcrete::Struct(inner) = out_ty {
-            let out_ty = registry.get_type(&inner.members[7]).unwrap();
-            dbg!(inner.members[7].debug_name.as_ref());
+            // should be resourcebound ty
             inner.members[7].clone()
         } else {
             panic!()
@@ -534,41 +533,41 @@ fn eval_get_execution_info_v2(
 }
 
 fn eval_deploy(
-    registry: &ProgramRegistry<CoreType, CoreLibfunc>,
-    info: &SignatureOnlyConcreteLibfunc,
-    args: Vec<Value>,
+    _registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    _info: &SignatureOnlyConcreteLibfunc,
+    _args: Vec<Value>,
 ) -> EvalAction {
     todo!()
 }
 
 fn eval_keccak(
-    registry: &ProgramRegistry<CoreType, CoreLibfunc>,
-    info: &SignatureOnlyConcreteLibfunc,
-    args: Vec<Value>,
+    _registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    _info: &SignatureOnlyConcreteLibfunc,
+    _args: Vec<Value>,
 ) -> EvalAction {
     todo!()
 }
 
 fn eval_library_call(
-    registry: &ProgramRegistry<CoreType, CoreLibfunc>,
-    info: &SignatureOnlyConcreteLibfunc,
-    args: Vec<Value>,
+    _registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    _info: &SignatureOnlyConcreteLibfunc,
+    _args: Vec<Value>,
 ) -> EvalAction {
     todo!()
 }
 
 fn eval_replace_class(
-    registry: &ProgramRegistry<CoreType, CoreLibfunc>,
-    info: &SignatureOnlyConcreteLibfunc,
-    args: Vec<Value>,
+    _registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    _info: &SignatureOnlyConcreteLibfunc,
+    _args: Vec<Value>,
 ) -> EvalAction {
     todo!()
 }
 
 fn eval_send_message_to_l1(
-    registry: &ProgramRegistry<CoreType, CoreLibfunc>,
-    info: &SignatureOnlyConcreteLibfunc,
-    args: Vec<Value>,
+    _registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    _info: &SignatureOnlyConcreteLibfunc,
+    _args: Vec<Value>,
 ) -> EvalAction {
     todo!()
 }

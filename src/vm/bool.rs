@@ -4,7 +4,7 @@ use cairo_lang_sierra::{
     extensions::{
         boolean::BoolConcreteLibfunc,
         core::{CoreLibfunc, CoreType},
-        lib_func::{SignatureAndTypeConcreteLibfunc, SignatureOnlyConcreteLibfunc},
+        lib_func::SignatureOnlyConcreteLibfunc,
     },
     program_registry::ProgramRegistry,
 };
