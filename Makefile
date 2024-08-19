@@ -1,4 +1,4 @@
-.PHONY: deps build needs-cairo2 deps-macos build-cairo-2-compiler-macos decompress-cairo install-scarb clean
+.PHONY: usage deps build check needs-cairo2 deps-macos build-cairo-2-compiler-macos decompress-cairo install-scarb clean
 
 UNAME := $(shell uname)
 
@@ -11,8 +11,20 @@ ifeq ($(wildcard ./cairo2/.),)
 endif
 	./scripts/check-corelib-version.sh $(CAIRO_2_VERSION)
 
+usage:
+	@echo "Usage:"
+	@echo "    deps:		 Installs the necesarry dependencies."
+	@echo "    build:        Builds the cairo-native library and binaries."
+	@echo "    check:        Checks format and lints."
+	@echo "    test:         Runs all tests."
+	@echo "    clean:        Cleans the built artifacts."
+
 build:
 	cargo build --release --all-features
+
+check: check-llvm
+	cargo fmt --all -- --check
+	cargo clippy --all-targets --all-features -- -D warnings
 
 test: needs-cairo2
 	cargo test --all-features
