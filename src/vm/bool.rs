@@ -42,11 +42,14 @@ pub fn eval_and(
         panic!()
     };
 
+    let lhs = lhs != 0;
+    let rhs = rhs != 0;
+
     EvalAction::NormalBranch(
         0,
         smallvec![Value::Enum {
             self_ty,
-            index: lhs & rhs,
+            index: (lhs && rhs) as usize,
             payload
         }],
     )
@@ -70,7 +73,7 @@ pub fn eval_not(
         0,
         smallvec![Value::Enum {
             self_ty,
-            index: !lhs,
+            index: (lhs == 0) as usize,
             payload
         }],
     )
@@ -94,11 +97,14 @@ pub fn eval_xor(
         panic!()
     };
 
+    let lhs = lhs != 0;
+    let rhs = rhs != 0;
+
     EvalAction::NormalBranch(
         0,
         smallvec![Value::Enum {
             self_ty,
-            index: lhs ^ rhs,
+            index: (lhs ^ rhs) as usize,
             payload
         }],
     )
@@ -122,11 +128,14 @@ pub fn eval_or(
         panic!()
     };
 
+    let lhs = lhs != 0;
+    let rhs = rhs != 0;
+
     EvalAction::NormalBranch(
         0,
         smallvec![Value::Enum {
             self_ty,
-            index: lhs | rhs,
+            index: (lhs || rhs) as usize,
             payload
         }],
     )
