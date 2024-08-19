@@ -12,6 +12,7 @@ use cairo_lang_sierra::{
     program_registry::ProgramRegistry,
 };
 use smallvec::smallvec;
+use starknet_crypto::Felt;
 
 pub fn eval(
     registry: &ProgramRegistry<CoreType, CoreLibfunc>,
@@ -24,7 +25,7 @@ pub fn eval(
         Uint128Concrete::SquareRoot(_) => todo!(),
         Uint128Concrete::Equal(info) => eval_equal(registry, info, args),
         Uint128Concrete::ToFelt252(info) => eval_to_felt(registry, info, args),
-        Uint128Concrete::FromFelt252(_) => todo!(),
+        Uint128Concrete::FromFelt252(info) => eval_from_felt(registry, info, args),
         Uint128Concrete::IsZero(info) => eval_is_zero(registry, info, args),
         Uint128Concrete::Divmod(_) => todo!(),
         Uint128Concrete::Bitwise(_) => todo!(),
@@ -102,4 +103,29 @@ pub fn eval_to_felt(
     };
 
     EvalAction::NormalBranch(0, smallvec![Value::Felt(value.into())])
+}
+
+pub fn eval_from_felt(
+    _registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    _info: &SignatureOnlyConcreteLibfunc,
+    args: Vec<Value>,
+) -> EvalAction {
+    let [range_check @ Value::Unit, Value::Felt(value)]: [Value; 2] = args.try_into().unwrap()
+    else {
+        panic!()
+    };
+
+    let max = Felt::from(u128::MAX);
+
+    if value <= max {
+        let value: u128 = value.to_biguint().try_into().unwrap();
+        EvalAction::NormalBranch(0, smallvec![range_check, Value::U128(value)])
+    } else {
+        let overflow: u128 = (value - max).to_biguint().try_into().unwrap();
+        let value: u128 = max.to_biguint().try_into().unwrap();
+        EvalAction::NormalBranch(
+            1,
+            smallvec![range_check, Value::U128(value), Value::U128(overflow)],
+        )
+    }
 }
