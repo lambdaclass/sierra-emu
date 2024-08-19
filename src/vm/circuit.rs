@@ -9,7 +9,7 @@ use cairo_lang_sierra::{
             ConcreteU96LimbsLessThanGuaranteeVerifyLibfunc,
         },
         core::{CoreLibfunc, CoreType, CoreTypeConcrete},
-        lib_func::{SignatureAndTypeConcreteLibfunc, SignatureOnlyConcreteLibfunc}, SignatureBasedConcreteLibfunc,
+        lib_func::{SignatureAndTypeConcreteLibfunc, SignatureOnlyConcreteLibfunc},
     },
     program_registry::ProgramRegistry,
 };
@@ -42,7 +42,7 @@ pub fn eval(
         CircuitConcreteLibfunc::U96GuaranteeVerify(info) => {
             dbg!("U96GuaranteeVerify");
             eval_u96_guarantee_verify(registry, info, args)
-        },
+        }
         CircuitConcreteLibfunc::U96LimbsLessThanGuaranteeVerify(info) => {
             dbg!("U96LimbsLessThanGuaranteeVerify");
             eval_u96_limbs_less_than_guarantee_verify(registry, info, args)
@@ -50,7 +50,7 @@ pub fn eval(
         CircuitConcreteLibfunc::U96SingleLimbLessThanGuaranteeVerify(info) => {
             dbg!("U96SingleLimbLessThanGuaranteeVerify");
             eval_u96_single_limb_less_than_guarantee_verify(registry, info, args)
-        },
+        }
     }
 }
 
@@ -233,25 +233,6 @@ pub fn eval_get_output(
     };
     let gate_offset = circuit_info.values.get(&_info.output_ty).unwrap().clone();
     let output = outputs.get(&(gate_offset as u64)).unwrap();
-
-    // dbg!(
-    //     "BRANCHS",
-    //     _info
-    //         .signature
-    //         .branch_signatures
-    //         .iter()
-    //         .map(|b| b)
-    //         .collect::<Vec<_>>()
-    // );
-    // dbg!(
-    //     "PARAMS{}",
-    //     _info
-    //         .signature
-    //         .param_signatures
-    //         .iter()
-    //         .map(|p| &p.ty)
-    //         .collect::<Vec<_>>()
-    // );
     // Params:
     //   - CircuitsOutputs
     //
@@ -260,10 +241,7 @@ pub fn eval_get_output(
     //     - u384 [X]
     //     - U96LimbsLtGuarantee [X]
 
-    EvalAction::NormalBranch(
-        0,
-        smallvec![Value::U384(output.clone()), Value::Unit],
-    )
+    EvalAction::NormalBranch(0, smallvec![Value::U384(output.clone()), Value::Unit])
 }
 
 pub fn eval_u96_limbs_less_than_guarantee_verify(
@@ -271,14 +249,14 @@ pub fn eval_u96_limbs_less_than_guarantee_verify(
     _info: &ConcreteU96LimbsLessThanGuaranteeVerifyLibfunc,
     _args: Vec<Value>,
 ) -> EvalAction {
-    // Params: 
+    // Params:
     //     - U96LimbsLTGuarantee<N>
     //
-    // Branches: 
+    // Branches:
     //    [0]:
-    //     - U96LimbsLTGuarantee<N - 1>        
-    //    [1] 
-    //     - U96Guarantee        
+    //     - U96LimbsLTGuarantee<N - 1>
+    //    [1]
+    //     - U96Guarantee
 
     EvalAction::NormalBranch(0, smallvec![Value::Unit])
 }
@@ -292,7 +270,7 @@ pub fn eval_u96_single_limb_less_than_guarantee_verify(
     //  - U96LimbsLtGuarantee<1>
     //
     // Branches:
-    //   [0]: 
+    //   [0]:
     //       - U96Guarantee
 
     EvalAction::NormalBranch(0, smallvec![Value::Unit])
@@ -314,29 +292,12 @@ pub fn eval_failure_guarantee_verify(
     _info: &SignatureOnlyConcreteLibfunc,
     _args: Vec<Value>,
 ) -> EvalAction {
-    let [rc96 @ Value::Unit, mul_mod @ Value::Unit, outputs, zero, one ]: [Value; 5] = _args.try_into().unwrap() else {
+    let [rc96 @ Value::Unit, mul_mod @ Value::Unit, outputs, zero, one]: [Value; 5] =
+        _args.try_into().unwrap()
+    else {
         panic!()
     };
-    dbg!(
-        "BRANCHS {}",
-        _info
-            .signature
-            .branch_signatures
-            .iter()
-            .map(|b| b)
-            .collect::<Vec<_>>()
-    );
 
-    dbg!(
-        "PARAMS {}",
-        _info
-            .signature
-            .param_signatures
-            .iter()
-            .map(|p| &p.ty)
-            .collect::<Vec<_>>()
-    );
-    
     // Params:
     //  - RangeCheck96
     //  - MulMod
