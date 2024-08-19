@@ -152,8 +152,6 @@ pub fn eval_eval(
                             Some(inv) => inv,
                             None => {
                                 // attempted to get the inverse of 0,
-                                // so 0 is stored and a error has occurred
-                                outputs.insert(mul_gate.lhs as u64, BigUint::from(0_u8));
                                 break false;
                             }
                         };
