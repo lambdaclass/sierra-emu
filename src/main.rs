@@ -101,7 +101,7 @@ mod test {
     use cairo_lang_compiler::CompilerConfig;
     use cairo_lang_sierra::program::{GenFunction, Program, StatementIdx};
     use cairo_lang_starknet::compile::compile_path;
-    use sierra_emu::{ProgramTrace, StateDump, VirtualMachine};
+    use sierra_emu::{ContractExecutionResult, ProgramTrace, StateDump, VirtualMachine};
 
     #[test]
     fn test_contract() {
@@ -172,6 +172,11 @@ mod test {
         }
 
         assert!(!vm.syscall_handler.storage.is_empty());
+
+        let result = ContractExecutionResult::from_trace(&trace).unwrap();
+        assert!(!result.failure_flag);
+        assert_eq!(result.return_values.len(), 0);
+        assert_eq!(result.error_msg, None);
 
         // let trace_str = serde_json::to_string_pretty(&trace).unwrap();
         // std::fs::write("contract_trace.json", trace_str).unwrap();
