@@ -533,7 +533,6 @@ fn eval_get_execution_info_v2(
         out_ty_id = &inner.ty;
         out_ty = registry.get_type(&inner.ty).unwrap();
     };
-    dbg!(&out_ty_id);
 
     match result {
         Ok(res) => EvalAction::NormalBranch(

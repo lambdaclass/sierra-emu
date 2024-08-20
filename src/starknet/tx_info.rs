@@ -19,10 +19,10 @@ impl TxInfo {
             Value::Felt(self.version),
             Value::Felt(self.account_contract_address),
             Value::U128(self.max_fee),
-            Value::Array {
+            Value::Struct(vec![Value::Array {
                 ty: felt252_ty,
                 data: self.signature.into_iter().map(Value::Felt).collect(),
-            },
+            }]),
             Value::Felt(self.transaction_hash),
             Value::Felt(self.chain_id),
             Value::Felt(self.nonce),

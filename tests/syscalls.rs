@@ -38,7 +38,7 @@ fn run_syscall(func_name: &str) -> ProgramTrace {
 
 #[test]
 fn test_contract_constructor() {
-    let mut trace = run_syscall("syscalls::syscalls::get_execution_info_v2");
+    run_syscall("syscalls::syscalls::get_execution_info_v2");
 }
 
 pub fn find_entry_point_by_idx(
