@@ -538,7 +538,11 @@ fn eval_get_execution_info_v2(
     match result {
         Ok(res) => EvalAction::NormalBranch(
             0,
-            smallvec![Value::U128(gas), system, res.into_value(felt_ty, out_ty_id.clone())],
+            smallvec![
+                Value::U128(gas),
+                system,
+                res.into_value(felt_ty, out_ty_id.clone())
+            ],
         ),
         Err(e) => EvalAction::NormalBranch(
             1,
