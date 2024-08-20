@@ -68,6 +68,33 @@ pub fn eval_as_immediate(
                 [GenericArg::Value(value)] => Value::U8(value.try_into().unwrap()),
                 _ => unreachable!(),
             },
+            CoreTypeConcrete::Uint128(_) => match inner_data {
+                [GenericArg::Value(value)] => Value::U128(value.try_into().unwrap()),
+                _ => unreachable!(),
+            },
+            CoreTypeConcrete::Struct(_) => {
+                let mut fields = Vec::new();
+
+                for field in inner_data {
+                    match field {
+                        GenericArg::Type(const_field_ty) => {
+                            let field_type = registry.get_type(const_field_ty).unwrap();
+
+                            match &field_type {
+                                CoreTypeConcrete::Const(const_ty) => {
+                                    let field_value =
+                                        inner(registry, &const_ty.inner_ty, &const_ty.inner_data);
+                                    fields.push(field_value);
+                                }
+                                _ => unreachable!(),
+                            };
+                        }
+                        _ => unreachable!(),
+                    }
+                }
+
+                Value::Struct(fields)
+            }
             _ => todo!("{:?}", type_id),
         }
     }

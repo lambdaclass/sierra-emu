@@ -1,18 +1,17 @@
-use std::ops::Range;
-
 use super::EvalAction;
 use crate::Value;
 use cairo_lang_sierra::{
     extensions::{
         bytes31::Bytes31ConcreteLibfunc,
         consts::SignatureAndConstConcreteLibfunc,
-        core::{CoreLibfunc, CoreType, CoreTypeConcrete},
+        core::{CoreLibfunc, CoreType},
         lib_func::SignatureOnlyConcreteLibfunc,
-        ConcreteLibfunc,
     },
     program_registry::ProgramRegistry,
 };
+use num_bigint::BigInt;
 use smallvec::smallvec;
+use starknet_crypto::Felt;
 
 pub fn eval(
     registry: &ProgramRegistry<CoreType, CoreLibfunc>,
@@ -27,32 +26,16 @@ pub fn eval(
 }
 
 pub fn eval_const(
-    registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    _registry: &ProgramRegistry<CoreType, CoreLibfunc>,
     info: &SignatureAndConstConcreteLibfunc,
     _args: Vec<Value>,
 ) -> EvalAction {
-    let out_ty = registry
-        .get_type(&info.branch_signatures()[0].vars[0].ty)
-        .unwrap();
-
-    if let CoreTypeConcrete::BoundedInt(bounded_info) = out_ty {
-        let range = bounded_info.range.clone();
-        let value = Value::BoundedInt {
-            range: Range {
-                start: range.lower,
-                end: range.upper,
-            },
-            value: info.c.clone(),
-        };
-        EvalAction::NormalBranch(0, smallvec![value])
-    } else {
-        panic!()
-    }
+    EvalAction::NormalBranch(0, smallvec![Value::Bytes31(info.c.clone().into())])
 }
 
 pub fn eval_from_felt(
-    registry: &ProgramRegistry<CoreType, CoreLibfunc>,
-    info: &SignatureOnlyConcreteLibfunc,
+    _registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    _info: &SignatureOnlyConcreteLibfunc,
     args: Vec<Value>,
 ) -> EvalAction {
     let [range_check @ Value::Unit, Value::Felt(value)]: [Value; 2] = args.try_into().unwrap()
@@ -60,29 +43,12 @@ pub fn eval_from_felt(
         panic!()
     };
 
-    let out_ty = registry
-        .get_type(&info.branch_signatures()[0].vars[1].ty)
-        .unwrap();
+    let max = Felt::from(BigInt::from(2).pow(248) - 1);
 
-    if let CoreTypeConcrete::BoundedInt(info) = out_ty {
-        let range = info.range.clone();
-
-        if range.is_full_felt252_range()
-            || (value < range.upper.clone().into() && value >= range.lower.clone().into())
-        {
-            let value = Value::BoundedInt {
-                range: Range {
-                    start: range.lower,
-                    end: range.upper,
-                },
-                value: value.to_bigint(),
-            };
-            EvalAction::NormalBranch(0, smallvec![range_check, value])
-        } else {
-            EvalAction::NormalBranch(1, smallvec![range_check])
-        }
+    if value <= max {
+        EvalAction::NormalBranch(0, smallvec![range_check, Value::Bytes31(value)])
     } else {
-        panic!()
+        EvalAction::NormalBranch(1, smallvec![range_check])
     }
 }
 
@@ -91,9 +57,9 @@ pub fn eval_to_felt252(
     _info: &SignatureOnlyConcreteLibfunc,
     args: Vec<Value>,
 ) -> EvalAction {
-    let [Value::BoundedInt { range: _, value }]: [Value; 1] = args.try_into().unwrap() else {
+    let [Value::Bytes31(value)]: [Value; 1] = args.try_into().unwrap() else {
         panic!()
     };
 
-    EvalAction::NormalBranch(0, smallvec![Value::Felt(value.into())])
+    EvalAction::NormalBranch(0, smallvec![Value::Felt(value)])
 }

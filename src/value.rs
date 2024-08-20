@@ -27,6 +27,7 @@ pub enum Value {
         payload: Box<Self>,
     },
     Felt(Felt),
+    Bytes31(Felt),
     FeltDict {
         ty: ConcreteTypeId,
         data: HashMap<Felt, Self>,
@@ -74,6 +75,7 @@ impl Value {
                 matches!(self, Self::Enum { self_ty, .. } if self_ty == type_id)
             }
             CoreTypeConcrete::Felt252(_) => matches!(self, Self::Felt(_)),
+            CoreTypeConcrete::Bytes31(_) => matches!(self, Self::Bytes31(_)),
             CoreTypeConcrete::Felt252Dict(info) => {
                 matches!(self, Self::FeltDict { ty, .. } if *ty == info.ty)
             }
@@ -133,8 +135,7 @@ impl Value {
                 StarkNetTypeConcrete::Secp256Point(_) => todo!(),
                 StarkNetTypeConcrete::Sha256StateHandle(_) => todo!(),
             },
-            CoreTypeConcrete::Bytes31(_) => todo!(),
-            CoreTypeConcrete::BoundedInt(_) => todo!(),
+            CoreTypeConcrete::BoundedInt(_) => matches!(self, Self::BoundedInt { .. }),
         }
     }
 
