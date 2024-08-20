@@ -12,6 +12,7 @@ use cairo_lang_sierra::{
     program_registry::ProgramRegistry,
 };
 use smallvec::smallvec;
+use starknet_crypto::Felt;
 
 pub fn eval(
     registry: &ProgramRegistry<CoreType, CoreLibfunc>,
@@ -24,12 +25,29 @@ pub fn eval(
         Uint32Concrete::SquareRoot(_) => todo!(),
         Uint32Concrete::Equal(info) => eval_equal(registry, info, args),
         Uint32Concrete::ToFelt252(info) => eval_to_felt252(registry, info, args),
-        Uint32Concrete::FromFelt252(_) => todo!(),
+        Uint32Concrete::FromFelt252(info) => eval_from_felt(registry, info, args),
         Uint32Concrete::IsZero(info) => eval_is_zero(registry, info, args),
-        Uint32Concrete::Divmod(_) => todo!(),
+        Uint32Concrete::Divmod(info) => eval_divmod(registry, info, args),
         Uint32Concrete::WideMul(info) => eval_widemul(registry, info, args),
         Uint32Concrete::Bitwise(_) => todo!(),
     }
+}
+
+pub fn eval_divmod(
+    _registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    _info: &SignatureOnlyConcreteLibfunc,
+    args: Vec<Value>,
+) -> EvalAction {
+    let [range_check @ Value::Unit, Value::U32(x), Value::U32(y)]: [Value; 3] =
+        args.try_into().unwrap()
+    else {
+        panic!()
+    };
+
+    let val = Value::U32(x / y);
+    let rem = Value::U32(x % y);
+
+    EvalAction::NormalBranch(0, smallvec![range_check, val, rem])
 }
 
 pub fn eval_operation(
@@ -52,6 +70,26 @@ pub fn eval_operation(
         has_overflow as usize,
         smallvec![range_check, Value::U32(result)],
     )
+}
+
+pub fn eval_from_felt(
+    _registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    _info: &SignatureOnlyConcreteLibfunc,
+    args: Vec<Value>,
+) -> EvalAction {
+    let [range_check @ Value::Unit, Value::Felt(value)]: [Value; 2] = args.try_into().unwrap()
+    else {
+        panic!()
+    };
+
+    let max = Felt::from(u32::MAX);
+
+    if value <= max {
+        let value: u32 = value.to_biguint().try_into().unwrap();
+        EvalAction::NormalBranch(0, smallvec![range_check, Value::U32(value)])
+    } else {
+        EvalAction::NormalBranch(1, smallvec![range_check])
+    }
 }
 
 pub fn eval_equal(

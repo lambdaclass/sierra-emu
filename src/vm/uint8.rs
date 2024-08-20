@@ -12,6 +12,7 @@ use cairo_lang_sierra::{
     program_registry::ProgramRegistry,
 };
 use smallvec::smallvec;
+use starknet_crypto::Felt;
 
 pub fn eval(
     registry: &ProgramRegistry<CoreType, CoreLibfunc>,
@@ -23,13 +24,25 @@ pub fn eval(
         Uint8Concrete::Operation(info) => eval_operation(registry, info, args),
         Uint8Concrete::SquareRoot(_) => todo!(),
         Uint8Concrete::Equal(info) => eval_equal(registry, info, args),
-        Uint8Concrete::ToFelt252(_) => todo!(),
-        Uint8Concrete::FromFelt252(_) => todo!(),
+        Uint8Concrete::ToFelt252(info) => eval_to_felt252(registry, info, args),
+        Uint8Concrete::FromFelt252(info) => eval_from_felt(registry, info, args),
         Uint8Concrete::IsZero(info) => eval_is_zero(registry, info, args),
         Uint8Concrete::Divmod(_) => todo!(),
         Uint8Concrete::WideMul(info) => eval_widemul(registry, info, args),
         Uint8Concrete::Bitwise(_) => todo!(),
     }
+}
+
+pub fn eval_to_felt252(
+    _registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    _info: &SignatureOnlyConcreteLibfunc,
+    args: Vec<Value>,
+) -> EvalAction {
+    let [Value::U8(value)]: [Value; 1] = args.try_into().unwrap() else {
+        panic!()
+    };
+
+    EvalAction::NormalBranch(0, smallvec![Value::Felt(value.into())])
 }
 
 pub fn eval_operation(
@@ -52,6 +65,26 @@ pub fn eval_operation(
         has_overflow as usize,
         smallvec![range_check, Value::U8(result)],
     )
+}
+
+pub fn eval_from_felt(
+    _registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    _info: &SignatureOnlyConcreteLibfunc,
+    args: Vec<Value>,
+) -> EvalAction {
+    let [range_check @ Value::Unit, Value::Felt(value)]: [Value; 2] = args.try_into().unwrap()
+    else {
+        panic!()
+    };
+
+    let max = Felt::from(u8::MAX);
+
+    if value <= max {
+        let value: u8 = value.to_biguint().try_into().unwrap();
+        EvalAction::NormalBranch(0, smallvec![range_check, Value::U8(value)])
+    } else {
+        EvalAction::NormalBranch(1, smallvec![range_check])
+    }
 }
 
 pub fn eval_equal(
