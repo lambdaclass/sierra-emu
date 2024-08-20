@@ -24,6 +24,7 @@ mod bool;
 mod bounded_int;
 mod r#box;
 mod branch_align;
+mod bytes31;
 mod cast;
 mod r#const;
 mod drop;
@@ -280,7 +281,7 @@ fn eval<'a>(
         }
         CoreConcreteLibfunc::Box(selector) => self::r#box::eval(registry, selector, args),
         CoreConcreteLibfunc::BranchAlign(info) => self::branch_align::eval(registry, info, args),
-        CoreConcreteLibfunc::Bytes31(_) => todo!(),
+        CoreConcreteLibfunc::Bytes31(selector) => self::bytes31::eval(registry, selector, args),
         CoreConcreteLibfunc::Cast(selector) => self::cast::eval(registry, selector, args),
         CoreConcreteLibfunc::Circuit(_) => todo!(),
         CoreConcreteLibfunc::Const(selector) => self::r#const::eval(registry, selector, args),
