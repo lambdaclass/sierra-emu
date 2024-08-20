@@ -99,7 +99,6 @@ mod test {
     use std::path::Path;
 
     use cairo_lang_compiler::CompilerConfig;
-    use cairo_lang_sierra::program::{GenFunction, Program, StatementIdx};
     use cairo_lang_starknet::compile::compile_path;
     use sierra_emu::{
         find_entry_point_by_idx, ContractExecutionResult, ProgramTrace, StateDump, VirtualMachine,
