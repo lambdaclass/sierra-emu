@@ -496,27 +496,49 @@ fn eval_get_execution_info_v2(
 
     let result = syscall_handler.get_execution_info_v2(&mut gas);
 
-    let out_ty = registry
+    let mut out_ty = registry
         .get_type(&info.branch_signatures()[0].vars[2].ty)
         .unwrap();
+    let mut out_ty_id = &info.branch_signatures()[0].vars[2].ty;
 
-    let out_ty = if let CoreTypeConcrete::Struct(inner) = out_ty {
-        let out_ty = registry.get_type(&inner.members[1]).unwrap();
-
-        if let CoreTypeConcrete::Struct(inner) = out_ty {
-            // should be resourcebound ty
-            inner.members[7].clone()
-        } else {
-            panic!()
-        }
-    } else {
-        panic!()
+    if let CoreTypeConcrete::Box(inner) = out_ty {
+        out_ty_id = &inner.ty;
+        out_ty = registry.get_type(&inner.ty).unwrap();
     };
+
+    if let CoreTypeConcrete::Struct(inner) = out_ty {
+        out_ty_id = &inner.members[1];
+        out_ty = registry.get_type(&inner.members[1]).unwrap();
+    };
+
+    if let CoreTypeConcrete::Box(inner) = out_ty {
+        out_ty_id = &inner.ty;
+        out_ty = registry.get_type(&inner.ty).unwrap();
+    };
+
+    if let CoreTypeConcrete::Struct(inner) = out_ty {
+        out_ty_id = &inner.members[7];
+        out_ty = registry.get_type(&inner.members[7]).unwrap();
+    };
+
+    if let CoreTypeConcrete::Struct(inner) = out_ty {
+        out_ty_id = &inner.members[0];
+        out_ty = registry.get_type(&inner.members[0]).unwrap();
+    };
+    if let CoreTypeConcrete::Snapshot(inner) = out_ty {
+        out_ty_id = &inner.ty;
+        out_ty = registry.get_type(&inner.ty).unwrap();
+    };
+    if let CoreTypeConcrete::Array(inner) = out_ty {
+        out_ty_id = &inner.ty;
+        out_ty = registry.get_type(&inner.ty).unwrap();
+    };
+    dbg!(&out_ty_id);
 
     match result {
         Ok(res) => EvalAction::NormalBranch(
             0,
-            smallvec![Value::U128(gas), system, res.into_value(felt_ty, out_ty)],
+            smallvec![Value::U128(gas), system, res.into_value(felt_ty, out_ty_id.clone())],
         ),
         Err(e) => EvalAction::NormalBranch(
             1,

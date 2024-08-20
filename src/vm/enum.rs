@@ -38,6 +38,8 @@ pub fn eval_init(
     };
     assert_eq!(info.n_variants, variants.len());
     assert!(info.index < info.n_variants);
+    dbg!(&value);
+    dbg!(&variants[info.index]);
     assert!(value.is(registry, &variants[info.index]));
 
     EvalAction::NormalBranch(
