@@ -7,7 +7,7 @@ use std::collections::BTreeMap;
 
 #[derive(Clone, Debug, Default, Serialize)]
 pub struct ProgramTrace {
-    states: Vec<StateDump>,
+    pub states: Vec<StateDump>,
     // TODO: Syscall data.
 }
 
@@ -23,8 +23,8 @@ impl ProgramTrace {
 
 #[derive(Clone, Debug)]
 pub struct StateDump {
-    statement_idx: StatementIdx,
-    items: BTreeMap<u64, Value>,
+    pub statement_idx: StatementIdx,
+    pub items: BTreeMap<u64, Value>,
 }
 
 impl StateDump {

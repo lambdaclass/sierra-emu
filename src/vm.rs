@@ -172,8 +172,8 @@ impl<S: StarknetSyscallHandler> VirtualMachine<S> {
         let state_snapshot = frame.state.get_mut().clone();
 
         debug!(
-            "Evaluating statement {} ({})",
-            frame.pc.0, &self.program.statements[frame.pc.0]
+            "Evaluating statement {} ({}) (values: \n{:#?}\n)",
+            frame.pc.0, &self.program.statements[frame.pc.0], state_snapshot
         );
         match &self.program.statements[frame.pc.0] {
             GenStatement::Invocation(invocation) => {

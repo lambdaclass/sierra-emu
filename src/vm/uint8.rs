@@ -96,7 +96,7 @@ pub fn eval_equal(
         panic!()
     };
 
-    EvalAction::NormalBranch((lhs != rhs) as usize, smallvec![])
+    EvalAction::NormalBranch((lhs == rhs) as usize, smallvec![])
 }
 
 pub fn eval_is_zero(
