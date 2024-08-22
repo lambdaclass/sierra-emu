@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use super::EvalAction;
 use crate::Value;
 use cairo_lang_sierra::{
@@ -72,10 +70,14 @@ pub fn eval_add_input(
     let l2 = l2.to_le_bytes();
     let l3 = l3.to_le_bytes();
     values.push(BigUint::from_bytes_le(&[
-        l0[0], l0[1], l0[2], l0[3], l0[4], l0[5], l0[6], l0[7], //
-        l1[0], l1[1], l1[2], l1[3], l1[4], l1[5], l1[6], l1[7], //
-        l2[0], l2[1], l2[2], l2[3], l2[4], l2[5], l2[6], l2[7], //
-        l3[0], l3[1], l3[2], l3[3], l3[4], l3[5], l3[6], l3[7], //
+        l0[0], l0[1], l0[2], l0[3], l0[4], l0[5], l0[6], l0[7], l0[8], l0[9], l0[10],
+        l0[11], //
+        l1[0], l1[1], l1[2], l1[3], l1[4], l1[5], l1[6], l1[7], l1[8], l1[9], l1[10],
+        l1[11], //
+        l2[0], l2[1], l2[2], l2[3], l2[4], l2[5], l2[6], l2[7], l2[8], l2[9], l2[10],
+        l2[11], //
+        l3[0], l3[1], l3[2], l3[3], l3[4], l3[5], l3[6], l3[7], l3[8], l3[9], l3[10],
+        l3[11], //
     ]));
 
     EvalAction::NormalBranch(
@@ -97,38 +99,33 @@ pub fn eval_eval(
         CoreTypeConcrete::Circuit(CircuitTypeConcrete::Circuit(info)) => &info.circuit_info,
         _ => todo!(),
     };
-    let mut outputs = inputs
-        .into_iter()
-        .enumerate()
-        .map(|(i, input)| {
-            let gate_num = &circ_info.mul_offsets[i];
-            (gate_num.output as u64, input)
-        })
-        .collect::<HashMap<u64, BigUint>>();
-
+    let mut outputs = vec![None; 1 + circ_info.n_inputs + circ_info.values.len()];
     let mut add_gates = circ_info.add_offsets.iter().peekable();
-    let mut mul_gates = circ_info
-        .mul_offsets
-        .iter()
-        .skip(circ_info.n_inputs)
-        .peekable();
+    let mut mul_gates = circ_info.mul_offsets.iter().skip(circ_info.n_inputs);
+
+    outputs[0] = Some(BigUint::from(1_u8));
+
+    for (i, input) in inputs.iter().enumerate() {
+        let gate = &circ_info.mul_offsets[i];
+        outputs[gate.output] = Some(input.to_owned());
+    }
 
     let success = loop {
         while let Some(add_gate) = add_gates.peek() {
-            let lhs = outputs.get(&(add_gate.lhs as u64));
-            let rhs = outputs.get(&(add_gate.rhs as u64));
+            let lhs = outputs[add_gate.lhs].to_owned();
+            let rhs = outputs[add_gate.rhs].to_owned();
 
             match (lhs, rhs) {
                 (Some(l), Some(r)) => {
-                    outputs.insert(add_gate.output as u64, (l + r) % &modulus);
+                    outputs.insert(add_gate.output, Some((l + r) % &modulus));
                 }
                 (None, Some(r)) => {
-                    let res = match outputs.get(&(add_gate.output as u64)) {
+                    let res = match outputs[add_gate.output].to_owned() {
                         Some(res) => res,
                         None => break,
                     };
                     // if it is a sub_gate the output index is store in lhs
-                    outputs.insert(add_gate.lhs as u64, (res + &modulus - r) % &modulus);
+                    outputs.insert(add_gate.lhs, Some((res + &modulus - r) % &modulus));
                 }
                 // there aren't enough gates computed for add_gate to compute
                 // the next gate so we need to compute a mul_gate
@@ -140,12 +137,12 @@ pub fn eval_eval(
 
         match mul_gates.next() {
             Some(mul_gate) => {
-                let lhs = outputs.get(&(mul_gate.lhs as u64));
-                let rhs = outputs.get(&(mul_gate.rhs as u64));
+                let lhs = outputs[mul_gate.lhs].to_owned();
+                let rhs = outputs[mul_gate.rhs].to_owned();
 
                 match (lhs, rhs) {
                     (Some(l), Some(r)) => {
-                        outputs.insert(mul_gate.output as u64, (l * r) % &modulus);
+                        outputs.insert(mul_gate.output, Some((l * r) % &modulus));
                     }
                     (None, Some(r)) => {
                         let res = match r.modinv(&modulus) {
@@ -156,11 +153,11 @@ pub fn eval_eval(
                             }
                         };
                         // if it is a inv_gate the output index is store in lhs
-                        outputs.insert(mul_gate.lhs as u64, res);
+                        outputs.insert(mul_gate.lhs, Some(res));
                     }
-                    // a mul_gate can always be computed because it is only computed
-                    // if an add_gate can't
-                    _ => continue,
+                    // this state should be reached since it would mean that
+                    // not all the circuit's inputs where filled
+                    _ => unreachable!(),
                 }
             }
             None => break true,
@@ -173,15 +170,7 @@ pub fn eval_eval(
             smallvec![add_mod, mul_mod, Value::CircuitOutputs(outputs),],
         )
     } else {
-        EvalAction::NormalBranch(
-            1,
-            smallvec![
-                add_mod,
-                mul_mod,
-                Value::CircuitOutputs(outputs),
-                Value::Unit
-            ],
-        )
+        EvalAction::NormalBranch(1, smallvec![add_mod, mul_mod, Value::Unit, Value::Unit])
     }
 }
 
@@ -198,9 +187,20 @@ pub fn eval_get_output(
         _ => todo!(),
     };
     let gate_offset = circuit_info.values.get(&_info.output_ty).unwrap().clone();
-    let output = outputs.get(&(gate_offset as u64)).unwrap();
+    let output = outputs[gate_offset].to_owned().unwrap();
+    let mask = BigUint::from_bytes_be(&[255; 12]);
 
-    EvalAction::NormalBranch(0, smallvec![Value::U384(output.clone()), Value::Unit])
+    let l0_big: BigUint = &output & &mask;
+    let l1_big: BigUint = &output & (&mask >> 96);
+    let l2_big: BigUint = &output & (&mask >> 192);
+    let l3_big: BigUint = output & (mask >> 288);
+
+    let l0: u128 = l0_big.try_into().unwrap();
+    let l1: u128 = l1_big.try_into().unwrap();
+    let l2: u128 = l2_big.try_into().unwrap();
+    let l3: u128 = l3_big.try_into().unwrap();
+
+    EvalAction::NormalBranch(0, smallvec![Value::U384(l0, l1, l2, l3), Value::Unit])
 }
 
 pub fn eval_u96_limbs_less_than_guarantee_verify(
