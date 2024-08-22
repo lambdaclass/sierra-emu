@@ -24,7 +24,7 @@ pub enum Value {
     },
     Circuit(Vec<BigUint>),
     CircuitModulus(BigUint),
-    CircuitOutputs(Vec<Option<BigUint>>),
+    CircuitOutputs(Vec<BigUint>),
     Enum {
         self_ty: ConcreteTypeId,
         index: usize,
@@ -42,7 +42,6 @@ pub enum Value {
     },
     I8(i8),
     Struct(Vec<Self>),
-    U384(u128, u128, u128, u128),
     U256(u128, u128),
     U128(u128),
     U32(u32),

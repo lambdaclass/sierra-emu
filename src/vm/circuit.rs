@@ -11,7 +11,7 @@ use cairo_lang_sierra::{
     },
     program_registry::ProgramRegistry,
 };
-use num_bigint::{BigInt, BigUint};
+use num_bigint::{BigInt, BigUint, ToBigInt};
 use smallvec::smallvec;
 
 pub fn eval(
@@ -101,13 +101,12 @@ pub fn eval_eval(
     };
     let mut outputs = vec![None; 1 + circ_info.n_inputs + circ_info.values.len()];
     let mut add_gates = circ_info.add_offsets.iter().peekable();
-    let mut mul_gates = circ_info.mul_offsets.iter().skip(circ_info.n_inputs);
+    let mut mul_gates = circ_info.mul_offsets.iter();
 
     outputs[0] = Some(BigUint::from(1_u8));
 
     for (i, input) in inputs.iter().enumerate() {
-        let gate = &circ_info.mul_offsets[i];
-        outputs[gate.output] = Some(input.to_owned());
+        outputs[i + 1] = Some(input.to_owned());
     }
 
     let success = loop {
@@ -117,7 +116,7 @@ pub fn eval_eval(
 
             match (lhs, rhs) {
                 (Some(l), Some(r)) => {
-                    outputs.insert(add_gate.output, Some((l + r) % &modulus));
+                    outputs[add_gate.output] = Some((l + r) % &modulus);
                 }
                 (None, Some(r)) => {
                     let res = match outputs[add_gate.output].to_owned() {
@@ -125,7 +124,7 @@ pub fn eval_eval(
                         None => break,
                     };
                     // if it is a sub_gate the output index is store in lhs
-                    outputs.insert(add_gate.lhs, Some((res + &modulus - r) % &modulus));
+                    outputs[add_gate.lhs] = Some((res + &modulus - r) % &modulus);
                 }
                 // there aren't enough gates computed for add_gate to compute
                 // the next gate so we need to compute a mul_gate
@@ -142,7 +141,7 @@ pub fn eval_eval(
 
                 match (lhs, rhs) {
                     (Some(l), Some(r)) => {
-                        outputs.insert(mul_gate.output, Some((l * r) % &modulus));
+                        outputs[mul_gate.output] = Some((l * r) % &modulus);
                     }
                     (None, Some(r)) => {
                         let res = match r.modinv(&modulus) {
@@ -153,7 +152,7 @@ pub fn eval_eval(
                             }
                         };
                         // if it is a inv_gate the output index is store in lhs
-                        outputs.insert(mul_gate.lhs, Some(res));
+                        outputs[mul_gate.lhs] = Some(res);
                     }
                     // this state should be reached since it would mean that
                     // not all the circuit's inputs where filled
@@ -164,10 +163,18 @@ pub fn eval_eval(
         }
     };
 
+    let values = outputs
+        .into_iter()
+        .skip(1 + circ_info.n_inputs)
+        .collect::<Option<Vec<BigUint>>>()
+        .expect("The circuit cannot be calculated");
+
+    dbg!(&values);
+
     if success {
         EvalAction::NormalBranch(
             0,
-            smallvec![add_mod, mul_mod, Value::CircuitOutputs(outputs),],
+            smallvec![add_mod, mul_mod, Value::CircuitOutputs(values)],
         )
     } else {
         EvalAction::NormalBranch(1, smallvec![add_mod, mul_mod, Value::Unit, Value::Unit])
@@ -187,20 +194,34 @@ pub fn eval_get_output(
         _ => todo!(),
     };
     let gate_offset = circuit_info.values.get(&_info.output_ty).unwrap().clone();
-    let output = outputs[gate_offset].to_owned().unwrap();
-    let mask = BigUint::from_bytes_be(&[255; 12]);
+    let output_idx = gate_offset - 1 - circuit_info.n_inputs;
+    let output = outputs[output_idx].to_owned();
+    let output_ubig = output.to_bigint().unwrap();
+    let mask = BigInt::from_bytes_be(num_bigint::Sign::Plus, &[255; 12]);
 
-    let l0_big: BigUint = &output & &mask;
-    let l1_big: BigUint = &output & (&mask >> 96);
-    let l2_big: BigUint = &output & (&mask >> 192);
-    let l3_big: BigUint = output & (mask >> 288);
+    let l0: BigInt = (&output_ubig & &mask).to_bigint().unwrap();
+    let l1: BigInt = &output_ubig & (&mask >> 96);
+    let l2: BigInt = &output_ubig & (&mask >> 192);
+    let l3: BigInt = output_ubig & (mask >> 288);
 
-    let l0: u128 = l0_big.try_into().unwrap();
-    let l1: u128 = l1_big.try_into().unwrap();
-    let l2: u128 = l2_big.try_into().unwrap();
-    let l3: u128 = l3_big.try_into().unwrap();
+    let range = BigInt::ZERO..BigInt::from(96_u8);
+    let vec_values = vec![
+        Value::BoundedInt {
+            range: range.clone(),
+            value: l0,
+        },
+        Value::BoundedInt {
+            range: range.clone(),
+            value: l1,
+        },
+        Value::BoundedInt {
+            range: range.clone(),
+            value: l2,
+        },
+        Value::BoundedInt { range, value: l3 },
+    ];
 
-    EvalAction::NormalBranch(0, smallvec![Value::U384(l0, l1, l2, l3), Value::Unit])
+    EvalAction::NormalBranch(0, smallvec![Value::Struct(vec_values), Value::Unit])
 }
 
 pub fn eval_u96_limbs_less_than_guarantee_verify(
