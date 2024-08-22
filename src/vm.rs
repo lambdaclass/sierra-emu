@@ -7,13 +7,14 @@ use cairo_lang_sierra::{
     extensions::{
         core::{CoreConcreteLibfunc, CoreLibfunc, CoreType, CoreTypeConcrete},
         starknet::StarkNetTypeConcrete,
+        ConcreteType,
     },
     ids::{ConcreteLibfuncId, FunctionId, VarId},
     program::{GenFunction, GenStatement, Invocation, Program, StatementIdx},
     program_registry::ProgramRegistry,
 };
 use cairo_lang_utils::ordered_hash_map::OrderedHashMap;
-use smallvec::SmallVec;
+use smallvec::{smallvec, SmallVec};
 use starknet_types_core::felt::Felt;
 use std::{cell::Cell, sync::Arc};
 use tracing::debug;
@@ -29,6 +30,7 @@ mod cast;
 mod r#const;
 mod drop;
 mod dup;
+mod ec;
 mod r#enum;
 mod felt252;
 mod felt252_dict;
@@ -129,8 +131,11 @@ impl<S: StarknetSyscallHandler> VirtualMachine<S> {
                         | CoreTypeConcrete::Poseidon(_)
                         | CoreTypeConcrete::Bitwise(_)
                         | CoreTypeConcrete::BuiltinCosts(_)
+                        | CoreTypeConcrete::EcOp(_)
                         | CoreTypeConcrete::SegmentArena(_) => Value::Unit,
-                        _ => unreachable!(),
+                        x => {
+                            todo!("{:?}", x.info())
+                        }
                     }
                 })
                 .collect::<Vec<_>>(),
@@ -290,7 +295,7 @@ fn eval<'a>(
         CoreConcreteLibfunc::Debug(_) => todo!(),
         CoreConcreteLibfunc::Drop(info) => self::drop::eval(registry, info, args),
         CoreConcreteLibfunc::Dup(info) => self::dup::eval(registry, info, args),
-        CoreConcreteLibfunc::Ec(_) => todo!(),
+        CoreConcreteLibfunc::Ec(selector) => self::ec::eval(registry, selector, args),
         CoreConcreteLibfunc::Enum(selector) => self::r#enum::eval(registry, selector, args),
         CoreConcreteLibfunc::Felt252(selector) => self::felt252::eval(registry, selector, args),
         CoreConcreteLibfunc::Felt252Dict(selector) => {
@@ -323,6 +328,10 @@ fn eval<'a>(
         CoreConcreteLibfunc::Uint64(selector) => self::uint64::eval(registry, selector, args),
         CoreConcreteLibfunc::Uint8(selector) => self::uint8::eval(registry, selector, args),
         CoreConcreteLibfunc::UnconditionalJump(info) => self::jump::eval(registry, info, args),
-        CoreConcreteLibfunc::UnwrapNonZero(_) => todo!(),
+        CoreConcreteLibfunc::UnwrapNonZero(_info) => {
+            let [value] = args.try_into().unwrap();
+
+            EvalAction::NormalBranch(0, smallvec![value])
+        }
     }
 }
