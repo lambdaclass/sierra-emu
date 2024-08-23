@@ -21,7 +21,7 @@ pub fn eval(
 ) -> EvalAction {
     match selector {
         StarkNetConcreteLibfunc::CallContract(info) => {
-            self::eval_call_contract(registry, info, args)
+            self::eval_call_contract(registry, info, args, syscall_handler)
         }
         StarkNetConcreteLibfunc::ClassHashConst(info) => {
             eval_class_hash_const(registry, info, args)
@@ -250,11 +250,73 @@ fn eval_storage_address_from_base_and_offset(
 }
 
 fn eval_call_contract(
-    _registry: &ProgramRegistry<CoreType, CoreLibfunc>,
-    _info: &SignatureOnlyConcreteLibfunc,
-    _args: Vec<Value>,
+    registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    info: &SignatureOnlyConcreteLibfunc,
+    args: Vec<Value>,
+    syscall_handler: &mut impl StarknetSyscallHandler,
 ) -> EvalAction {
-    todo!()
+    let [Value::U128(mut gas), system, Value::Felt(address), Value::Felt(entry_point_selector), Value::Struct(calldata)]: [Value; 5] =
+        args.try_into().unwrap()
+    else {
+        panic!()
+    };
+
+    let [Value::Array {
+        ty: _,
+        data: calldata,
+    }]: [Value; 1] = calldata.try_into().unwrap()
+    else {
+        panic!()
+    };
+
+    let calldata = calldata
+        .into_iter()
+        .map(|x| match x {
+            Value::Felt(x) => x,
+            _ => unreachable!(),
+        })
+        .collect();
+
+    // get felt type from the error branch array
+    let felt_ty = {
+        match registry
+            .get_type(&info.branch_signatures()[1].vars[2].ty)
+            .unwrap()
+        {
+            CoreTypeConcrete::Array(info) => info.ty.clone(),
+            _ => unreachable!(),
+        }
+    };
+
+    let result = syscall_handler.call_contract(address, entry_point_selector, calldata, &mut gas);
+
+    match result {
+        Ok(return_values) => EvalAction::NormalBranch(
+            0,
+            smallvec![
+                Value::U128(gas),
+                system,
+                Value::Struct(vec![Value::Array {
+                    ty: felt_ty,
+                    data: return_values
+                        .into_iter()
+                        .map(Value::Felt)
+                        .collect::<Vec<_>>(),
+                }])
+            ],
+        ),
+        Err(e) => EvalAction::NormalBranch(
+            1,
+            smallvec![
+                Value::U128(gas),
+                system,
+                Value::Array {
+                    ty: felt_ty,
+                    data: e.into_iter().map(Value::Felt).collect::<Vec<_>>(),
+                }
+            ],
+        ),
+    }
 }
 
 fn eval_storage_read(
