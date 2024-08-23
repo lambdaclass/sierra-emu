@@ -239,8 +239,6 @@ impl<S: StarknetSyscallHandler> VirtualMachine<S> {
                         )
                         .unwrap(),
                     );
-                } else {
-                    dbg!(&curr_frame.state.take());
                 }
             }
         }
