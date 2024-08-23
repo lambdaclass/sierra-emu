@@ -200,6 +200,7 @@ pub fn eval_state_finalize(
         EvalAction::NormalBranch(1, smallvec![])
     } else {
         let point = &state - &random_point;
+        let point = point.to_affine().unwrap();
         EvalAction::NormalBranch(
             0,
             smallvec![Value::EcPoint {
