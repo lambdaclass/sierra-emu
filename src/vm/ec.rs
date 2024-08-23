@@ -9,10 +9,13 @@ use cairo_lang_sierra::{
     program_registry::ProgramRegistry,
 };
 use num_traits::identities::Zero;
+use rand::Rng;
 use smallvec::smallvec;
 use starknet_crypto::Felt;
 use starknet_curve::curve_params::BETA;
 use starknet_types_core::curve::{AffinePoint, ProjectivePoint};
+use std::ops::Mul;
+use std::ops::Neg;
 
 // todo: verify these are correct.
 
@@ -23,12 +26,12 @@ pub fn eval(
 ) -> EvalAction {
     match selector {
         EcConcreteLibfunc::IsZero(info) => eval_is_zero(registry, info, args),
-        EcConcreteLibfunc::Neg(_) => todo!(),
+        EcConcreteLibfunc::Neg(info) => eval_neg(registry, info, args),
         EcConcreteLibfunc::StateAdd(info) => eval_state_add(registry, info, args),
         EcConcreteLibfunc::TryNew(info) => eval_new(registry, info, args),
-        EcConcreteLibfunc::StateFinalize(_) => todo!(),
-        EcConcreteLibfunc::StateInit(_) => todo!(),
-        EcConcreteLibfunc::StateAddMul(_) => todo!(),
+        EcConcreteLibfunc::StateFinalize(info) => eval_state_finalize(registry, info, args),
+        EcConcreteLibfunc::StateInit(info) => eval_state_init(registry, info, args),
+        EcConcreteLibfunc::StateAddMul(info) => eval_state_add_mul(registry, info, args),
         EcConcreteLibfunc::PointFromX(info) => eval_point_from_x(registry, info, args),
         EcConcreteLibfunc::UnwrapPoint(_) => todo!(),
         EcConcreteLibfunc::Zero(_) => todo!(),
@@ -40,15 +43,36 @@ pub fn eval_is_zero(
     _info: &SignatureOnlyConcreteLibfunc,
     args: Vec<Value>,
 ) -> EvalAction {
-    let [value @ Value::EcPoint { x, y }]: [Value; 1] = args.try_into().unwrap() else {
+    let [value @ Value::EcPoint { x: _, y }]: [Value; 1] = args.try_into().unwrap() else {
         panic!()
     };
-
-    if x.is_zero() && y.is_zero() {
+    // To check whether `(x, y) = (0, 0)` (the zero point), it is enough to check
+    // whether `y = 0`, since there is no point on the curve with y = 0.
+    if y.is_zero() {
         EvalAction::NormalBranch(0, smallvec![])
     } else {
         EvalAction::NormalBranch(1, smallvec![value])
     }
+}
+
+pub fn eval_neg(
+    _registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    _info: &SignatureOnlyConcreteLibfunc,
+    args: Vec<Value>,
+) -> EvalAction {
+    let [Value::EcPoint { x, y }]: [Value; 1] = args.try_into().unwrap() else {
+        panic!()
+    };
+
+    let point = AffinePoint::new(x, y).unwrap().neg();
+
+    EvalAction::NormalBranch(
+        0,
+        smallvec![Value::EcPoint {
+            x: point.x(),
+            y: point.y(),
+        }],
+    )
 }
 
 pub fn eval_new(
@@ -72,6 +96,24 @@ pub fn eval_new(
     }
 }
 
+pub fn eval_state_init(
+    _registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    _info: &SignatureOnlyConcreteLibfunc,
+    _args: Vec<Value>,
+) -> EvalAction {
+    let state = random_ec_point();
+
+    EvalAction::NormalBranch(
+        0,
+        smallvec![Value::EcState {
+            x0: state.x(),
+            y0: state.y(),
+            x1: state.x(),
+            y1: state.y(),
+        }],
+    )
+}
+
 pub fn eval_state_add(
     _registry: &ProgramRegistry<CoreType, CoreLibfunc>,
     _info: &SignatureOnlyConcreteLibfunc,
@@ -87,6 +129,7 @@ pub fn eval_state_add(
     let point = AffinePoint::new(x, y).unwrap();
 
     state += &point;
+    let state = state.to_affine().unwrap();
 
     EvalAction::NormalBranch(
         0,
@@ -99,6 +142,63 @@ pub fn eval_state_add(
     )
 }
 
+pub fn eval_state_add_mul(
+    _registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    _info: &SignatureOnlyConcreteLibfunc,
+    args: Vec<Value>,
+) -> EvalAction {
+    let [ec @ Value::Unit, Value::EcState { x0, y0, x1, y1 }, Value::Felt(scalar), Value::EcPoint { x, y }]: [Value; 4] =
+        args.try_into().unwrap()
+    else {
+        panic!()
+    };
+
+    let mut state = ProjectivePoint::from_affine(x0, y0).unwrap();
+    let point = ProjectivePoint::from_affine(x, y).unwrap();
+
+    state += &point.mul(scalar);
+    let state = state.to_affine().unwrap();
+
+    EvalAction::NormalBranch(
+        0,
+        smallvec![
+            ec,
+            Value::EcState {
+                x0: state.x(),
+                y0: state.y(),
+                x1,
+                y1
+            }
+        ],
+    )
+}
+
+pub fn eval_state_finalize(
+    _registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    _info: &SignatureOnlyConcreteLibfunc,
+    args: Vec<Value>,
+) -> EvalAction {
+    let [Value::EcState { x0, y0, x1, y1 }]: [Value; 1] = args.try_into().unwrap() else {
+        panic!()
+    };
+
+    let state = ProjectivePoint::from_affine(x0, y0).unwrap();
+    let random_point = ProjectivePoint::from_affine(x1, y1).unwrap();
+
+    if state.x() == random_point.x() && state.y() == random_point.y() {
+        EvalAction::NormalBranch(1, smallvec![])
+    } else {
+        let point = &state - &random_point;
+        EvalAction::NormalBranch(
+            0,
+            smallvec![Value::EcPoint {
+                x: point.x(),
+                y: point.y(),
+            }],
+        )
+    }
+}
+
 pub fn eval_point_from_x(
     _registry: &ProgramRegistry<CoreType, CoreLibfunc>,
     _info: &SignatureOnlyConcreteLibfunc,
@@ -109,6 +209,7 @@ pub fn eval_point_from_x(
     };
 
     // https://github.com/starkware-libs/cairo/blob/aaad921bba52e729dc24ece07fab2edf09ccfa15/crates/cairo-lang-sierra-to-casm/src/invocations/ec.rs#L63
+
     let x2 = x * x;
     let x3 = x2 * x;
     let alpha_x_plus_beta = x + BETA;
@@ -128,4 +229,20 @@ pub fn eval_point_from_x(
         ),
         Err(_) => EvalAction::NormalBranch(1, smallvec![range_check]),
     }
+}
+
+fn random_ec_point() -> AffinePoint {
+    // https://github.com/starkware-libs/cairo/blob/aaad921bba52e729dc24ece07fab2edf09ccfa15/crates/cairo-lang-runner/src/casm_run/mod.rs#L1802
+    let mut rng = rand::thread_rng();
+    let (random_x, random_y) = loop {
+        // Randominzing 31 bytes to make sure is in range.
+        let x_bytes: [u8; 31] = rng.gen();
+        let random_x = Felt::from_bytes_be_slice(&x_bytes);
+        let random_y_squared = random_x * random_x * random_x + random_x + BETA;
+        if let Some(random_y) = random_y_squared.sqrt() {
+            break (random_x, random_y);
+        }
+    };
+
+    AffinePoint::new(random_x, random_y).unwrap()
 }
