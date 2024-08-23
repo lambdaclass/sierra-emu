@@ -33,7 +33,7 @@ pub fn eval(
         EcConcreteLibfunc::StateInit(info) => eval_state_init(registry, info, args),
         EcConcreteLibfunc::StateAddMul(info) => eval_state_add_mul(registry, info, args),
         EcConcreteLibfunc::PointFromX(info) => eval_point_from_x(registry, info, args),
-        EcConcreteLibfunc::UnwrapPoint(_) => todo!(),
+        EcConcreteLibfunc::UnwrapPoint(info) => eval_unwrap_point(registry, info, args),
         EcConcreteLibfunc::Zero(_) => todo!(),
     }
 }
@@ -53,6 +53,17 @@ pub fn eval_is_zero(
     } else {
         EvalAction::NormalBranch(1, smallvec![value])
     }
+}
+
+pub fn eval_unwrap_point(
+    _registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    _info: &SignatureOnlyConcreteLibfunc,
+    args: Vec<Value>,
+) -> EvalAction {
+    let [Value::EcPoint { x, y }]: [Value; 1] = args.try_into().unwrap() else {
+        panic!()
+    };
+    EvalAction::NormalBranch(0, smallvec![Value::Felt(x), Value::Felt(y)])
 }
 
 pub fn eval_neg(
