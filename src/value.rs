@@ -50,7 +50,6 @@ pub enum Value {
     I8(i8),
     Struct(Vec<Self>),
     U128(u128),
-    U256(u128, u128),
     U16(u16),
     U32(u32),
     U64(u64),

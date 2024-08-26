@@ -1,3 +1,5 @@
+use std::u128;
+
 use super::EvalAction;
 use crate::Value;
 use cairo_lang_sierra::{
@@ -11,8 +13,10 @@ use cairo_lang_sierra::{
     },
     program_registry::ProgramRegistry,
 };
+use num_bigint::BigUint;
 use smallvec::smallvec;
 use starknet_crypto::Felt;
+use starknet_types_core::felt::NonZeroFelt;
 
 pub fn eval(
     registry: &ProgramRegistry<CoreType, CoreLibfunc>,
@@ -27,12 +31,42 @@ pub fn eval(
         Uint128Concrete::ToFelt252(info) => eval_to_felt(registry, info, args),
         Uint128Concrete::FromFelt252(info) => eval_from_felt(registry, info, args),
         Uint128Concrete::IsZero(info) => eval_is_zero(registry, info, args),
-        Uint128Concrete::Divmod(_) => todo!(),
+        Uint128Concrete::Divmod(info) => eval_divmod(registry, info, args),
         Uint128Concrete::Bitwise(info) => eval_bitwise(registry, info, args),
         Uint128Concrete::GuaranteeMul(_) => todo!(),
-        Uint128Concrete::MulGuaranteeVerify(_) => todo!(),
+        Uint128Concrete::MulGuaranteeVerify(info) => eval_guarantee_verify(registry, info, args),
         Uint128Concrete::ByteReverse(_) => todo!(),
     }
+}
+
+pub fn eval_guarantee_verify(
+    _registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    _info: &SignatureOnlyConcreteLibfunc,
+    args: Vec<Value>,
+) -> EvalAction {
+    let [range_check @ Value::Unit, _verify @ Value::Unit]: [Value; 2] = args.try_into().unwrap()
+    else {
+        panic!()
+    };
+
+    EvalAction::NormalBranch(0, smallvec![range_check])
+}
+
+pub fn eval_divmod(
+    _registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    _info: &SignatureOnlyConcreteLibfunc,
+    args: Vec<Value>,
+) -> EvalAction {
+    let [range_check @ Value::Unit, Value::U128(x), Value::U128(y)]: [Value; 3] =
+        args.try_into().unwrap()
+    else {
+        panic!()
+    };
+
+    let val = Value::U128(x / y);
+    let rem = Value::U128(x % y);
+
+    EvalAction::NormalBranch(0, smallvec![range_check, val, rem])
 }
 
 pub fn eval_operation(
@@ -136,17 +170,19 @@ pub fn eval_from_felt(
         panic!()
     };
 
-    let max = Felt::from(u128::MAX);
+    let bound = Felt::from(u128::MAX) + 1;
 
-    if value <= max {
+    if value < bound {
         let value: u128 = value.to_biguint().try_into().unwrap();
         EvalAction::NormalBranch(0, smallvec![range_check, Value::U128(value)])
     } else {
-        let overflow: u128 = (value - max).to_biguint().try_into().unwrap();
-        let value: u128 = max.to_biguint().try_into().unwrap();
+        let (new_value, overflow) = value.div_rem(&NonZeroFelt::try_from(bound).unwrap());
+
+        let overflow: u128 = overflow.to_biguint().try_into().unwrap();
+        let new_value: u128 = new_value.to_biguint().try_into().unwrap();
         EvalAction::NormalBranch(
             1,
-            smallvec![range_check, Value::U128(value), Value::U128(overflow)],
+            smallvec![range_check, Value::U128(new_value), Value::U128(overflow)],
         )
     }
 }
