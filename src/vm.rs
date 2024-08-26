@@ -45,6 +45,8 @@ mod snapshot_take;
 mod starknet;
 mod r#struct;
 mod uint128;
+mod uint16;
+mod uint252;
 mod uint32;
 mod uint64;
 mod uint8;
@@ -321,8 +323,8 @@ fn eval<'a>(
         }
         CoreConcreteLibfunc::Struct(selector) => self::r#struct::eval(registry, selector, args),
         CoreConcreteLibfunc::Uint128(selector) => self::uint128::eval(registry, selector, args),
-        CoreConcreteLibfunc::Uint16(_) => todo!(),
-        CoreConcreteLibfunc::Uint256(_) => todo!(),
+        CoreConcreteLibfunc::Uint16(selector) => self::uint16::eval(registry, selector, args),
+        CoreConcreteLibfunc::Uint256(selector) => self::uint252::eval(registry, selector, args),
         CoreConcreteLibfunc::Uint32(selector) => self::uint32::eval(registry, selector, args),
         CoreConcreteLibfunc::Uint512(_) => todo!(),
         CoreConcreteLibfunc::Uint64(selector) => self::uint64::eval(registry, selector, args),
