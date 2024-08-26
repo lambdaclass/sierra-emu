@@ -6,7 +6,7 @@ use std::collections::BTreeMap;
 
 #[derive(Clone, Debug, Default, Serialize)]
 pub struct ProgramTrace {
-    states: Vec<StateDump>,
+    pub states: Vec<StateDump>,
     // TODO: Syscall data.
 }
 
@@ -17,6 +17,10 @@ impl ProgramTrace {
 
     pub fn push(&mut self, state: StateDump) {
         self.states.push(state);
+    }
+
+    pub fn index(&self, index: u64) -> StateDump {
+        self.states[index as usize].clone()
     }
 }
 
@@ -35,6 +39,10 @@ impl StateDump {
                 .map(|(id, value)| (id.id, value))
                 .collect(),
         }
+    }
+
+    pub fn item(&self) -> BTreeMap<u64, Value> {
+        self.items.clone()
     }
 }
 

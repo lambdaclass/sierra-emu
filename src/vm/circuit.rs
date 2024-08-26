@@ -1,3 +1,5 @@
+use std::u8;
+
 use super::EvalAction;
 use crate::Value;
 use cairo_lang_sierra::{
@@ -11,8 +13,9 @@ use cairo_lang_sierra::{
     },
     program_registry::ProgramRegistry,
 };
-use num_bigint::{BigInt, BigUint, ToBigInt};
+use num_bigint::{BigInt, BigUint, Sign, ToBigInt};
 use smallvec::smallvec;
+use starknet_types_core::felt::Felt;
 
 pub fn eval(
     registry: &ProgramRegistry<CoreType, CoreLibfunc>,
@@ -154,7 +157,7 @@ pub fn eval_eval(
                         // if it is a inv_gate the output index is store in lhs
                         outputs[mul_gate.lhs] = Some(res);
                     }
-                    // this state should be reached since it would mean that
+                    // this state should not be reached since it would mean that
                     // not all the circuit's inputs where filled
                     _ => unreachable!(),
                 }
@@ -168,8 +171,6 @@ pub fn eval_eval(
         .skip(1 + circ_info.n_inputs)
         .collect::<Option<Vec<BigUint>>>()
         .expect("The circuit cannot be calculated");
-
-    dbg!(&values);
 
     if success {
         EvalAction::NormalBranch(
@@ -196,15 +197,16 @@ pub fn eval_get_output(
     let gate_offset = circuit_info.values.get(&_info.output_ty).unwrap().clone();
     let output_idx = gate_offset - 1 - circuit_info.n_inputs;
     let output = outputs[output_idx].to_owned();
-    let output_ubig = output.to_bigint().unwrap();
-    let mask = BigInt::from_bytes_be(num_bigint::Sign::Plus, &[255; 12]);
+    let output_big = output.to_bigint().unwrap();
 
-    let l0: BigInt = (&output_ubig & &mask).to_bigint().unwrap();
-    let l1: BigInt = &output_ubig & (&mask >> 96);
-    let l2: BigInt = &output_ubig & (&mask >> 192);
-    let l3: BigInt = output_ubig & (mask >> 288);
+    let mask: BigInt = BigInt::from_bytes_be(Sign::Plus, &[255; 12]);
 
-    let range = BigInt::ZERO..BigInt::from(96_u8);
+    let l0: BigInt = &output_big & &mask;
+    let l1: BigInt = (&output_big >> 96) & &mask;
+    let l2: BigInt = (&output_big >> 192) & &mask;
+    let l3: BigInt = (output_big >> 288) & &mask;
+
+    let range = BigInt::ZERO..(BigInt::from(1) << 96);
     let vec_values = vec![
         Value::BoundedInt {
             range: range.clone(),
@@ -351,4 +353,15 @@ pub fn eval_into_u96_guarantee(
     assert_eq!(range, BigInt::ZERO..(BigInt::from(1) << 96));
 
     EvalAction::NormalBranch(0, smallvec![Value::U128(value.try_into().unwrap())])
+}
+
+#[cfg(test)]
+mod tests {
+    use std::path::Path;
+
+    use cairo_lang_compiler::CompilerConfig;
+    use cairo_lang_starknet::compile::compile_path;
+    use num_bigint::BigInt;
+
+    use crate::{ProgramTrace, StateDump, Value, VirtualMachine};
 }
