@@ -33,10 +33,27 @@ pub fn eval(
         Uint128Concrete::IsZero(info) => eval_is_zero(registry, info, args),
         Uint128Concrete::Divmod(info) => eval_divmod(registry, info, args),
         Uint128Concrete::Bitwise(info) => eval_bitwise(registry, info, args),
-        Uint128Concrete::GuaranteeMul(_) => todo!(),
+        Uint128Concrete::GuaranteeMul(info) => eval_guarantee_mul(registry, info, args),
         Uint128Concrete::MulGuaranteeVerify(info) => eval_guarantee_verify(registry, info, args),
         Uint128Concrete::ByteReverse(_) => todo!(),
     }
+}
+
+pub fn eval_guarantee_mul(
+    _registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    _info: &SignatureOnlyConcreteLibfunc,
+    args: Vec<Value>,
+) -> EvalAction {
+    let [Value::U128(lhs), Value::U128(rhs)]: [Value; 2] = args.try_into().unwrap() else {
+        panic!()
+    };
+
+    let mask128 = BigUint::from(u128::MAX);
+    let result = BigUint::from(lhs) * BigUint::from(rhs);
+    let high = Value::U128((&result >> 128u32).try_into().unwrap());
+    let low = Value::U128((result & mask128).try_into().unwrap());
+
+    EvalAction::NormalBranch(0, smallvec![high, low, Value::Unit])
 }
 
 pub fn eval_guarantee_verify(

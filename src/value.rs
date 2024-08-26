@@ -2,6 +2,7 @@ use cairo_lang_sierra::{
     extensions::{
         core::{CoreLibfunc, CoreType, CoreTypeConcrete},
         starknet::StarkNetTypeConcrete,
+        ConcreteType,
     },
     ids::ConcreteTypeId,
     program_registry::ProgramRegistry,
@@ -76,7 +77,8 @@ impl Value {
         registry: &ProgramRegistry<CoreType, CoreLibfunc>,
         type_id: &ConcreteTypeId,
     ) -> bool {
-        match registry.get_type(type_id).unwrap() {
+        let ty = registry.get_type(type_id).unwrap();
+        let res = match ty {
             CoreTypeConcrete::Array(info) => {
                 matches!(self, Self::Array { ty, .. } if *ty == info.ty)
             }
@@ -145,7 +147,13 @@ impl Value {
                 StarkNetTypeConcrete::Sha256StateHandle(_) => todo!(),
             },
             CoreTypeConcrete::BoundedInt(_) => matches!(self, Self::BoundedInt { .. }),
+        };
+
+        if !res {
+            dbg!("value is mismatch", ty.info(), self);
         }
+
+        res
     }
 
     #[doc(hidden)]
