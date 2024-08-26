@@ -27,10 +27,27 @@ pub fn eval(
         Uint8Concrete::ToFelt252(info) => eval_to_felt252(registry, info, args),
         Uint8Concrete::FromFelt252(info) => eval_from_felt(registry, info, args),
         Uint8Concrete::IsZero(info) => eval_is_zero(registry, info, args),
-        Uint8Concrete::Divmod(_) => todo!(),
+        Uint8Concrete::Divmod(info) => eval_divmod(registry, info, args),
         Uint8Concrete::WideMul(info) => eval_widemul(registry, info, args),
-        Uint8Concrete::Bitwise(_) => todo!(),
+        Uint8Concrete::Bitwise(info) => eval_bitwise(registry, info, args),
     }
+}
+
+pub fn eval_divmod(
+    _registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    _info: &SignatureOnlyConcreteLibfunc,
+    args: Vec<Value>,
+) -> EvalAction {
+    let [range_check @ Value::Unit, Value::U8(x), Value::U8(y)]: [Value; 3] =
+        args.try_into().unwrap()
+    else {
+        panic!()
+    };
+
+    let val = Value::U8(x / y);
+    let rem = Value::U8(x % y);
+
+    EvalAction::NormalBranch(0, smallvec![range_check, val, rem])
 }
 
 pub fn eval_to_felt252(
@@ -97,6 +114,27 @@ pub fn eval_equal(
     };
 
     EvalAction::NormalBranch((lhs == rhs) as usize, smallvec![])
+}
+
+pub fn eval_bitwise(
+    _registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    _info: &SignatureOnlyConcreteLibfunc,
+    args: Vec<Value>,
+) -> EvalAction {
+    let [bitwise @ Value::Unit, Value::U8(lhs), Value::U8(rhs)]: [Value; 3] =
+        args.try_into().unwrap()
+    else {
+        panic!()
+    };
+
+    let and = lhs & rhs;
+    let or = lhs | rhs;
+    let xor = lhs ^ rhs;
+
+    EvalAction::NormalBranch(
+        0,
+        smallvec![bitwise, Value::U8(and), Value::U8(or), Value::U8(xor)],
+    )
 }
 
 pub fn eval_is_zero(

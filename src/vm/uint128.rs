@@ -28,7 +28,7 @@ pub fn eval(
         Uint128Concrete::FromFelt252(info) => eval_from_felt(registry, info, args),
         Uint128Concrete::IsZero(info) => eval_is_zero(registry, info, args),
         Uint128Concrete::Divmod(_) => todo!(),
-        Uint128Concrete::Bitwise(_) => todo!(),
+        Uint128Concrete::Bitwise(info) => eval_bitwise(registry, info, args),
         Uint128Concrete::GuaranteeMul(_) => todo!(),
         Uint128Concrete::MulGuaranteeVerify(_) => todo!(),
         Uint128Concrete::ByteReverse(_) => todo!(),
@@ -83,6 +83,27 @@ pub fn eval_is_zero(
     } else {
         EvalAction::NormalBranch(1, smallvec![vm_value])
     }
+}
+
+pub fn eval_bitwise(
+    _registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    _info: &SignatureOnlyConcreteLibfunc,
+    args: Vec<Value>,
+) -> EvalAction {
+    let [bitwise @ Value::Unit, Value::U128(lhs), Value::U128(rhs)]: [Value; 3] =
+        args.try_into().unwrap()
+    else {
+        panic!()
+    };
+
+    let and = lhs & rhs;
+    let or = lhs | rhs;
+    let xor = lhs ^ rhs;
+
+    EvalAction::NormalBranch(
+        0,
+        smallvec![bitwise, Value::U128(and), Value::U128(or), Value::U128(xor)],
+    )
 }
 
 pub fn eval_const(

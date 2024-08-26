@@ -29,7 +29,7 @@ pub fn eval(
         Uint32Concrete::IsZero(info) => eval_is_zero(registry, info, args),
         Uint32Concrete::Divmod(info) => eval_divmod(registry, info, args),
         Uint32Concrete::WideMul(info) => eval_widemul(registry, info, args),
-        Uint32Concrete::Bitwise(_) => todo!(),
+        Uint32Concrete::Bitwise(info) => eval_bitwise(registry, info, args),
     }
 }
 
@@ -102,6 +102,27 @@ pub fn eval_equal(
     };
 
     EvalAction::NormalBranch((lhs == rhs) as usize, smallvec![])
+}
+
+pub fn eval_bitwise(
+    _registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    _info: &SignatureOnlyConcreteLibfunc,
+    args: Vec<Value>,
+) -> EvalAction {
+    let [bitwise @ Value::Unit, Value::U32(lhs), Value::U32(rhs)]: [Value; 3] =
+        args.try_into().unwrap()
+    else {
+        panic!()
+    };
+
+    let and = lhs & rhs;
+    let or = lhs | rhs;
+    let xor = lhs ^ rhs;
+
+    EvalAction::NormalBranch(
+        0,
+        smallvec![bitwise, Value::U32(and), Value::U32(or), Value::U32(xor)],
+    )
 }
 
 pub fn eval_is_zero(
