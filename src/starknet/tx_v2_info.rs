@@ -31,36 +31,36 @@ impl TxV2Info {
             Value::Felt(self.version),
             Value::Felt(self.account_contract_address),
             Value::U128(self.max_fee),
-            Value::Array {
+            Value::Struct(vec![Value::Array {
                 ty: felt252_ty.clone(),
                 data: self.signature.into_iter().map(Value::Felt).collect(),
-            },
+            }]),
             Value::Felt(self.transaction_hash),
             Value::Felt(self.chain_id),
             Value::Felt(self.nonce),
-            Value::Array {
+            Value::Struct(vec![Value::Array {
                 ty: resource_bounds_ty,
                 data: self
                     .resource_bounds
                     .into_iter()
                     .map(ResourceBounds::into_value)
                     .collect(),
-            },
+            }]),
             Value::U128(self.tip),
-            Value::Array {
+            Value::Struct(vec![Value::Array {
                 ty: felt252_ty.clone(),
                 data: self.paymaster_data.into_iter().map(Value::Felt).collect(),
-            },
+            }]),
             Value::U32(self.nonce_data_availability_mode),
             Value::U32(self.fee_data_availability_mode),
-            Value::Array {
+            Value::Struct(vec![Value::Array {
                 ty: felt252_ty,
                 data: self
                     .account_deployment_data
                     .into_iter()
                     .map(Value::Felt)
                     .collect(),
-            },
+            }]),
         ])
     }
 }

@@ -18,7 +18,9 @@ pub fn eval(
     match selector {
         StructConcreteLibfunc::Construct(info) => eval_construct(registry, info, args),
         StructConcreteLibfunc::Deconstruct(info) => eval_deconstruct(registry, info, args),
-        StructConcreteLibfunc::SnapshotDeconstruct(_) => todo!(),
+        StructConcreteLibfunc::SnapshotDeconstruct(info) => {
+            eval_snapshot_deconstruct(registry, info, args)
+        }
     }
 }
 
@@ -54,6 +56,36 @@ pub fn eval_deconstruct(
     let CoreTypeConcrete::Struct(StructConcreteType { members, .. }) = registry
         .get_type(&info.signature.param_signatures[0].ty)
         .unwrap()
+    else {
+        panic!()
+    };
+    assert_eq!(values.len(), members.len());
+    assert!(values
+        .iter()
+        .zip(members)
+        .all(|(value, ty)| value.is(registry, ty)));
+
+    EvalAction::NormalBranch(0, values.into())
+}
+
+pub fn eval_snapshot_deconstruct(
+    registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    info: &SignatureOnlyConcreteLibfunc,
+    args: Vec<Value>,
+) -> EvalAction {
+    let [Value::Struct(values)]: [Value; 1] = args.try_into().unwrap() else {
+        panic!()
+    };
+
+    let CoreTypeConcrete::Snapshot(snapshot_ty) = registry
+        .get_type(&info.signature.param_signatures[0].ty)
+        .unwrap()
+    else {
+        panic!()
+    };
+
+    let CoreTypeConcrete::Struct(StructConcreteType { members, .. }) =
+        registry.get_type(&snapshot_ty.ty).unwrap()
     else {
         panic!()
     };
