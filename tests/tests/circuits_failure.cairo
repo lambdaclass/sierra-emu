@@ -6,15 +6,12 @@ use core::circuit::{
 
 fn main() {
     let in1 = CircuitElement::<CircuitInput<0>> {};
-    let in2 = CircuitElement::<CircuitInput<1>> {};
-    let sub = circuit_sub(in1, in2);
-    let inv = circuit_inverse(sub);
+    let inv = circuit_inverse(in1);
 
     let modulus = TryInto::<_, CircuitModulus>::try_into([7, 0, 0, 0]).unwrap();
     let outputs = (inv,)
         .new_inputs()
-        .next([6, 0, 0, 0])
-        .next([6, 0, 0, 0])
+        .next([0, 0, 0, 0])
         .done()
         .eval(modulus)
         .unwrap();

@@ -150,8 +150,7 @@ pub fn eval_eval(
                         let res = match r.modinv(&modulus) {
                             Some(inv) => inv,
                             None => {
-                                // attempted to get the inverse of 0,
-                                break false;
+                                panic!("attempt to divide by 0");
                             }
                         };
                         // if it is a inv_gate the output index is store in lhs
@@ -353,15 +352,4 @@ pub fn eval_into_u96_guarantee(
     assert_eq!(range, BigInt::ZERO..(BigInt::from(1) << 96));
 
     EvalAction::NormalBranch(0, smallvec![Value::U128(value.try_into().unwrap())])
-}
-
-#[cfg(test)]
-mod tests {
-    use std::path::Path;
-
-    use cairo_lang_compiler::CompilerConfig;
-    use cairo_lang_starknet::compile::compile_path;
-    use num_bigint::BigInt;
-
-    use crate::{ProgramTrace, StateDump, Value, VirtualMachine};
 }
