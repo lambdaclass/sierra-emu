@@ -4,7 +4,7 @@ use cairo_lang_sierra::{
     extensions::{
         core::{CoreLibfunc, CoreType},
         int::{
-            unsigned::{Uint8Concrete, Uint8Traits},
+            unsigned::{Uint64Concrete, Uint64Traits},
             IntConstConcreteLibfunc, IntOperationConcreteLibfunc, IntOperator,
         },
         lib_func::SignatureOnlyConcreteLibfunc,
@@ -16,20 +16,20 @@ use starknet_crypto::Felt;
 
 pub fn eval(
     registry: &ProgramRegistry<CoreType, CoreLibfunc>,
-    selector: &Uint8Concrete,
+    selector: &Uint64Concrete,
     args: Vec<Value>,
 ) -> EvalAction {
     match selector {
-        Uint8Concrete::Const(info) => eval_const(registry, info, args),
-        Uint8Concrete::Operation(info) => eval_operation(registry, info, args),
-        Uint8Concrete::SquareRoot(_) => todo!(),
-        Uint8Concrete::Equal(info) => eval_equal(registry, info, args),
-        Uint8Concrete::ToFelt252(info) => eval_to_felt252(registry, info, args),
-        Uint8Concrete::FromFelt252(info) => eval_from_felt(registry, info, args),
-        Uint8Concrete::IsZero(info) => eval_is_zero(registry, info, args),
-        Uint8Concrete::Divmod(info) => eval_divmod(registry, info, args),
-        Uint8Concrete::WideMul(info) => eval_widemul(registry, info, args),
-        Uint8Concrete::Bitwise(info) => eval_bitwise(registry, info, args),
+        Uint64Concrete::Const(info) => eval_const(registry, info, args),
+        Uint64Concrete::Operation(info) => eval_operation(registry, info, args),
+        Uint64Concrete::SquareRoot(_) => todo!(),
+        Uint64Concrete::Equal(info) => eval_equal(registry, info, args),
+        Uint64Concrete::ToFelt252(info) => eval_to_felt252(registry, info, args),
+        Uint64Concrete::FromFelt252(info) => eval_from_felt(registry, info, args),
+        Uint64Concrete::IsZero(info) => eval_is_zero(registry, info, args),
+        Uint64Concrete::Divmod(info) => eval_divmod(registry, info, args),
+        Uint64Concrete::WideMul(info) => eval_widemul(registry, info, args),
+        Uint64Concrete::Bitwise(info) => eval_bitwise(registry, info, args),
     }
 }
 
@@ -38,50 +38,16 @@ pub fn eval_divmod(
     _info: &SignatureOnlyConcreteLibfunc,
     args: Vec<Value>,
 ) -> EvalAction {
-    let [range_check @ Value::Unit, Value::U8(x), Value::U8(y)]: [Value; 3] =
+    let [range_check @ Value::Unit, Value::U64(x), Value::U64(y)]: [Value; 3] =
         args.try_into().unwrap()
     else {
         panic!()
     };
 
-    let val = Value::U8(x / y);
-    let rem = Value::U8(x % y);
+    let val = Value::U64(x / y);
+    let rem = Value::U64(x % y);
 
     EvalAction::NormalBranch(0, smallvec![range_check, val, rem])
-}
-
-pub fn eval_to_felt252(
-    _registry: &ProgramRegistry<CoreType, CoreLibfunc>,
-    _info: &SignatureOnlyConcreteLibfunc,
-    args: Vec<Value>,
-) -> EvalAction {
-    let [Value::U8(value)]: [Value; 1] = args.try_into().unwrap() else {
-        panic!()
-    };
-
-    EvalAction::NormalBranch(0, smallvec![Value::Felt(value.into())])
-}
-
-pub fn eval_operation(
-    _registry: &ProgramRegistry<CoreType, CoreLibfunc>,
-    info: &IntOperationConcreteLibfunc,
-    args: Vec<Value>,
-) -> EvalAction {
-    let [range_check @ Value::Unit, Value::U8(lhs), Value::U8(rhs)]: [Value; 3] =
-        args.try_into().unwrap()
-    else {
-        panic!()
-    };
-
-    let (result, has_overflow) = match info.operator {
-        IntOperator::OverflowingAdd => lhs.overflowing_add(rhs),
-        IntOperator::OverflowingSub => lhs.overflowing_sub(rhs),
-    };
-
-    EvalAction::NormalBranch(
-        has_overflow as usize,
-        smallvec![range_check, Value::U8(result)],
-    )
 }
 
 pub fn eval_from_felt(
@@ -94,14 +60,36 @@ pub fn eval_from_felt(
         panic!()
     };
 
-    let max = Felt::from(u8::MAX);
+    let max = Felt::from(u64::MAX);
 
     if value <= max {
-        let value: u8 = value.to_biguint().try_into().unwrap();
-        EvalAction::NormalBranch(0, smallvec![range_check, Value::U8(value)])
+        let value: u64 = value.to_biguint().try_into().unwrap();
+        EvalAction::NormalBranch(0, smallvec![range_check, Value::U64(value)])
     } else {
         EvalAction::NormalBranch(1, smallvec![range_check])
     }
+}
+
+pub fn eval_operation(
+    _registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    info: &IntOperationConcreteLibfunc,
+    args: Vec<Value>,
+) -> EvalAction {
+    let [range_check @ Value::Unit, Value::U64(lhs), Value::U64(rhs)]: [Value; 3] =
+        args.try_into().unwrap()
+    else {
+        panic!()
+    };
+
+    let (result, has_overflow) = match info.operator {
+        IntOperator::OverflowingAdd => lhs.overflowing_add(rhs),
+        IntOperator::OverflowingSub => lhs.overflowing_sub(rhs),
+    };
+
+    EvalAction::NormalBranch(
+        has_overflow as usize,
+        smallvec![range_check, Value::U64(result)],
+    )
 }
 
 pub fn eval_equal(
@@ -109,7 +97,7 @@ pub fn eval_equal(
     _info: &SignatureOnlyConcreteLibfunc,
     args: Vec<Value>,
 ) -> EvalAction {
-    let [Value::U8(lhs), Value::U8(rhs)]: [Value; 2] = args.try_into().unwrap() else {
+    let [Value::U64(lhs), Value::U64(rhs)]: [Value; 2] = args.try_into().unwrap() else {
         panic!()
     };
 
@@ -121,7 +109,7 @@ pub fn eval_bitwise(
     _info: &SignatureOnlyConcreteLibfunc,
     args: Vec<Value>,
 ) -> EvalAction {
-    let [bitwise @ Value::Unit, Value::U8(lhs), Value::U8(rhs)]: [Value; 3] =
+    let [bitwise @ Value::Unit, Value::U64(lhs), Value::U64(rhs)]: [Value; 3] =
         args.try_into().unwrap()
     else {
         panic!()
@@ -133,7 +121,7 @@ pub fn eval_bitwise(
 
     EvalAction::NormalBranch(
         0,
-        smallvec![bitwise, Value::U8(and), Value::U8(or), Value::U8(xor)],
+        smallvec![bitwise, Value::U64(and), Value::U64(or), Value::U64(xor)],
     )
 }
 
@@ -142,7 +130,7 @@ pub fn eval_is_zero(
     _info: &SignatureOnlyConcreteLibfunc,
     args: Vec<Value>,
 ) -> EvalAction {
-    let [vm_value @ Value::U8(value)]: [Value; 1] = args.try_into().unwrap() else {
+    let [vm_value @ Value::U64(value)]: [Value; 1] = args.try_into().unwrap() else {
         panic!()
     };
 
@@ -153,12 +141,24 @@ pub fn eval_is_zero(
     }
 }
 
+pub fn eval_to_felt252(
+    _registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    _info: &SignatureOnlyConcreteLibfunc,
+    args: Vec<Value>,
+) -> EvalAction {
+    let [Value::U64(value)]: [Value; 1] = args.try_into().unwrap() else {
+        panic!()
+    };
+
+    EvalAction::NormalBranch(0, smallvec![Value::Felt(value.into())])
+}
+
 pub fn eval_const(
     _registry: &ProgramRegistry<CoreType, CoreLibfunc>,
-    info: &IntConstConcreteLibfunc<Uint8Traits>,
+    info: &IntConstConcreteLibfunc<Uint64Traits>,
     _args: Vec<Value>,
 ) -> EvalAction {
-    EvalAction::NormalBranch(0, smallvec![Value::U8(info.c)])
+    EvalAction::NormalBranch(0, smallvec![Value::U64(info.c)])
 }
 
 pub fn eval_widemul(
@@ -166,11 +166,11 @@ pub fn eval_widemul(
     _info: &SignatureOnlyConcreteLibfunc,
     args: Vec<Value>,
 ) -> EvalAction {
-    let [Value::U8(lhs), Value::U8(rhs)]: [Value; 2] = args.try_into().unwrap() else {
+    let [Value::U64(lhs), Value::U64(rhs)]: [Value; 2] = args.try_into().unwrap() else {
         panic!()
     };
 
-    let result = (lhs as u16) * (rhs as u16);
+    let result = (lhs as u128) * (rhs as u128);
 
-    EvalAction::NormalBranch(0, smallvec![Value::U16(result)])
+    EvalAction::NormalBranch(0, smallvec![Value::U128(result)])
 }

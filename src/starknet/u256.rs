@@ -7,6 +7,7 @@ pub struct U256 {
 }
 
 impl U256 {
+    #[allow(unused)]
     pub(crate) fn into_value(self) -> Value {
         Value::Struct(vec![Value::U128(self.lo), Value::U128(self.hi)])
     }

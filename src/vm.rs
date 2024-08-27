@@ -7,26 +7,30 @@ use cairo_lang_sierra::{
     extensions::{
         core::{CoreConcreteLibfunc, CoreLibfunc, CoreType, CoreTypeConcrete},
         starknet::StarkNetTypeConcrete,
+        ConcreteType,
     },
     ids::{ConcreteLibfuncId, FunctionId, VarId},
     program::{GenFunction, GenStatement, Invocation, Program, StatementIdx},
     program_registry::ProgramRegistry,
 };
 use cairo_lang_utils::ordered_hash_map::OrderedHashMap;
-use smallvec::SmallVec;
+use smallvec::{smallvec, SmallVec};
 use starknet_types_core::felt::Felt;
 use std::{cell::Cell, sync::Arc};
 use tracing::debug;
 
 mod ap_tracking;
 mod array;
+mod bool;
 mod bounded_int;
 mod r#box;
 mod branch_align;
+mod bytes31;
 mod cast;
 mod r#const;
 mod drop;
 mod dup;
+mod ec;
 mod r#enum;
 mod felt252;
 mod felt252_dict;
@@ -35,16 +39,22 @@ mod function_call;
 mod gas;
 mod jump;
 mod mem;
+mod pedersen;
+mod poseidon;
 mod snapshot_take;
 mod starknet;
 mod r#struct;
+mod uint128;
+mod uint16;
+mod uint252;
 mod uint32;
+mod uint64;
 mod uint8;
 
 pub struct VirtualMachine<S: StarknetSyscallHandler = StubSyscallHandler> {
     program: Arc<Program>,
     registry: ProgramRegistry<CoreType, CoreLibfunc>,
-    syscall_handler: S,
+    pub syscall_handler: S,
     frames: Vec<SierraFrame>,
 }
 
@@ -123,8 +133,11 @@ impl<S: StarknetSyscallHandler> VirtualMachine<S> {
                         | CoreTypeConcrete::Poseidon(_)
                         | CoreTypeConcrete::Bitwise(_)
                         | CoreTypeConcrete::BuiltinCosts(_)
+                        | CoreTypeConcrete::EcOp(_)
                         | CoreTypeConcrete::SegmentArena(_) => Value::Unit,
-                        _ => unreachable!(),
+                        x => {
+                            todo!("{:?}", x.info())
+                        }
                     }
                 })
                 .collect::<Vec<_>>(),
@@ -166,8 +179,8 @@ impl<S: StarknetSyscallHandler> VirtualMachine<S> {
         let state_snapshot = frame.state.get_mut().clone();
 
         debug!(
-            "Evaluating statement {} ({})",
-            frame.pc.0, &self.program.statements[frame.pc.0]
+            "Evaluating statement {} ({}) (values: \n{:#?}\n)",
+            frame.pc.0, &self.program.statements[frame.pc.0], state_snapshot
         );
         match &self.program.statements[frame.pc.0] {
             GenStatement::Invocation(invocation) => {
@@ -269,13 +282,13 @@ fn eval<'a>(
             self::ap_tracking::eval(registry, selector, args)
         }
         CoreConcreteLibfunc::Array(selector) => self::array::eval(registry, selector, args),
-        CoreConcreteLibfunc::Bool(_) => todo!(),
+        CoreConcreteLibfunc::Bool(selector) => self::bool::eval(registry, selector, args),
         CoreConcreteLibfunc::BoundedInt(selector) => {
             self::bounded_int::eval(registry, selector, args)
         }
         CoreConcreteLibfunc::Box(selector) => self::r#box::eval(registry, selector, args),
         CoreConcreteLibfunc::BranchAlign(info) => self::branch_align::eval(registry, info, args),
-        CoreConcreteLibfunc::Bytes31(_) => todo!(),
+        CoreConcreteLibfunc::Bytes31(selector) => self::bytes31::eval(registry, selector, args),
         CoreConcreteLibfunc::Cast(selector) => self::cast::eval(registry, selector, args),
         CoreConcreteLibfunc::Circuit(_) => todo!(),
         CoreConcreteLibfunc::Const(selector) => self::r#const::eval(registry, selector, args),
@@ -284,7 +297,7 @@ fn eval<'a>(
         CoreConcreteLibfunc::Debug(_) => todo!(),
         CoreConcreteLibfunc::Drop(info) => self::drop::eval(registry, info, args),
         CoreConcreteLibfunc::Dup(info) => self::dup::eval(registry, info, args),
-        CoreConcreteLibfunc::Ec(_) => todo!(),
+        CoreConcreteLibfunc::Ec(selector) => self::ec::eval(registry, selector, args),
         CoreConcreteLibfunc::Enum(selector) => self::r#enum::eval(registry, selector, args),
         CoreConcreteLibfunc::Felt252(selector) => self::felt252::eval(registry, selector, args),
         CoreConcreteLibfunc::Felt252Dict(selector) => {
@@ -297,8 +310,8 @@ fn eval<'a>(
         CoreConcreteLibfunc::Gas(selector) => self::gas::eval(registry, selector, args),
         CoreConcreteLibfunc::Mem(selector) => self::mem::eval(registry, selector, args),
         CoreConcreteLibfunc::Nullable(_) => todo!(),
-        CoreConcreteLibfunc::Pedersen(_) => todo!(),
-        CoreConcreteLibfunc::Poseidon(_) => todo!(),
+        CoreConcreteLibfunc::Pedersen(selector) => self::pedersen::eval(registry, selector, args),
+        CoreConcreteLibfunc::Poseidon(selector) => self::poseidon::eval(registry, selector, args),
         CoreConcreteLibfunc::Sint128(_) => todo!(),
         CoreConcreteLibfunc::Sint16(_) => todo!(),
         CoreConcreteLibfunc::Sint32(_) => todo!(),
@@ -309,14 +322,18 @@ fn eval<'a>(
             self::starknet::eval(registry, selector, args, syscall_handler)
         }
         CoreConcreteLibfunc::Struct(selector) => self::r#struct::eval(registry, selector, args),
-        CoreConcreteLibfunc::Uint128(_) => todo!(),
-        CoreConcreteLibfunc::Uint16(_) => todo!(),
-        CoreConcreteLibfunc::Uint256(_) => todo!(),
+        CoreConcreteLibfunc::Uint128(selector) => self::uint128::eval(registry, selector, args),
+        CoreConcreteLibfunc::Uint16(selector) => self::uint16::eval(registry, selector, args),
+        CoreConcreteLibfunc::Uint256(selector) => self::uint252::eval(registry, selector, args),
         CoreConcreteLibfunc::Uint32(selector) => self::uint32::eval(registry, selector, args),
         CoreConcreteLibfunc::Uint512(_) => todo!(),
-        CoreConcreteLibfunc::Uint64(_) => todo!(),
+        CoreConcreteLibfunc::Uint64(selector) => self::uint64::eval(registry, selector, args),
         CoreConcreteLibfunc::Uint8(selector) => self::uint8::eval(registry, selector, args),
         CoreConcreteLibfunc::UnconditionalJump(info) => self::jump::eval(registry, info, args),
-        CoreConcreteLibfunc::UnwrapNonZero(_) => todo!(),
+        CoreConcreteLibfunc::UnwrapNonZero(_info) => {
+            let [value] = args.try_into().unwrap();
+
+            EvalAction::NormalBranch(0, smallvec![value])
+        }
     }
 }

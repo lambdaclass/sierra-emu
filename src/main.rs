@@ -99,9 +99,10 @@ mod test {
     use std::path::Path;
 
     use cairo_lang_compiler::CompilerConfig;
-    use cairo_lang_sierra::program::{GenFunction, Program, StatementIdx};
     use cairo_lang_starknet::compile::compile_path;
-    use sierra_emu::{ProgramTrace, StateDump, VirtualMachine};
+    use sierra_emu::{
+        find_entry_point_by_idx, ContractExecutionResult, ProgramTrace, StateDump, VirtualMachine,
+    };
 
     #[test]
     fn test_contract() {
@@ -171,17 +172,14 @@ mod test {
             trace.push(StateDump::new(statement_idx, state));
         }
 
+        assert!(!vm.syscall_handler.storage.is_empty());
+
+        let result = ContractExecutionResult::from_trace(&trace).unwrap();
+        assert!(!result.failure_flag);
+        assert_eq!(result.return_values.len(), 0);
+        assert_eq!(result.error_msg, None);
+
         // let trace_str = serde_json::to_string_pretty(&trace).unwrap();
         // std::fs::write("contract_trace.json", trace_str).unwrap();
-    }
-
-    pub fn find_entry_point_by_idx(
-        program: &Program,
-        entry_point_idx: usize,
-    ) -> Option<&GenFunction<StatementIdx>> {
-        program
-            .funcs
-            .iter()
-            .find(|x| x.id.id == entry_point_idx as u64)
     }
 }
