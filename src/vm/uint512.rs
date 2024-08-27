@@ -1,5 +1,8 @@
 use super::EvalAction;
-use crate::{vm::uint252::{u256_to_biguint, u256_to_value, u516_to_value}, Value};
+use crate::{
+    vm::uint252::{u256_to_biguint, u256_to_value, u516_to_value},
+    Value,
+};
 use cairo_lang_sierra::{
     extensions::{
         core::{CoreLibfunc, CoreType},
@@ -32,13 +35,16 @@ pub fn eval_divmod(
         panic!()
     };
 
-    let [Value::U128(div_0), Value::U128(div_1), Value::U128(div_2), Value::U128(div_3)]: [Value; 4] = lhs.try_into().unwrap() else {
+    let [Value::U128(div_0), Value::U128(div_1), Value::U128(div_2), Value::U128(div_3)]: [Value;
+        4] = lhs.try_into().unwrap()
+    else {
         panic!()
     };
 
     let lhs = u256_to_biguint(div_0, div_1) | (u256_to_biguint(div_2, div_3) << 256);
 
-    let [Value::U128(divisor_0), Value::U128(divisor_1)]: [Value; 2] = rhs.try_into().unwrap() else {
+    let [Value::U128(divisor_0), Value::U128(divisor_1)]: [Value; 2] = rhs.try_into().unwrap()
+    else {
         panic!()
     };
 

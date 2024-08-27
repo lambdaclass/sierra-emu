@@ -23,7 +23,7 @@ pub fn eval(
         ArrayConcreteLibfunc::PopFront(info) => eval_pop_front(registry, info, args),
         ArrayConcreteLibfunc::PopFrontConsume(_) => todo!(),
         ArrayConcreteLibfunc::Get(info) => eval_get(registry, info, args),
-        ArrayConcreteLibfunc::Slice(_) => todo!(),
+        ArrayConcreteLibfunc::Slice(info) => eval_slice(registry, info, args),
         ArrayConcreteLibfunc::Len(info) => eval_len(registry, info, args),
         ArrayConcreteLibfunc::SnapshotPopFront(info) => {
             eval_snapshot_pop_front(registry, info, args)
@@ -88,6 +88,32 @@ pub fn eval_get(
     match data.get(index as usize).cloned() {
         Some(value) => EvalAction::NormalBranch(0, smallvec![range_check, value]),
         None => EvalAction::NormalBranch(0, smallvec![range_check]),
+    }
+}
+
+pub fn eval_slice(
+    _registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    _info: &SignatureAndTypeConcreteLibfunc,
+    args: Vec<Value>,
+) -> EvalAction {
+    let [range_check @ Value::Unit, Value::Array { data, ty }, Value::U32(start), Value::U32(len)]: [Value; 4] =
+        args.try_into().unwrap()
+    else {
+        panic!()
+    };
+
+    match data.get(start as usize..(start + len) as usize) {
+        Some(value) => EvalAction::NormalBranch(
+            0,
+            smallvec![
+                range_check,
+                Value::Array {
+                    data: value.to_vec(),
+                    ty
+                }
+            ],
+        ),
+        None => EvalAction::NormalBranch(1, smallvec![range_check]),
     }
 }
 

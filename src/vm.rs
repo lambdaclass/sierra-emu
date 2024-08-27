@@ -48,9 +48,9 @@ mod uint128;
 mod uint16;
 mod uint252;
 mod uint32;
+mod uint512;
 mod uint64;
 mod uint8;
-mod uint512;
 
 pub struct VirtualMachine<S: StarknetSyscallHandler = StubSyscallHandler> {
     program: Arc<Program>,
