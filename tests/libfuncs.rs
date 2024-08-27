@@ -2,9 +2,12 @@ use std::{path::Path, sync::Arc};
 
 use cairo_lang_compiler::{compile_cairo_project_at_path, CompilerConfig};
 use cairo_lang_sierra::{
-    extensions::{core::CoreTypeConcrete, starknet::StarkNetTypeConcrete},
+    extensions::{
+        circuit::CircuitTypeConcrete, core::CoreTypeConcrete, starknet::StarkNetTypeConcrete,
+    },
     program::{GenFunction, Program, StatementIdx},
 };
+use num_bigint::BigInt;
 use sierra_emu::{ProgramTrace, StateDump, Value, VirtualMachine};
 
 fn run_program(path: &str, func_name: &str, args: &[Value]) -> Vec<Value> {
@@ -40,11 +43,15 @@ fn run_program(path: &str, func_name: &str, args: &[Value]) -> Vec<Value> {
                     CoreTypeConcrete::GasBuiltin(_) => Value::U128(initial_gas),
                     CoreTypeConcrete::StarkNet(StarkNetTypeConcrete::System(_)) => Value::Unit,
                     CoreTypeConcrete::RangeCheck(_)
+                    | CoreTypeConcrete::RangeCheck96(_)
                     | CoreTypeConcrete::Pedersen(_)
                     | CoreTypeConcrete::Poseidon(_)
                     | CoreTypeConcrete::Bitwise(_)
                     | CoreTypeConcrete::BuiltinCosts(_)
-                    | CoreTypeConcrete::SegmentArena(_) => Value::Unit,
+                    | CoreTypeConcrete::SegmentArena(_)
+                    | CoreTypeConcrete::Circuit(
+                        CircuitTypeConcrete::AddMod(_) | CircuitTypeConcrete::MulMod(_),
+                    ) => Value::Unit,
                     _ => args.next().unwrap(),
                 }
             })
@@ -130,4 +137,54 @@ pub fn find_entry_point_by_name<'a>(
         .funcs
         .iter()
         .find(|x| x.id.debug_name.as_ref().map(|x| x.as_str()) == Some(name))
+}
+
+// CIRCUITS
+
+#[test]
+fn test_run_full_circuit() {
+    let range96 = BigInt::ZERO..(BigInt::from(1) << 96);
+    let limb0 = Value::BoundedInt {
+        range: range96.clone(),
+        value: 36699840570117848377038274035_u128.into(),
+    };
+    let limb1 = Value::BoundedInt {
+        range: range96.clone(),
+        value: 72042528776886984408017100026_u128.into(),
+    };
+    let limb2 = Value::BoundedInt {
+        range: range96.clone(),
+        value: 54251667697617050795983757117_u128.into(),
+    };
+    let limb3 = Value::BoundedInt {
+        range: range96,
+        value: 7.into(),
+    };
+
+    let output = run_program(
+        "tests/tests/circuits.cairo",
+        "circuits::circuits::main",
+        &[],
+    );
+    let expected_output = Value::Struct(vec![Value::Struct(vec![limb0, limb1, limb2, limb3])]);
+    let Value::Enum {
+        self_ty: _,
+        index: _,
+        payload,
+    } = output.last().unwrap()
+    else {
+        panic!("No output");
+    };
+
+    assert_eq!(**payload, expected_output);
+}
+
+#[test]
+#[should_panic(expected = "attempt to divide by 0")]
+fn test_circuit_failure() {
+    run_program(
+        "tests/tests/circuits_failure.cairo",
+        "circuits_failure::circuits_failure::main",
+        &[],
+    );
 }

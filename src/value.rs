@@ -1,5 +1,6 @@
 use cairo_lang_sierra::{
     extensions::{
+        circuit::CircuitTypeConcrete,
         core::{CoreLibfunc, CoreType, CoreTypeConcrete},
         starknet::StarkNetTypeConcrete,
         ConcreteType,
@@ -7,7 +8,7 @@ use cairo_lang_sierra::{
     ids::ConcreteTypeId,
     program_registry::ProgramRegistry,
 };
-use num_bigint::BigInt;
+use num_bigint::{BigInt, BigUint};
 use serde::Serialize;
 use starknet_types_core::felt::Felt;
 use std::{collections::HashMap, fmt::Debug, ops::Range};
@@ -22,6 +23,9 @@ pub enum Value {
         range: Range<BigInt>,
         value: BigInt,
     },
+    Circuit(Vec<BigUint>),
+    CircuitModulus(BigUint),
+    CircuitOutputs(Vec<BigUint>),
     Enum {
         self_ty: ConcreteTypeId,
         index: usize,
@@ -50,6 +54,7 @@ pub enum Value {
     },
     I8(i8),
     Struct(Vec<Self>),
+    U256(u128, u128),
     U128(u128),
     U16(u16),
     U32(u32),
@@ -82,6 +87,9 @@ impl Value {
             CoreTypeConcrete::Array(info) => {
                 matches!(self, Self::Array { ty, .. } if *ty == info.ty)
             }
+            CoreTypeConcrete::BoundedInt(info) => {
+                matches!(self, Self::BoundedInt { range, .. } if range.start == info.range.lower && range.end == info.range.upper)
+            }
             CoreTypeConcrete::Enum(_) => {
                 matches!(self, Self::Enum { self_ty, .. } if self_ty == type_id)
             }
@@ -94,6 +102,12 @@ impl Value {
             CoreTypeConcrete::NonZero(info) => self.is(registry, &info.ty),
             CoreTypeConcrete::Sint8(_) => matches!(self, Self::I8(_)),
             CoreTypeConcrete::Snapshot(info) => self.is(registry, &info.ty),
+            CoreTypeConcrete::StarkNet(
+                StarkNetTypeConcrete::ClassHash(_)
+                | StarkNetTypeConcrete::ContractAddress(_)
+                | StarkNetTypeConcrete::StorageBaseAddress(_)
+                | StarkNetTypeConcrete::StorageAddress(_),
+            ) => matches!(self, Self::Felt(_)),
             CoreTypeConcrete::Struct(info) => {
                 matches!(self, Self::Struct(members)
                     if members.len() == info.members.len()
@@ -105,9 +119,19 @@ impl Value {
             }
             CoreTypeConcrete::Uint8(_) => matches!(self, Self::U8(_)),
             CoreTypeConcrete::Uint32(_) => matches!(self, Self::U32(_)),
+            CoreTypeConcrete::Uint128(_)
+            | CoreTypeConcrete::Circuit(CircuitTypeConcrete::U96Guarantee(_)) => {
+                matches!(self, Self::U128(_))
+            }
 
             // Unused builtins (mapped to `Value::Unit`).
-            CoreTypeConcrete::RangeCheck(_) | CoreTypeConcrete::SegmentArena(_) => {
+            CoreTypeConcrete::RangeCheck(_)
+            | CoreTypeConcrete::SegmentArena(_)
+            | CoreTypeConcrete::RangeCheck96(_)
+            | CoreTypeConcrete::Circuit(
+                CircuitTypeConcrete::AddMod(_) | CircuitTypeConcrete::MulMod(_),
+            )
+            | CoreTypeConcrete::StarkNet(StarkNetTypeConcrete::System(_)) => {
                 matches!(self, Self::Unit)
             }
 

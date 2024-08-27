@@ -1,6 +1,8 @@
 use self::args::CmdArgs;
 use cairo_lang_sierra::{
-    extensions::{core::CoreTypeConcrete, starknet::StarkNetTypeConcrete},
+    extensions::{
+        circuit::CircuitTypeConcrete, core::CoreTypeConcrete, starknet::StarkNetTypeConcrete,
+    },
     ProgramParser,
 };
 use clap::Parser;
@@ -65,10 +67,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     CoreTypeConcrete::Felt252(_) => Value::parse_felt(&iter.next().unwrap()),
                     CoreTypeConcrete::GasBuiltin(_) => Value::U128(args.available_gas.unwrap()),
                     CoreTypeConcrete::RangeCheck(_)
+                    | CoreTypeConcrete::RangeCheck96(_)
                     | CoreTypeConcrete::Bitwise(_)
                     | CoreTypeConcrete::Pedersen(_)
                     | CoreTypeConcrete::Poseidon(_)
-                    | CoreTypeConcrete::SegmentArena(_) => Value::Unit,
+                    | CoreTypeConcrete::SegmentArena(_)
+                    | CoreTypeConcrete::Circuit(
+                        CircuitTypeConcrete::AddMod(_) | CircuitTypeConcrete::MulMod(_),
+                    ) => Value::Unit,
                     CoreTypeConcrete::StarkNet(inner) => match inner {
                         StarkNetTypeConcrete::System(_) => Value::Unit,
                         _ => todo!(),
