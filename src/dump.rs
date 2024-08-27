@@ -18,10 +18,6 @@ impl ProgramTrace {
     pub fn push(&mut self, state: StateDump) {
         self.states.push(state);
     }
-
-    pub fn index(&self, index: u64) -> StateDump {
-        self.states[index as usize].clone()
-    }
 }
 
 #[derive(Clone, Debug)]
