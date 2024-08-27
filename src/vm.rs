@@ -50,6 +50,7 @@ mod uint252;
 mod uint32;
 mod uint64;
 mod uint8;
+mod uint512;
 
 pub struct VirtualMachine<S: StarknetSyscallHandler = StubSyscallHandler> {
     program: Arc<Program>,
@@ -326,7 +327,7 @@ fn eval<'a>(
         CoreConcreteLibfunc::Uint16(selector) => self::uint16::eval(registry, selector, args),
         CoreConcreteLibfunc::Uint256(selector) => self::uint252::eval(registry, selector, args),
         CoreConcreteLibfunc::Uint32(selector) => self::uint32::eval(registry, selector, args),
-        CoreConcreteLibfunc::Uint512(_) => todo!(),
+        CoreConcreteLibfunc::Uint512(selector) => self::uint512::eval(registry, selector, args),
         CoreConcreteLibfunc::Uint64(selector) => self::uint64::eval(registry, selector, args),
         CoreConcreteLibfunc::Uint8(selector) => self::uint8::eval(registry, selector, args),
         CoreConcreteLibfunc::UnconditionalJump(info) => self::jump::eval(registry, info, args),
