@@ -37,10 +37,6 @@ impl StateDump {
                 .collect(),
         }
     }
-
-    pub fn item(&self) -> BTreeMap<u64, Value> {
-        self.items.clone()
-    }
 }
 
 impl Serialize for StateDump {
