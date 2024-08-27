@@ -4,7 +4,7 @@ use cairo_lang_sierra::{
     extensions::{
         casts::{CastConcreteLibfunc, DowncastConcreteLibfunc},
         core::{CoreLibfunc, CoreType, CoreTypeConcrete},
-        lib_func::SignatureOnlyConcreteLibfunc,
+        lib_func::SignatureOnlyConcreteLibfunc, ConcreteType,
     },
     program_registry::ProgramRegistry,
 };
@@ -54,7 +54,8 @@ pub fn eval_downcast(
                     CoreTypeConcrete::Uint32(_) => Value::U32(value.try_into().unwrap()),
                     CoreTypeConcrete::Uint64(_) => Value::U64(value.try_into().unwrap()),
                     CoreTypeConcrete::Uint128(_) => Value::U128(value.try_into().unwrap()),
-                    _ => todo!(),
+                    CoreTypeConcrete::BoundedInt(_) => Value::BoundedInt{ range, value },
+                    x => todo!("{:?}", x.info()),
                 }
             ],
         )
