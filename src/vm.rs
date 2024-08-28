@@ -1,4 +1,5 @@
 use crate::{
+    debug::libfunc_to_name,
     starknet::{StarknetSyscallHandler, StubSyscallHandler},
     Value,
 };
@@ -17,7 +18,7 @@ use cairo_lang_utils::ordered_hash_map::OrderedHashMap;
 use smallvec::{smallvec, SmallVec};
 use starknet_types_core::felt::Felt;
 use std::{cell::Cell, sync::Arc};
-use tracing::debug;
+use tracing::{debug, trace};
 
 mod ap_tracking;
 mod array;
@@ -181,11 +182,17 @@ impl<S: StarknetSyscallHandler> VirtualMachine<S> {
         let state_snapshot = frame.state.get_mut().clone();
 
         debug!(
-            "Evaluating statement {} ({}) (values: \n{:#?}\n)",
-            frame.pc.0, &self.program.statements[frame.pc.0], state_snapshot
+            "Evaluating statement {} ({})",
+            frame.pc.0, &self.program.statements[frame.pc.0],
         );
+        trace!("values: \n{:#?}\n", state_snapshot);
         match &self.program.statements[frame.pc.0] {
             GenStatement::Invocation(invocation) => {
+                let libfunc = self.registry.get_libfunc(&invocation.libfunc_id).unwrap();
+                debug!(
+                    "Executing invocation of libfunc: {}",
+                    libfunc_to_name(libfunc)
+                );
                 let (state, values) =
                     edit_state::take_args(frame.state.take(), invocation.args.iter()).unwrap();
 

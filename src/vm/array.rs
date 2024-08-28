@@ -87,7 +87,7 @@ pub fn eval_get(
 
     match data.get(index as usize).cloned() {
         Some(value) => EvalAction::NormalBranch(0, smallvec![range_check, value]),
-        None => EvalAction::NormalBranch(0, smallvec![range_check]),
+        None => EvalAction::NormalBranch(1, smallvec![range_check]),
     }
 }
 
@@ -144,7 +144,7 @@ pub fn eval_pop_front(
         let value = data[0].clone();
         EvalAction::NormalBranch(0, smallvec![Value::Array { data: new_data, ty }, value])
     } else {
-        EvalAction::NormalBranch(1, smallvec![])
+        EvalAction::NormalBranch(1, smallvec![Value::Array { data, ty }])
     }
 }
 

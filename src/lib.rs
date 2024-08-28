@@ -2,6 +2,7 @@ use cairo_lang_sierra::program::{GenFunction, Program, StatementIdx};
 
 pub use self::{dump::*, value::*, vm::VirtualMachine};
 
+mod debug;
 mod dump;
 pub mod starknet;
 mod value;
