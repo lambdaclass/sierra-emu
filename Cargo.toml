@@ -4,8 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-cairo-lang-sierra = "2.7.1"
-cairo-lang-utils = "2.7.1"
+cairo-lang-sierra = "^2.7.1"
+cairo-lang-utils = "^2.7.1"
 clap = { version = "4.5.16", features = ["derive"] }
 k256 = "0.13.3"
 keccak = "0.1.5"
@@ -25,8 +25,8 @@ tracing = "0.1.40"
 tracing-subscriber = { version = "0.3.18", features = ["env-filter"] }
 
 [dev-dependencies]
-cairo-lang-compiler = "2.7.1"
-cairo-lang-starknet = "2.7.1"
+cairo-lang-compiler = "^2.7.1"
+cairo-lang-starknet = "^2.7.1"
 
 # On dev optimize dependencies a bit so it's not as slow.
 [profile.dev.package."*"]
