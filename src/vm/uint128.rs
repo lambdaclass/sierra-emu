@@ -1,5 +1,3 @@
-use std::u128;
-
 use super::EvalAction;
 use crate::Value;
 use cairo_lang_sierra::{

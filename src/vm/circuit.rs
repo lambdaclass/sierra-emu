@@ -1,5 +1,3 @@
-use std::u8;
-
 use super::EvalAction;
 use crate::Value;
 use cairo_lang_sierra::{
@@ -15,7 +13,6 @@ use cairo_lang_sierra::{
 };
 use num_bigint::{BigInt, BigUint, Sign, ToBigInt};
 use smallvec::smallvec;
-use starknet_types_core::felt::Felt;
 
 pub fn eval(
     registry: &ProgramRegistry<CoreType, CoreLibfunc>,
@@ -193,7 +190,7 @@ pub fn eval_get_output(
         CoreTypeConcrete::Circuit(CircuitTypeConcrete::Circuit(info)) => &info.circuit_info,
         _ => todo!(),
     };
-    let gate_offset = circuit_info.values.get(&_info.output_ty).unwrap().clone();
+    let gate_offset = *circuit_info.values.get(&_info.output_ty).unwrap();
     let output_idx = gate_offset - 1 - circuit_info.n_inputs;
     let output = outputs[output_idx].to_owned();
     let output_big = output.to_bigint().unwrap();

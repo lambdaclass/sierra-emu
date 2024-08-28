@@ -6,12 +6,11 @@ use crate::{
 use cairo_lang_sierra::{
     extensions::{
         core::{CoreLibfunc, CoreType},
-        int::{unsigned256::Uint256Concrete, unsigned512::Uint512Concrete},
+        int::unsigned512::Uint512Concrete,
         lib_func::SignatureOnlyConcreteLibfunc,
     },
     program_registry::ProgramRegistry,
 };
-use num_bigint::BigUint;
 use smallvec::smallvec;
 
 pub fn eval(
