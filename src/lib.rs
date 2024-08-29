@@ -4,6 +4,7 @@ pub use self::{dump::*, value::*, vm::VirtualMachine};
 
 mod debug;
 mod dump;
+mod gas;
 pub mod starknet;
 mod value;
 mod vm;
