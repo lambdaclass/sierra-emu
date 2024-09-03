@@ -28,7 +28,7 @@ pub fn eval(
         ArrayConcreteLibfunc::SnapshotPopFront(info) => {
             eval_snapshot_pop_front(registry, info, args)
         }
-        ArrayConcreteLibfunc::SnapshotPopBack(_) => todo!(),
+        ArrayConcreteLibfunc::SnapshotPopBack(info) => eval_snapshot_pop_back(registry, info, args),
         ArrayConcreteLibfunc::SnapshotMultiPopFront(_) => todo!(),
         ArrayConcreteLibfunc::SnapshotMultiPopBack(_) => todo!(),
     }
@@ -162,6 +162,25 @@ pub fn eval_snapshot_pop_front(
         let value = data[0].clone();
         assert!(value.is(registry, &info.ty));
         EvalAction::NormalBranch(0, smallvec![Value::Array { data: new_data, ty }, value])
+    } else {
+        EvalAction::NormalBranch(1, smallvec![Value::Array { data, ty }])
+    }
+}
+
+pub fn eval_snapshot_pop_back(
+    registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    info: &SignatureAndTypeConcreteLibfunc,
+    args: Vec<Value>,
+) -> EvalAction {
+    let [Value::Array { mut data, ty }]: [Value; 1] = args.try_into().unwrap() else {
+        panic!()
+    };
+
+    if !data.is_empty() {
+        let new_data = data.split_off(data.len() - 1);
+        let value = new_data[0].clone();
+        assert!(value.is(registry, &info.ty));
+        EvalAction::NormalBranch(0, smallvec![Value::Array { data, ty }, value])
     } else {
         EvalAction::NormalBranch(1, smallvec![Value::Array { data, ty }])
     }
