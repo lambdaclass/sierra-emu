@@ -1,5 +1,3 @@
-use std::u128;
-
 use super::EvalAction;
 use crate::Value;
 use cairo_lang_sierra::{
@@ -153,7 +151,7 @@ pub fn eval_bitwise(
 
     EvalAction::NormalBranch(
         0,
-        smallvec![bitwise, Value::U128(and), Value::U128(or), Value::U128(xor)],
+        smallvec![bitwise, Value::U128(and), Value::U128(xor), Value::U128(or)],
     )
 }
 

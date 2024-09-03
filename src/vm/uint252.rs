@@ -1,5 +1,3 @@
-use std::u128;
-
 use super::EvalAction;
 use crate::Value;
 use cairo_lang_sierra::{
@@ -56,6 +54,21 @@ pub fn u256_to_value(value: BigUint) -> Value {
     let hi: u128 = (&value >> 128u32).try_into().unwrap();
     let lo: u128 = (value & BigUint::from(u128::MAX)).try_into().unwrap();
     Value::Struct(vec![Value::U128(lo), Value::U128(hi)])
+}
+
+#[inline]
+pub fn u516_to_value(value: BigUint) -> Value {
+    let upper_u256: BigUint = &value >> 256u32;
+    let hi1: u128 = (&upper_u256 >> 128u32).try_into().unwrap();
+    let lo1: u128 = (upper_u256 & BigUint::from(u128::MAX)).try_into().unwrap();
+    let hi: u128 = (&value >> 128u32).try_into().unwrap();
+    let lo: u128 = (value & BigUint::from(u128::MAX)).try_into().unwrap();
+    Value::Struct(vec![
+        Value::U128(lo),
+        Value::U128(hi),
+        Value::U128(lo1),
+        Value::U128(hi1),
+    ])
 }
 
 pub fn eval_divmod(

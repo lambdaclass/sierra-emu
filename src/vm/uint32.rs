@@ -121,7 +121,7 @@ pub fn eval_bitwise(
 
     EvalAction::NormalBranch(
         0,
-        smallvec![bitwise, Value::U32(and), Value::U32(or), Value::U32(xor)],
+        smallvec![bitwise, Value::U32(and), Value::U32(xor), Value::U32(or)],
     )
 }
 

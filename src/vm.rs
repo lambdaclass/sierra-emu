@@ -1,4 +1,6 @@
 use crate::{
+    debug::libfunc_to_name,
+    gas::{GasMetadata, MetadataComputationConfig},
     starknet::{StarknetSyscallHandler, StubSyscallHandler},
     Value,
 };
@@ -17,7 +19,7 @@ use cairo_lang_utils::ordered_hash_map::OrderedHashMap;
 use smallvec::{smallvec, SmallVec};
 use starknet_types_core::felt::Felt;
 use std::{cell::Cell, sync::Arc};
-use tracing::debug;
+use tracing::{debug, trace};
 
 mod ap_tracking;
 mod array;
@@ -49,20 +51,23 @@ mod uint128;
 mod uint16;
 mod uint252;
 mod uint32;
+mod uint512;
 mod uint64;
 mod uint8;
 
 pub struct VirtualMachine<S: StarknetSyscallHandler = StubSyscallHandler> {
-    program: Arc<Program>,
-    registry: ProgramRegistry<CoreType, CoreLibfunc>,
+    pub program: Arc<Program>,
+    pub registry: ProgramRegistry<CoreType, CoreLibfunc>,
     pub syscall_handler: S,
     frames: Vec<SierraFrame>,
+    pub gas: GasMetadata,
 }
 
 impl VirtualMachine {
     pub fn new(program: Arc<Program>) -> Self {
         let registry = ProgramRegistry::new(&program).unwrap();
         Self {
+            gas: GasMetadata::new(&program, Some(MetadataComputationConfig::default())).unwrap(),
             program,
             registry,
             syscall_handler: StubSyscallHandler::default(),
@@ -75,6 +80,7 @@ impl<S: StarknetSyscallHandler> VirtualMachine<S> {
     pub fn new_starknet(program: Arc<Program>, syscall_handler: S) -> Self {
         let registry = ProgramRegistry::new(&program).unwrap();
         Self {
+            gas: GasMetadata::new(&program, Some(MetadataComputationConfig::default())).unwrap(),
             program,
             registry,
             syscall_handler,
@@ -180,11 +186,17 @@ impl<S: StarknetSyscallHandler> VirtualMachine<S> {
         let state_snapshot = frame.state.get_mut().clone();
 
         debug!(
-            "Evaluating statement {} ({}) (values: \n{:#?}\n)",
-            frame.pc.0, &self.program.statements[frame.pc.0], state_snapshot
+            "Evaluating statement {} ({})",
+            frame.pc.0, &self.program.statements[frame.pc.0],
         );
+        trace!("values: \n{:#?}\n", state_snapshot);
         match &self.program.statements[frame.pc.0] {
             GenStatement::Invocation(invocation) => {
+                let libfunc = self.registry.get_libfunc(&invocation.libfunc_id).unwrap();
+                debug!(
+                    "Executing invocation of libfunc: {}",
+                    libfunc_to_name(libfunc)
+                );
                 let (state, values) =
                     edit_state::take_args(frame.state.take(), invocation.args.iter()).unwrap();
 
@@ -193,6 +205,8 @@ impl<S: StarknetSyscallHandler> VirtualMachine<S> {
                     &invocation.libfunc_id,
                     values,
                     &mut self.syscall_handler,
+                    &self.gas,
+                    &frame.pc,
                 ) {
                     EvalAction::NormalBranch(branch_idx, results) => {
                         assert_eq!(
@@ -277,6 +291,8 @@ fn eval<'a>(
     id: &'a ConcreteLibfuncId,
     args: Vec<Value>,
     syscall_handler: &mut impl StarknetSyscallHandler,
+    gas: &GasMetadata,
+    statement_idx: &StatementIdx,
 ) -> EvalAction {
     match registry.get_libfunc(id).unwrap() {
         CoreConcreteLibfunc::ApTracking(selector) => {
@@ -308,7 +324,9 @@ fn eval<'a>(
             self::felt252_dict_entry::eval(registry, selector, args)
         }
         CoreConcreteLibfunc::FunctionCall(info) => self::function_call::eval(registry, info, args),
-        CoreConcreteLibfunc::Gas(selector) => self::gas::eval(registry, selector, args),
+        CoreConcreteLibfunc::Gas(selector) => {
+            self::gas::eval(registry, selector, args, gas, *statement_idx)
+        }
         CoreConcreteLibfunc::Mem(selector) => self::mem::eval(registry, selector, args),
         CoreConcreteLibfunc::Nullable(_) => todo!(),
         CoreConcreteLibfunc::Pedersen(selector) => self::pedersen::eval(registry, selector, args),
@@ -327,7 +345,7 @@ fn eval<'a>(
         CoreConcreteLibfunc::Uint16(selector) => self::uint16::eval(registry, selector, args),
         CoreConcreteLibfunc::Uint256(selector) => self::uint252::eval(registry, selector, args),
         CoreConcreteLibfunc::Uint32(selector) => self::uint32::eval(registry, selector, args),
-        CoreConcreteLibfunc::Uint512(_) => todo!(),
+        CoreConcreteLibfunc::Uint512(selector) => self::uint512::eval(registry, selector, args),
         CoreConcreteLibfunc::Uint64(selector) => self::uint64::eval(registry, selector, args),
         CoreConcreteLibfunc::Uint8(selector) => self::uint8::eval(registry, selector, args),
         CoreConcreteLibfunc::UnconditionalJump(info) => self::jump::eval(registry, info, args),

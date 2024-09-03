@@ -3,8 +3,12 @@ use crate::Value;
 use cairo_lang_sierra::{
     extensions::{
         core::{CoreLibfunc, CoreType, CoreTypeConcrete},
-        enm::{EnumConcreteLibfunc, EnumConcreteType, EnumInitConcreteLibfunc},
+        enm::{
+            EnumConcreteLibfunc, EnumConcreteType, EnumFromBoundedIntConcreteLibfunc,
+            EnumInitConcreteLibfunc,
+        },
         lib_func::SignatureOnlyConcreteLibfunc,
+        ConcreteLibfunc,
     },
     program_registry::ProgramRegistry,
 };
@@ -17,9 +21,9 @@ pub fn eval(
 ) -> EvalAction {
     match selector {
         EnumConcreteLibfunc::Init(info) => eval_init(registry, info, args),
-        EnumConcreteLibfunc::FromBoundedInt(_) => todo!(),
+        EnumConcreteLibfunc::FromBoundedInt(info) => eval_from_bounded_int(registry, info, args),
         EnumConcreteLibfunc::Match(info) => eval_match(registry, info, args),
-        EnumConcreteLibfunc::SnapshotMatch(_) => todo!(),
+        EnumConcreteLibfunc::SnapshotMatch(info) => eval_snapshot_match(registry, info, args),
     }
 }
 
@@ -50,6 +54,24 @@ pub fn eval_init(
     )
 }
 
+pub fn eval_from_bounded_int(
+    _registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    info: &EnumFromBoundedIntConcreteLibfunc,
+    args: Vec<Value>,
+) -> EvalAction {
+    let [Value::BoundedInt { range: _, value }]: [Value; 1] = args.try_into().unwrap() else {
+        panic!()
+    };
+
+    let enm = Value::Enum {
+        self_ty: info.branch_signatures()[0].vars[0].ty.clone(),
+        index: value.try_into().unwrap(),
+        payload: Box::new(Value::Struct(vec![])),
+    };
+
+    EvalAction::NormalBranch(0, smallvec![enm])
+}
+
 pub fn eval_match(
     registry: &ProgramRegistry<CoreType, CoreLibfunc>,
     info: &SignatureOnlyConcreteLibfunc,
@@ -64,6 +86,38 @@ pub fn eval_match(
         panic!()
     };
     assert_eq!(self_ty, info.signature.param_signatures[0].ty);
+    assert!(payload.is(
+        registry,
+        &info.signature.branch_signatures[index].vars[0].ty
+    ));
+
+    EvalAction::NormalBranch(index, smallvec![*payload])
+}
+
+pub fn eval_snapshot_match(
+    registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    info: &SignatureOnlyConcreteLibfunc,
+    args: Vec<Value>,
+) -> EvalAction {
+    let [Value::Enum {
+        self_ty,
+        index,
+        payload,
+    }]: [Value; 1] = args.try_into().unwrap()
+    else {
+        panic!()
+    };
+
+    let ty = registry
+        .get_type(&info.signature.param_signatures[0].ty)
+        .unwrap();
+
+    if let CoreTypeConcrete::Snapshot(inner) = ty {
+        assert_eq!(inner.ty, self_ty);
+    } else {
+        panic!("expected snapshot type")
+    }
+
     assert!(payload.is(
         registry,
         &info.signature.branch_signatures[index].vars[0].ty

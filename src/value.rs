@@ -72,8 +72,13 @@ impl Value {
         type_id: &ConcreteTypeId,
     ) -> Self {
         match registry.get_type(type_id).unwrap() {
+            CoreTypeConcrete::Uint8(_) => Value::U8(0),
             CoreTypeConcrete::Uint32(_) => Value::U32(0),
-            _ => panic!("type {type_id} has no default value implementation"),
+            CoreTypeConcrete::Uint64(_) => Value::U64(0),
+            CoreTypeConcrete::Uint16(_) => Value::U16(0),
+            CoreTypeConcrete::Uint128(_) => Value::U128(0),
+            CoreTypeConcrete::Felt252(_) => Value::Felt(0.into()),
+            x => panic!("type {:?} has no default value implementation", x.info()),
         }
     }
 
@@ -147,14 +152,12 @@ impl Value {
             CoreTypeConcrete::BuiltinCosts(_) => matches!(self, Self::Unit),
             CoreTypeConcrete::Uint16(_) => matches!(self, Self::U16(_)),
             CoreTypeConcrete::Uint64(_) => matches!(self, Self::U64(_)),
-            CoreTypeConcrete::Uint128(_) => matches!(self, Self::U128(_)),
             CoreTypeConcrete::Uint128MulGuarantee(_) => matches!(self, Self::Unit),
             CoreTypeConcrete::Sint16(_) => todo!(),
             CoreTypeConcrete::Sint32(_) => todo!(),
             CoreTypeConcrete::Sint64(_) => todo!(),
             CoreTypeConcrete::Sint128(_) => todo!(),
             CoreTypeConcrete::Nullable(info) => self.is(registry, &info.ty),
-            CoreTypeConcrete::RangeCheck96(_) => matches!(self, Self::Unit),
             CoreTypeConcrete::Uninitialized(_) => todo!(),
             CoreTypeConcrete::Felt252DictEntry(_) => todo!(),
             CoreTypeConcrete::SquashedFelt252Dict(_) => todo!(),
@@ -170,7 +173,6 @@ impl Value {
                 StarkNetTypeConcrete::Secp256Point(_) => todo!(),
                 StarkNetTypeConcrete::Sha256StateHandle(_) => todo!(),
             },
-            CoreTypeConcrete::BoundedInt(_) => matches!(self, Self::BoundedInt { .. }),
         };
 
         if !res {

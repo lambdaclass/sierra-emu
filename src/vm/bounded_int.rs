@@ -20,14 +20,80 @@ pub fn eval(
     args: Vec<Value>,
 ) -> EvalAction {
     match selector {
-        BoundedIntConcreteLibfunc::Add(_) => todo!(),
-        BoundedIntConcreteLibfunc::Sub(_) => todo!(),
+        BoundedIntConcreteLibfunc::Add(info) => eval_add(registry, info, args),
+        BoundedIntConcreteLibfunc::Sub(info) => eval_sub(registry, info, args),
         BoundedIntConcreteLibfunc::Mul(info) => eval_mul(registry, info, args),
         BoundedIntConcreteLibfunc::DivRem(info) => eval_div_rem(registry, info, args),
         BoundedIntConcreteLibfunc::Constrain(info) => eval_constrain(registry, info, args),
         BoundedIntConcreteLibfunc::IsZero(info) => eval_is_zero(registry, info, args),
-        BoundedIntConcreteLibfunc::WrapNonZero(_) => todo!(),
+        BoundedIntConcreteLibfunc::WrapNonZero(info) => eval_wrap_non_zero(registry, info, args),
     }
+}
+
+pub fn eval_add(
+    registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    info: &SignatureOnlyConcreteLibfunc,
+    args: Vec<Value>,
+) -> EvalAction {
+    let [Value::BoundedInt { value: lhs, .. }, Value::BoundedInt { value: rhs, .. }]: [Value; 2] =
+        args.try_into().unwrap()
+    else {
+        panic!()
+    };
+
+    let range = match registry
+        .get_type(&info.signature.branch_signatures[0].vars[0].ty)
+        .unwrap()
+    {
+        CoreTypeConcrete::BoundedInt(info) => info.range.lower.clone()..info.range.upper.clone(),
+        CoreTypeConcrete::NonZero(info) => match registry.get_type(&info.ty).unwrap() {
+            CoreTypeConcrete::BoundedInt(info) => {
+                info.range.lower.clone()..info.range.upper.clone()
+            }
+            _ => unreachable!(),
+        },
+        _ => unreachable!(),
+    };
+    EvalAction::NormalBranch(
+        0,
+        smallvec![Value::BoundedInt {
+            range,
+            value: lhs + rhs,
+        }],
+    )
+}
+
+pub fn eval_sub(
+    registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    info: &SignatureOnlyConcreteLibfunc,
+    args: Vec<Value>,
+) -> EvalAction {
+    let [Value::BoundedInt { value: lhs, .. }, Value::BoundedInt { value: rhs, .. }]: [Value; 2] =
+        args.try_into().unwrap()
+    else {
+        panic!()
+    };
+
+    let range = match registry
+        .get_type(&info.signature.branch_signatures[0].vars[0].ty)
+        .unwrap()
+    {
+        CoreTypeConcrete::BoundedInt(info) => info.range.lower.clone()..info.range.upper.clone(),
+        CoreTypeConcrete::NonZero(info) => match registry.get_type(&info.ty).unwrap() {
+            CoreTypeConcrete::BoundedInt(info) => {
+                info.range.lower.clone()..info.range.upper.clone()
+            }
+            _ => unreachable!(),
+        },
+        _ => unreachable!(),
+    };
+    EvalAction::NormalBranch(
+        0,
+        smallvec![Value::BoundedInt {
+            range,
+            value: lhs - rhs,
+        }],
+    )
 }
 
 pub fn eval_mul(
@@ -194,4 +260,14 @@ pub fn eval_is_zero(
     } else {
         EvalAction::NormalBranch(1, smallvec![value])
     }
+}
+
+pub fn eval_wrap_non_zero(
+    _registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    _info: &SignatureOnlyConcreteLibfunc,
+    args: Vec<Value>,
+) -> EvalAction {
+    let [value] = args.try_into().unwrap();
+
+    EvalAction::NormalBranch(0, smallvec![value])
 }
