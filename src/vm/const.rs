@@ -64,6 +64,10 @@ pub fn eval_as_immediate(
                 [GenericArg::Value(value)] => Value::U32(value.try_into().unwrap()),
                 _ => unreachable!(),
             },
+            CoreTypeConcrete::Uint64(_) => match inner_data {
+                [GenericArg::Value(value)] => Value::U64(value.try_into().unwrap()),
+                _ => unreachable!(),
+            },
             CoreTypeConcrete::Uint8(_) => match inner_data {
                 [GenericArg::Value(value)] => Value::U8(value.try_into().unwrap()),
                 _ => unreachable!(),
@@ -95,7 +99,39 @@ pub fn eval_as_immediate(
 
                 Value::Struct(fields)
             }
-            _ => todo!("{:?}", type_id),
+            CoreTypeConcrete::Array(_) => todo!(),
+            CoreTypeConcrete::Coupon(_) => todo!(),
+            CoreTypeConcrete::Bitwise(_) => todo!(),
+            CoreTypeConcrete::Box(_) => todo!(),
+            CoreTypeConcrete::Circuit(_) => todo!(),
+            CoreTypeConcrete::Const(_) => todo!(),
+            CoreTypeConcrete::EcOp(_) => todo!(),
+            CoreTypeConcrete::EcPoint(_) => todo!(),
+            CoreTypeConcrete::EcState(_) => todo!(),
+            CoreTypeConcrete::GasBuiltin(_) => todo!(),
+            CoreTypeConcrete::BuiltinCosts(_) => todo!(),
+            CoreTypeConcrete::Uint16(_) => todo!(),
+            CoreTypeConcrete::Uint128MulGuarantee(_) => todo!(),
+            CoreTypeConcrete::Sint16(_) => todo!(),
+            CoreTypeConcrete::Sint32(_) => todo!(),
+            CoreTypeConcrete::Sint64(_) => todo!(),
+            CoreTypeConcrete::Sint128(_) => todo!(),
+            CoreTypeConcrete::Nullable(_) => todo!(),
+            CoreTypeConcrete::RangeCheck(_) => todo!(),
+            CoreTypeConcrete::RangeCheck96(_) => todo!(),
+            CoreTypeConcrete::Uninitialized(_) => todo!(),
+            CoreTypeConcrete::Enum(_) => todo!(),
+            CoreTypeConcrete::Felt252Dict(_) => todo!(),
+            CoreTypeConcrete::Felt252DictEntry(_) => todo!(),
+            CoreTypeConcrete::SquashedFelt252Dict(_) => todo!(),
+            CoreTypeConcrete::Pedersen(_) => todo!(),
+            CoreTypeConcrete::Poseidon(_) => todo!(),
+            CoreTypeConcrete::Span(_) => todo!(),
+            CoreTypeConcrete::StarkNet(_) => todo!(),
+            CoreTypeConcrete::SegmentArena(_) => todo!(),
+            CoreTypeConcrete::Snapshot(_) => todo!(),
+            CoreTypeConcrete::Bytes31(_) => todo!(),
+            // _ => todo!("{:?}", type_id),
         }
     }
 
