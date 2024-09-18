@@ -88,6 +88,10 @@ pub fn eval_divmod(
 
     let lhs = u256_to_biguint(lhs_lo, lhs_hi);
 
+    let [Value::Struct(rhs)]: [Value; 1] = rhs.try_into().unwrap() else {
+        panic!()
+    };
+
     let [Value::U128(rhs_lo), Value::U128(rhs_hi)]: [Value; 2] = rhs.try_into().unwrap() else {
         panic!()
     };
