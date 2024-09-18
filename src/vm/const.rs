@@ -55,7 +55,20 @@ pub fn eval_as_immediate(
                 [GenericArg::Value(value)] => Value::Felt(value.into()),
                 _ => unreachable!(),
             },
-            CoreTypeConcrete::NonZero(info) => inner(registry, &info.ty, inner_data),
+            CoreTypeConcrete::NonZero(_) => match inner_data {
+                // Copied from the sierra to casm lowering
+                // NonZero is the same type as the inner type in native.
+                [GenericArg::Type(inner_ty)] => {
+                    let inner_type = registry.get_type(inner_ty).unwrap();
+                    let const_inner_type = match inner_type {
+                        CoreTypeConcrete::Const(inner) => inner,
+                        _ => unreachable!(),
+                    };
+
+                    inner(registry, &const_inner_type.inner_ty, &const_inner_type.inner_data)
+                }
+                _ => unreachable!(),
+            },
             CoreTypeConcrete::Sint8(_) => match inner_data {
                 [GenericArg::Value(value)] => Value::I8(value.try_into().unwrap()),
                 _ => unreachable!(),
@@ -70,6 +83,14 @@ pub fn eval_as_immediate(
             },
             CoreTypeConcrete::Uint128(_) => match inner_data {
                 [GenericArg::Value(value)] => Value::U128(value.try_into().unwrap()),
+                x => unreachable!("{:?}", x),
+            },
+            CoreTypeConcrete::Uint64(_) => match inner_data {
+                [GenericArg::Value(value)] => Value::U64(value.try_into().unwrap()),
+                x => unreachable!("{:?}", x),
+            },
+            CoreTypeConcrete::Uint16(_) => match inner_data {
+                [GenericArg::Value(value)] => Value::U16(value.try_into().unwrap()),
                 _ => unreachable!(),
             },
             CoreTypeConcrete::Struct(_) => {
@@ -80,14 +101,14 @@ pub fn eval_as_immediate(
                         GenericArg::Type(const_field_ty) => {
                             let field_type = registry.get_type(const_field_ty).unwrap();
 
-                            match &field_type {
-                                CoreTypeConcrete::Const(const_ty) => {
-                                    let field_value =
-                                        inner(registry, &const_ty.inner_ty, &const_ty.inner_data);
-                                    fields.push(field_value);
-                                }
+                            let const_field_type = match &field_type {
+                                CoreTypeConcrete::Const(inner) => inner,
                                 _ => unreachable!(),
                             };
+
+                            let field_value =
+                                inner(registry, &const_field_type.inner_ty, &const_field_type.inner_data);
+                            fields.push(field_value);
                         }
                         _ => unreachable!(),
                     }
