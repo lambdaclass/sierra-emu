@@ -1,3 +1,5 @@
+use std::u128;
+
 use cairo_lang_sierra::{
     extensions::{
         core::{CoreLibfunc, CoreType},
@@ -44,10 +46,10 @@ fn eval_diff(
     if lhs >= rhs {
         EvalAction::NormalBranch(
             0,
-            smallvec![range_check, Value::I128(lhs - rhs)],
+            smallvec![range_check, Value::U128((lhs - rhs).try_into().unwrap())],
         )
     } else {
-        EvalAction::NormalBranch(1, smallvec![range_check, Value::I128(lhs.wrapping_sub(rhs))])
+        EvalAction::NormalBranch(1, smallvec![range_check, Value::U128(lhs.wrapping_sub(rhs).try_into().unwrap())])
     }
 }
 

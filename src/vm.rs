@@ -342,7 +342,7 @@ fn eval<'a>(
             self::starknet::eval(registry, selector, args, syscall_handler)
         }
         CoreConcreteLibfunc::Struct(selector) => self::r#struct::eval(registry, selector, args),
-        CoreConcreteLibfunc::Uint128(selector) => {self::uint128::eval(registry, selector, args)},
+        CoreConcreteLibfunc::Uint128(selector) => self::uint128::eval(registry, selector, args),
         CoreConcreteLibfunc::Uint16(selector) => self::uint16::eval(registry, selector, args),
         CoreConcreteLibfunc::Uint256(selector) => self::uint252::eval(registry, selector, args),
         CoreConcreteLibfunc::Uint32(selector) => self::uint32::eval(registry, selector, args),
