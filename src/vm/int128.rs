@@ -49,7 +49,13 @@ fn eval_diff(
             smallvec![range_check, Value::U128((lhs - rhs).try_into().unwrap())],
         )
     } else {
-        EvalAction::NormalBranch(1, smallvec![range_check, Value::U128(lhs.wrapping_sub(rhs).try_into().unwrap())])
+        EvalAction::NormalBranch(
+            1,
+            smallvec![
+                range_check,
+                Value::U128(lhs.wrapping_sub(rhs).try_into().unwrap())
+            ],
+        )
     }
 }
 

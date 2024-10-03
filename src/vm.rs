@@ -332,7 +332,7 @@ fn eval<'a>(
         CoreConcreteLibfunc::Nullable(_) => todo!(),
         CoreConcreteLibfunc::Pedersen(selector) => self::pedersen::eval(registry, selector, args),
         CoreConcreteLibfunc::Poseidon(selector) => self::poseidon::eval(registry, selector, args),
-        CoreConcreteLibfunc::Sint128(selector) => {self::int128::eval(registry, selector, args)},
+        CoreConcreteLibfunc::Sint128(selector) => self::int128::eval(registry, selector, args),
         CoreConcreteLibfunc::Sint16(_) => todo!(),
         CoreConcreteLibfunc::Sint32(_) => todo!(),
         CoreConcreteLibfunc::Sint64(_) => todo!(),
