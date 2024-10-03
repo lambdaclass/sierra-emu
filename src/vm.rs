@@ -40,6 +40,7 @@ mod felt252_dict;
 mod felt252_dict_entry;
 mod function_call;
 mod gas;
+mod int128;
 mod jump;
 mod mem;
 mod pedersen;
@@ -331,7 +332,7 @@ fn eval<'a>(
         CoreConcreteLibfunc::Nullable(_) => todo!(),
         CoreConcreteLibfunc::Pedersen(selector) => self::pedersen::eval(registry, selector, args),
         CoreConcreteLibfunc::Poseidon(selector) => self::poseidon::eval(registry, selector, args),
-        CoreConcreteLibfunc::Sint128(_) => todo!(),
+        CoreConcreteLibfunc::Sint128(selector) => {self::int128::eval(registry, selector, args)},
         CoreConcreteLibfunc::Sint16(_) => todo!(),
         CoreConcreteLibfunc::Sint32(_) => todo!(),
         CoreConcreteLibfunc::Sint64(_) => todo!(),
@@ -341,7 +342,7 @@ fn eval<'a>(
             self::starknet::eval(registry, selector, args, syscall_handler)
         }
         CoreConcreteLibfunc::Struct(selector) => self::r#struct::eval(registry, selector, args),
-        CoreConcreteLibfunc::Uint128(selector) => self::uint128::eval(registry, selector, args),
+        CoreConcreteLibfunc::Uint128(selector) => {self::uint128::eval(registry, selector, args)},
         CoreConcreteLibfunc::Uint16(selector) => self::uint16::eval(registry, selector, args),
         CoreConcreteLibfunc::Uint256(selector) => self::uint252::eval(registry, selector, args),
         CoreConcreteLibfunc::Uint32(selector) => self::uint32::eval(registry, selector, args),

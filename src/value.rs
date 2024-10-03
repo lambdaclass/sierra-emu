@@ -52,6 +52,8 @@ pub enum Value {
         x1: Felt,
         y1: Felt,
     },
+    I128(i128),
+    I32(i32),
     I8(i8),
     Struct(Vec<Self>),
     U256(u128, u128),
@@ -105,6 +107,8 @@ impl Value {
             }
             CoreTypeConcrete::GasBuiltin(_) => matches!(self, Self::U128(_)),
             CoreTypeConcrete::NonZero(info) => self.is(registry, &info.ty),
+            CoreTypeConcrete::Sint128(_) => matches!(self, Self::I128(_)),
+            CoreTypeConcrete::Sint32(_) => matches!(self, Self::I32(_)),
             CoreTypeConcrete::Sint8(_) => matches!(self, Self::I8(_)),
             CoreTypeConcrete::Snapshot(info) => self.is(registry, &info.ty),
             CoreTypeConcrete::StarkNet(
@@ -154,9 +158,7 @@ impl Value {
             CoreTypeConcrete::Uint64(_) => matches!(self, Self::U64(_)),
             CoreTypeConcrete::Uint128MulGuarantee(_) => matches!(self, Self::Unit),
             CoreTypeConcrete::Sint16(_) => todo!(),
-            CoreTypeConcrete::Sint32(_) => todo!(),
             CoreTypeConcrete::Sint64(_) => todo!(),
-            CoreTypeConcrete::Sint128(_) => todo!(),
             CoreTypeConcrete::Nullable(info) => self.is(registry, &info.ty),
             CoreTypeConcrete::Uninitialized(_) => todo!(),
             CoreTypeConcrete::Felt252DictEntry(_) => todo!(),

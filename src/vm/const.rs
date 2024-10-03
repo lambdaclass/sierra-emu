@@ -56,6 +56,14 @@ pub fn eval_as_immediate(
                 _ => unreachable!(),
             },
             CoreTypeConcrete::NonZero(info) => inner(registry, &info.ty, inner_data),
+            CoreTypeConcrete::Sint128(_) => match inner_data {
+                [GenericArg::Value(value)] => Value::I128(value.try_into().unwrap()),
+                _ => unreachable!(),
+            },
+            CoreTypeConcrete::Sint32(_) => match inner_data {
+                [GenericArg::Value(value)] => Value::I32(value.try_into().unwrap()),
+                _ => unreachable!(),
+            },
             CoreTypeConcrete::Sint8(_) => match inner_data {
                 [GenericArg::Value(value)] => Value::I8(value.try_into().unwrap()),
                 _ => unreachable!(),
@@ -95,7 +103,40 @@ pub fn eval_as_immediate(
 
                 Value::Struct(fields)
             }
-            _ => todo!("{:?}", type_id),
+            CoreTypeConcrete::Array(_) => todo!("1"),
+            CoreTypeConcrete::Coupon(_) => todo!("2"),
+            CoreTypeConcrete::Bitwise(_) => todo!("3"),
+            CoreTypeConcrete::Box(_) => todo!("4"),
+            CoreTypeConcrete::Circuit(_) => todo!("5"),
+            CoreTypeConcrete::Const(_) => todo!("6"),
+            CoreTypeConcrete::EcOp(_) => todo!("7"),
+            CoreTypeConcrete::EcPoint(_) => todo!("8"),
+            CoreTypeConcrete::EcState(_) => todo!("9"),
+            CoreTypeConcrete::GasBuiltin(_) => todo!("10"),
+            CoreTypeConcrete::BuiltinCosts(_) => todo!("11"),
+            CoreTypeConcrete::Uint16(_) => todo!("12"),
+            CoreTypeConcrete::Uint64(_) => match inner_data {
+                [GenericArg::Value(value)] => Value::U64(value.try_into().unwrap()),
+                _ => unreachable!(),
+            },
+            CoreTypeConcrete::Uint128MulGuarantee(_) => todo!("14"),
+            CoreTypeConcrete::Sint16(_) => todo!("15"),
+            CoreTypeConcrete::Sint64(_) => todo!("17"),
+            CoreTypeConcrete::Nullable(_) => todo!("19"),
+            CoreTypeConcrete::RangeCheck(_) => todo!("20"),
+            CoreTypeConcrete::RangeCheck96(_) => todo!("21"),
+            CoreTypeConcrete::Uninitialized(_) => todo!("22"),
+            CoreTypeConcrete::Enum(_) => todo!("23"),
+            CoreTypeConcrete::Felt252Dict(_) => todo!("24"),
+            CoreTypeConcrete::Felt252DictEntry(_) => todo!("25"),
+            CoreTypeConcrete::SquashedFelt252Dict(_) => todo!("26"),
+            CoreTypeConcrete::Pedersen(_) => todo!("27"),
+            CoreTypeConcrete::Poseidon(_) => todo!("28"),
+            CoreTypeConcrete::Span(_) => todo!("29"),
+            CoreTypeConcrete::StarkNet(_) => todo!("30"),
+            CoreTypeConcrete::SegmentArena(_) => todo!("31"),
+            CoreTypeConcrete::Snapshot(_) => todo!("32"),
+            CoreTypeConcrete::Bytes31(_) => todo!("33"),
         }
     }
 

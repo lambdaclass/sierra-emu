@@ -21,6 +21,7 @@ pub fn eval(
     selector: &Uint128Concrete,
     args: Vec<Value>,
 ) -> EvalAction {
+    dbg!(&args);
     match selector {
         Uint128Concrete::Const(info) => eval_const(registry, info, args),
         Uint128Concrete::Operation(info) => eval_operation(registry, info, args),
