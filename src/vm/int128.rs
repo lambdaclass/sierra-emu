@@ -21,6 +21,7 @@ pub fn eval(
     selector: &Sint128Concrete,
     args: Vec<Value>,
 ) -> EvalAction {
+
     match selector {
         Sint128Concrete::Const(info) => todo!("1"),
         Sint128Concrete::Operation(info) => eval_operation(registry, info, args),
@@ -34,7 +35,7 @@ pub fn eval(
 
 fn eval_diff(
     _registry: &ProgramRegistry<CoreType, CoreLibfunc>,
-    selector: &SignatureOnlyConcreteLibfunc,
+    _selector: &SignatureOnlyConcreteLibfunc,
     args: Vec<Value>,
 ) -> EvalAction {
     let [range_check @ Value::Unit, Value::I128(lhs), Value::I128(rhs)]: [Value; 3] =
@@ -42,6 +43,13 @@ fn eval_diff(
     else {
         panic!()
     };
+
+    dbg!(_selector
+        .signature
+        .branch_signatures
+        .iter()
+        .map(|x| x.vars.iter().map(|x| &x.ty).collect::<Vec<_>>())
+        .collect::<Vec<_>>());
 
     if lhs >= rhs {
         EvalAction::NormalBranch(
@@ -133,5 +141,62 @@ pub fn eval_from_felt(
         EvalAction::NormalBranch(0, smallvec![range_check, Value::I128(value)])
     } else {
         EvalAction::NormalBranch(1, smallvec![range_check])
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{load_cairo, test_utils::run_test_program, Value};
+
+    #[test]
+    fn test_eval_diff() {
+        let (_, program) = load_cairo!(
+            use core::integer;
+
+            fn main() -> u128 {
+                integer::i128_diff(2, 1).unwrap()
+            }
+        );
+
+        let result = run_test_program(program);
+
+        let Value::Enum {
+            self_ty: _,
+            index: _,
+            payload,
+        } = result.last().unwrap()
+        else {
+            panic!("No output");
+        };
+
+        let expected = Value::Struct(vec![Value::U128(1)]);
+
+        assert_eq!(**payload, expected);
+    }
+
+    #[test]
+    fn test_eval_from_felt() {
+        let (_, program) = load_cairo!(
+            use core::integer;
+
+            fn main() -> i128 {
+                0x7fffffffffffffffffffffffffffffff_felt252.try_into().unwrap()
+            }
+        );
+
+        let result = run_test_program(program);
+
+        let Value::Enum {
+            self_ty: _,
+            index: _,
+            payload,
+        } = result.last().unwrap()
+        else {
+            panic!("No output");
+        };
+
+        let expected = Value::Struct(vec![Value::I128(0x7fffffffffffffffffffffffffffffff)]);
+
+        assert_eq!(**payload, expected);
     }
 }
