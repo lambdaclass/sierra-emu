@@ -5,7 +5,12 @@ use cairo_lang_compiler::{
     project::setup_project, CompilerConfig,
 };
 use cairo_lang_filesystem::db::init_dev_corelib;
-use cairo_lang_sierra::{extensions::{circuit::CircuitTypeConcrete, core::CoreTypeConcrete, starknet::StarkNetTypeConcrete}, program::Program};
+use cairo_lang_sierra::{
+    extensions::{
+        circuit::CircuitTypeConcrete, core::CoreTypeConcrete, starknet::StarkNetTypeConcrete,
+    },
+    program::Program,
+};
 
 use crate::{find_entry_point_by_idx, ProgramTrace, StateDump, Value, VirtualMachine};
 

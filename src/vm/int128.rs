@@ -21,7 +21,6 @@ pub fn eval(
     selector: &Sint128Concrete,
     args: Vec<Value>,
 ) -> EvalAction {
-
     match selector {
         Sint128Concrete::Const(info) => todo!("1"),
         Sint128Concrete::Operation(info) => eval_operation(registry, info, args),
@@ -43,13 +42,6 @@ fn eval_diff(
     else {
         panic!()
     };
-
-    dbg!(_selector
-        .signature
-        .branch_signatures
-        .iter()
-        .map(|x| x.vars.iter().map(|x| &x.ty).collect::<Vec<_>>())
-        .collect::<Vec<_>>());
 
     if lhs >= rhs {
         EvalAction::NormalBranch(
@@ -180,7 +172,9 @@ mod tests {
             use core::integer;
 
             fn main() -> i128 {
-                0x7fffffffffffffffffffffffffffffff_felt252.try_into().unwrap()
+                0x7fffffffffffffffffffffffffffffff_felt252
+                    .try_into()
+                    .unwrap()
             }
         );
 
