@@ -367,10 +367,7 @@ fn eval_storage_write(
     let [Value::U128(mut gas), system, Value::U32(address_domain), Value::Felt(storage_key), Value::Felt(value)]: [Value; 5] = args.try_into().unwrap() else {
         panic!()
     };
-    println!("=============================");
-    println!("Key {}", &storage_key.to_hex_string());
-    println!("Value {}", &value.to_hex_string());
-    println!("=============================");
+
     let error_felt_ty = {
         match registry
             .get_type(&info.branch_signatures()[1].vars[2].ty)
