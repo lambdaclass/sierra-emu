@@ -56,8 +56,20 @@ pub fn eval_as_immediate(
                 _ => unreachable!(),
             },
             CoreTypeConcrete::NonZero(info) => inner(registry, &info.ty, inner_data),
+            CoreTypeConcrete::Sint128(_) => match inner_data {
+                [GenericArg::Value(value)] => Value::I128(value.try_into().unwrap()),
+                _ => unreachable!(),
+            },
+            CoreTypeConcrete::Sint32(_) => match inner_data {
+                [GenericArg::Value(value)] => Value::I32(value.try_into().unwrap()),
+                _ => unreachable!(),
+            },
             CoreTypeConcrete::Sint8(_) => match inner_data {
                 [GenericArg::Value(value)] => Value::I8(value.try_into().unwrap()),
+                _ => unreachable!(),
+            },
+            CoreTypeConcrete::Uint64(_) => match inner_data {
+                [GenericArg::Value(value)] => Value::U64(value.try_into().unwrap()),
                 _ => unreachable!(),
             },
             CoreTypeConcrete::Uint32(_) => match inner_data {
@@ -95,7 +107,7 @@ pub fn eval_as_immediate(
 
                 Value::Struct(fields)
             }
-            _ => todo!("{:?}", type_id),
+            _ => todo!("{}", type_id),
         }
     }
 
