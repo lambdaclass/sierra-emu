@@ -1,5 +1,3 @@
-use std::u128;
-
 use cairo_lang_sierra::{
     extensions::{
         core::{CoreLibfunc, CoreType},
@@ -22,12 +20,12 @@ pub fn eval(
     args: Vec<Value>,
 ) -> EvalAction {
     match selector {
-        Sint128Concrete::Const(info) => todo!("1"),
+        Sint128Concrete::Const(_) => todo!("int128 const"),
         Sint128Concrete::Operation(info) => eval_operation(registry, info, args),
         Sint128Concrete::Equal(info) => eval_equal(registry, info, args),
         Sint128Concrete::ToFelt252(info) => eval_to_felt(registry, info, args),
         Sint128Concrete::FromFelt252(info) => eval_from_felt(registry, info, args),
-        Sint128Concrete::IsZero(info) => todo!("6"),
+        Sint128Concrete::IsZero(_) => todo!("int128 is_zero"),
         Sint128Concrete::Diff(info) => eval_diff(registry, info, args),
     }
 }
