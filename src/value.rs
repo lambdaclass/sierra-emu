@@ -62,6 +62,7 @@ pub enum Value {
     U32(u32),
     U64(u64),
     U8(u8),
+    Null,
     Uninitialized {
         ty: ConcreteTypeId,
     },
@@ -80,6 +81,7 @@ impl Value {
             CoreTypeConcrete::Uint16(_) => Value::U16(0),
             CoreTypeConcrete::Uint128(_) => Value::U128(0),
             CoreTypeConcrete::Felt252(_) => Value::Felt(0.into()),
+            CoreTypeConcrete::Nullable(_) => Value::Null,
             x => panic!("type {:?} has no default value implementation", x.info()),
         }
     }
