@@ -29,7 +29,9 @@ pub fn eval(
             eval_snapshot_pop_front(registry, info, args)
         }
         ArrayConcreteLibfunc::SnapshotPopBack(info) => eval_snapshot_pop_back(registry, info, args),
-        ArrayConcreteLibfunc::SnapshotMultiPopFront(_) => todo!(),
+        ArrayConcreteLibfunc::SnapshotMultiPopFront(info) => {
+            eval_snapshot_multi_pop_front(registry, info, args)
+        }
         ArrayConcreteLibfunc::SnapshotMultiPopBack(_) => todo!(),
     }
 }
@@ -183,5 +185,31 @@ pub fn eval_snapshot_pop_back(
         EvalAction::NormalBranch(0, smallvec![Value::Array { data, ty }, value])
     } else {
         EvalAction::NormalBranch(1, smallvec![Value::Array { data, ty }])
+    }
+}
+
+fn eval_snapshot_multi_pop_front(
+    registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    info: &cairo_lang_sierra::extensions::array::ConcreteMultiPopLibfunc,
+    args: Vec<Value>,
+) -> EvalAction {
+    let [rangecheck, Value::Array { mut data, ty }]: [Value; 2] = args.try_into().unwrap() else {
+        panic!()
+    };
+
+    let CoreTypeConcrete::Struct(popped_cty) = registry.get_type(&info.popped_ty).unwrap() else {
+        panic!()
+    };
+
+    if data.len() >= popped_cty.members.len() {
+        let new_data = data.split_off(popped_cty.members.len());
+        let value = Value::Struct(data);
+        assert!(value.is(registry, &info.popped_ty));
+        EvalAction::NormalBranch(
+            0,
+            smallvec![rangecheck, Value::Array { data: new_data, ty }, value],
+        )
+    } else {
+        EvalAction::NormalBranch(1, smallvec![rangecheck, Value::Array { data, ty }])
     }
 }

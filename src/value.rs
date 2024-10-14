@@ -175,7 +175,7 @@ impl Value {
                 | StarkNetTypeConcrete::StorageAddress(_) => matches!(self, Self::Felt(_)),
                 StarkNetTypeConcrete::System(_) => matches!(self, Self::Unit),
                 StarkNetTypeConcrete::Secp256Point(_) => todo!(),
-                StarkNetTypeConcrete::Sha256StateHandle(_) => todo!(),
+                StarkNetTypeConcrete::Sha256StateHandle(_) => matches!(self, Self::Struct { .. }),
             },
         };
 

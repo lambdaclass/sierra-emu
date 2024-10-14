@@ -7,6 +7,7 @@ use crate::{
 use cairo_lang_sierra::{
     edit_state,
     extensions::{
+        circuit::CircuitTypeConcrete,
         core::{CoreConcreteLibfunc, CoreLibfunc, CoreType, CoreTypeConcrete},
         starknet::StarkNetTypeConcrete,
         ConcreteType,
@@ -137,6 +138,10 @@ impl<S: StarknetSyscallHandler> VirtualMachine<S> {
                         }
                         CoreTypeConcrete::StarkNet(StarkNetTypeConcrete::System(_)) => Value::Unit,
                         CoreTypeConcrete::RangeCheck(_)
+                        | CoreTypeConcrete::RangeCheck96(_)
+                        | CoreTypeConcrete::Circuit(
+                            CircuitTypeConcrete::MulMod(_) | CircuitTypeConcrete::AddMod(_),
+                        )
                         | CoreTypeConcrete::Pedersen(_)
                         | CoreTypeConcrete::Poseidon(_)
                         | CoreTypeConcrete::Bitwise(_)

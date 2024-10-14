@@ -214,3 +214,17 @@ pub fn eval_from_felt(
         )
     }
 }
+
+pub fn eval_byte_reverse(
+    _registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    _info: &SignatureOnlyConcreteLibfunc,
+    args: Vec<Value>,
+) -> EvalAction {
+    let [bitwise @ Value::Unit, Value::U128(value)]: [Value; 2] = args.try_into().unwrap() else {
+        panic!()
+    };
+
+    let value = value.swap_bytes();
+
+    EvalAction::NormalBranch(0, smallvec![bitwise, Value::U128(value)])
+}

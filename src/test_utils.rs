@@ -1,3 +1,5 @@
+#![cfg(test)]
+
 use std::{fs, path::Path, sync::Arc};
 
 use cairo_lang_compiler::{
