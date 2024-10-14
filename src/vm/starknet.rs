@@ -79,9 +79,15 @@ pub fn eval(
         }
         StarkNetConcreteLibfunc::Deploy(info) => eval_deploy(registry, info, args, syscall_handler),
         StarkNetConcreteLibfunc::Keccak(info) => eval_keccak(registry, info, args, syscall_handler),
-        StarkNetConcreteLibfunc::Sha256ProcessBlock(_) => todo!(),
-        StarkNetConcreteLibfunc::Sha256StateHandleInit(_) => todo!(),
-        StarkNetConcreteLibfunc::Sha256StateHandleDigest(_) => todo!(),
+        StarkNetConcreteLibfunc::Sha256ProcessBlock(info) => {
+            eval_sha256_process_block(registry, info, args, syscall_handler)
+        }
+        StarkNetConcreteLibfunc::Sha256StateHandleInit(info) => {
+            eval_sha256_state_handle_init(registry, info, args, syscall_handler)
+        }
+        StarkNetConcreteLibfunc::Sha256StateHandleDigest(info) => {
+            eval_sha256_state_handle_digest(registry, info, args, syscall_handler)
+        }
         StarkNetConcreteLibfunc::LibraryCall(info) => {
             eval_library_call(registry, info, args, syscall_handler)
         }
@@ -920,6 +926,90 @@ fn eval_send_message_to_l1(
                 Value::Array {
                     ty: felt_ty,
                     data: e.into_iter().map(Value::Felt).collect::<Vec<_>>(),
+                }
+            ],
+        ),
+    }
+}
+
+fn eval_sha256_state_handle_init(
+    _registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    _info: &SignatureOnlyConcreteLibfunc,
+    args: Vec<Value>,
+    _syscall_handler: &mut impl StarknetSyscallHandler,
+) -> EvalAction {
+    let [value]: [Value; 1] = args.try_into().unwrap();
+
+    EvalAction::NormalBranch(0, smallvec![value])
+}
+
+fn eval_sha256_state_handle_digest(
+    _registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    _info: &SignatureOnlyConcreteLibfunc,
+    args: Vec<Value>,
+    _syscall_handler: &mut impl StarknetSyscallHandler,
+) -> EvalAction {
+    let [value]: [Value; 1] = args.try_into().unwrap();
+
+    EvalAction::NormalBranch(0, smallvec![value])
+}
+
+fn eval_sha256_process_block(
+    registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    info: &SignatureOnlyConcreteLibfunc,
+    args: Vec<Value>,
+    syscall_handler: &mut impl StarknetSyscallHandler,
+) -> EvalAction {
+    let [Value::U128(mut gas), system, Value::Struct(prev_state), Value::Struct(current_block)]: [Value; 4] = args.try_into().unwrap() else {
+        panic!()
+    };
+
+    let prev_state: [u32; 8] = prev_state
+        .into_iter()
+        .map(|v| {
+            let Value::U32(v) = v else { panic!() };
+            v
+        })
+        .collect::<Vec<_>>()
+        .try_into()
+        .unwrap();
+    let current_block: [u32; 16] = current_block
+        .into_iter()
+        .map(|v| {
+            let Value::U32(v) = v else { panic!() };
+            v
+        })
+        .collect::<Vec<_>>()
+        .try_into()
+        .unwrap();
+
+    // get felt type from the error branch array
+    let felt_ty = {
+        match registry
+            .get_type(&info.branch_signatures()[1].vars[2].ty)
+            .unwrap()
+        {
+            CoreTypeConcrete::Array(info) => info.ty.clone(),
+            _ => unreachable!(),
+        }
+    };
+
+    match syscall_handler.sha256_process_block(prev_state, current_block, &mut gas) {
+        Ok(payload) => {
+            let payload = payload.into_iter().map(Value::U32).collect::<Vec<_>>();
+            EvalAction::NormalBranch(
+                0,
+                smallvec![Value::U128(gas), system, Value::Struct(payload)],
+            )
+        }
+        Err(payload) => EvalAction::NormalBranch(
+            1,
+            smallvec![
+                Value::U128(gas),
+                system,
+                Value::Array {
+                    ty: felt_ty,
+                    data: payload.into_iter().map(Value::Felt).collect::<Vec<_>>(),
                 }
             ],
         ),

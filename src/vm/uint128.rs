@@ -211,7 +211,7 @@ pub fn eval_byte_reverse(
         panic!()
     };
 
-    let value = value.reverse_bits();
+    let value = value.swap_bytes();
 
     EvalAction::NormalBranch(0, smallvec![bitwise, Value::U128(value)])
 }
