@@ -5,6 +5,7 @@ use cairo_lang_sierra::{
         array::ArrayConcreteLibfunc,
         core::{CoreLibfunc, CoreType, CoreTypeConcrete},
         lib_func::{SignatureAndTypeConcreteLibfunc, SignatureOnlyConcreteLibfunc},
+        ConcreteLibfunc,
     },
     program_registry::ProgramRegistry,
 };
@@ -17,7 +18,7 @@ pub fn eval(
 ) -> EvalAction {
     match selector {
         ArrayConcreteLibfunc::New(info) => eval_new(registry, info, args),
-        ArrayConcreteLibfunc::SpanFromTuple(_) => todo!(),
+        ArrayConcreteLibfunc::SpanFromTuple(info) => eval_span_from_tuple(registry, info, args),
         ArrayConcreteLibfunc::TupleFromSpan(_) => todo!(),
         ArrayConcreteLibfunc::Append(info) => eval_append(registry, info, args),
         ArrayConcreteLibfunc::PopFront(info) => eval_pop_front(registry, info, args),
@@ -50,12 +51,44 @@ pub fn eval_new(
         CoreTypeConcrete::Array(info) => &info.ty,
         _ => unreachable!(),
     };
-
+    //dbg!("ARRAY: {}", &ty);
     EvalAction::NormalBranch(
         0,
         smallvec![Value::Array {
             ty: ty.clone(),
             data: Vec::new(),
+        }],
+    )
+}
+
+fn eval_span_from_tuple(
+    registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    info: &SignatureAndTypeConcreteLibfunc,
+    args: Vec<Value>,
+) -> EvalAction {
+    let [Value::Struct(data)]: [Value; 1] = args.try_into().unwrap() else {
+        panic!()
+    };
+
+    let type_info = registry
+        .get_type(&info.branch_signatures()[0].vars[0].ty)
+        .unwrap();
+    let ty = match type_info {
+        CoreTypeConcrete::Snapshot(info) => {
+            let type_info = registry.get_type(&info.ty).unwrap();
+            match type_info {
+                CoreTypeConcrete::Array(info) => &info.ty,
+                _ => unreachable!(),
+            }
+        }
+        _ => unreachable!(),
+    };
+
+    EvalAction::NormalBranch(
+        0,
+        smallvec![Value::Array {
+            ty: ty.clone(),
+            data
         }],
     )
 }

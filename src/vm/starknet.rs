@@ -1,11 +1,11 @@
 use super::EvalAction;
-use crate::{starknet::StarknetSyscallHandler, Value};
+use crate::{starknet::{ StarknetSyscallHandler, U256}, Value};
 use cairo_lang_sierra::{
     extensions::{
         consts::SignatureAndConstConcreteLibfunc,
         core::{CoreLibfunc, CoreType, CoreTypeConcrete},
         lib_func::SignatureOnlyConcreteLibfunc,
-        starknet::StarkNetConcreteLibfunc,
+        starknet::{self, secp256::Secp256ConcreteLibfunc, StarkNetConcreteLibfunc},
         ConcreteLibfunc,
     },
     program_registry::ProgramRegistry,
@@ -98,7 +98,9 @@ pub fn eval(
             eval_send_message_to_l1(registry, info, args, syscall_handler)
         }
         StarkNetConcreteLibfunc::Testing(_info) => todo!(),
-        StarkNetConcreteLibfunc::Secp256(_info) => todo!(),
+        StarkNetConcreteLibfunc::Secp256(info) => {
+            eval_secp256(registry, info, args, syscall_handler)
+        }
     }
 }
 
@@ -1013,5 +1015,51 @@ fn eval_sha256_process_block(
                 }
             ],
         ),
+    }
+}
+
+fn eval_secp256(
+    registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    info: &Secp256ConcreteLibfunc,
+    args: Vec<Value>,
+    syscall_handler: &mut impl StarknetSyscallHandler,
+) -> EvalAction {
+    match info {
+        Secp256ConcreteLibfunc::K1(libfunc) => match libfunc {
+            cairo_lang_sierra::extensions::starknet::secp256::Secp256OpConcreteLibfunc::New(_) => todo!(),
+            cairo_lang_sierra::extensions::starknet::secp256::Secp256OpConcreteLibfunc::Add(_) => todo!(),
+            cairo_lang_sierra::extensions::starknet::secp256::Secp256OpConcreteLibfunc::Mul(_) => todo!(),
+            cairo_lang_sierra::extensions::starknet::secp256::Secp256OpConcreteLibfunc::GetPointFromX(_) => todo!(),
+            cairo_lang_sierra::extensions::starknet::secp256::Secp256OpConcreteLibfunc::GetXy(_) => todo!(),
+        },
+        Secp256ConcreteLibfunc::R1(libfunc) => match libfunc {
+            cairo_lang_sierra::extensions::starknet::secp256::Secp256OpConcreteLibfunc::New(_) => todo!(),
+            cairo_lang_sierra::extensions::starknet::secp256::Secp256OpConcreteLibfunc::Add(_) => todo!(),
+            cairo_lang_sierra::extensions::starknet::secp256::Secp256OpConcreteLibfunc::Mul(_) => todo!(),
+            cairo_lang_sierra::extensions::starknet::secp256::Secp256OpConcreteLibfunc::GetPointFromX(info) => {
+                dbg!("SIGNATURE: {}", info.signature.param_signatures.iter().map(|x| &x.ty).collect::<Vec<_>>());
+                dbg!("SIGNATURE: {}", info.signature.branch_signatures.iter().map(|x| x.vars.iter().map(|x|&x.ty).collect::<Vec<_>>()).collect::<Vec<_>>());
+                dbg!("ARGS {}", &args);
+                let [Value::U128(mut gas), system, Value::Struct(x_arg), Value::Enum { self_ty: _, index, payload: _ }]: [Value; 4] = args.try_into().unwrap() else {
+                    panic!()
+                };
+                let Value::U128(lo) = x_arg[0] else {
+                    panic!();
+                };
+                let Value::U128(hi) = x_arg[1] else {
+                    panic!();
+                };
+                let x = U256 { lo, hi };
+                let y_parity = index == 0;
+
+                match syscall_handler.secp256r1_get_point_from_x(x, y_parity, &mut gas) {
+                    Ok(ok) => {},
+                    Err(err) => {}
+                }
+
+                EvalAction::NormalBranch(0, smallvec![])
+            },
+            cairo_lang_sierra::extensions::starknet::secp256::Secp256OpConcreteLibfunc::GetXy(_) => todo!(),
+        },
     }
 }
