@@ -37,19 +37,6 @@ pub fn eval(
     }
 }
 
-pub fn eval_byte_reverse(
-    _registry: &ProgramRegistry<CoreType, CoreLibfunc>,
-    _info: &SignatureOnlyConcreteLibfunc,
-    args: Vec<Value>,
-) -> EvalAction {
-    let [bitwise @ Value::Unit, Value::U128(input)]: [Value; 2] = args.try_into().unwrap()
-    else {
-        panic!()
-    };
-
-    EvalAction::NormalBranch(0, smallvec![bitwise, Value::U128(input.swap_bytes())])
-}
-
 pub fn eval_guarantee_mul(
     _registry: &ProgramRegistry<CoreType, CoreLibfunc>,
     _info: &SignatureOnlyConcreteLibfunc,
