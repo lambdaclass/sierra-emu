@@ -1051,20 +1051,38 @@ fn eval_secp256r1_new(
     registry: &ProgramRegistry<CoreType, CoreLibfunc>,
     info: &SignatureOnlyConcreteLibfunc,
     args: Vec<Value>,
-    syscall_handler: &mut impl StarknetSyscallHandler
+    syscall_handler: &mut impl StarknetSyscallHandler,
 ) -> EvalAction {
-    dbg!("SIGNATURE: {}", info.signature.param_signatures.iter().map(|x| &x.ty).collect::<Vec<_>>());
-    dbg!("SIGNATURE: {}", info.signature.branch_signatures.iter().map(|x| x.vars.iter().map(|x|&x.ty).collect::<Vec<_>>()).collect::<Vec<_>>());
+    dbg!(
+        "SIGNATURE: {}",
+        info.signature
+            .param_signatures
+            .iter()
+            .map(|x| &x.ty)
+            .collect::<Vec<_>>()
+    );
+    dbg!(
+        "SIGNATURE: {}",
+        info.signature
+            .branch_signatures
+            .iter()
+            .map(|x| x.vars.iter().map(|x| &x.ty).collect::<Vec<_>>())
+            .collect::<Vec<_>>()
+    );
     dbg!("ARGS {}", &args);
 
-    let [Value::U128(mut gas), system, Value::Struct(x), Value::Struct(y)]: [Value; 4] = args.try_into().unwrap() else {
+    let [Value::U128(mut gas), system, Value::Struct(x), Value::Struct(y)]: [Value; 4] =
+        args.try_into().unwrap()
+    else {
         panic!()
     };
 
-    let [Value::U128(lo_x), Value::U128(hi_x)]: [Value; 2] = x[..].to_owned().try_into().unwrap() else {
+    let [Value::U128(lo_x), Value::U128(hi_x)]: [Value; 2] = x[..].to_owned().try_into().unwrap()
+    else {
         panic!();
     };
-    let [Value::U128(lo_y), Value::U128(hi_y)]: [Value; 2] = y[..].to_owned().try_into().unwrap() else {
+    let [Value::U128(lo_y), Value::U128(hi_y)]: [Value; 2] = y[..].to_owned().try_into().unwrap()
+    else {
         panic!();
     };
 
@@ -1075,36 +1093,43 @@ fn eval_secp256r1_new(
         Ok(payload) => {
             let payload_ty = info.branch_signatures()[0].vars[2].ty.clone();
             match payload {
-            Some(p) => {
-                dbg!("SOME");
-                let payload = Box::new(p.into_value());
-                EvalAction::NormalBranch(0, smallvec![
-                    Value::U128(gas),
-                    system,
-                    Value::Enum {
-                        self_ty: payload_ty,
-                        index: 0,
-                        payload
-                    }
-                ])
+                Some(p) => {
+                    dbg!("SOME");
+                    let payload = Box::new(p.into_value());
+                    EvalAction::NormalBranch(
+                        0,
+                        smallvec![
+                            Value::U128(gas),
+                            system,
+                            Value::Enum {
+                                self_ty: payload_ty,
+                                index: 0,
+                                payload
+                            }
+                        ],
+                    )
+                }
+                None => {
+                    dbg!("NONE");
+                    let payload = Box::new(Value::Struct(vec![
+                        Value::Struct(vec![Value::U128(0), Value::U128(0)]),
+                        Value::Struct(vec![Value::U128(0), Value::U128(0)]),
+                    ]));
+                    EvalAction::NormalBranch(
+                        0,
+                        smallvec![
+                            Value::U128(gas),
+                            system,
+                            Value::Enum {
+                                self_ty: payload_ty,
+                                index: 1,
+                                payload
+                            },
+                        ],
+                    )
+                }
             }
-            None => {
-                dbg!("NONE");
-                let payload = Box::new(Value::Struct(vec![
-                    Value::Struct(vec![Value::U128(0), Value::U128(0)]),
-                    Value::Struct(vec![Value::U128(0), Value::U128(0)]),
-                ]));
-                EvalAction::NormalBranch(0, smallvec![
-                    Value::U128(gas),
-                    system,
-                    Value::Enum {
-                        self_ty: payload_ty,
-                        index: 1,
-                        payload
-                    },
-                ])
-            }
-        }},
+        }
         Err(payload) => {
             let felt_ty = {
                 match registry
@@ -1116,14 +1141,17 @@ fn eval_secp256r1_new(
                 }
             };
 
-            EvalAction::NormalBranch(1, smallvec![
-                Value::U128(gas),
-                system,
-                Value::Array {
-                    ty:felt_ty,
-                    data: payload.into_iter().map(Value::Felt).collect::<Vec<_>>()
-                }
-            ])
+            EvalAction::NormalBranch(
+                1,
+                smallvec![
+                    Value::U128(gas),
+                    system,
+                    Value::Array {
+                        ty: felt_ty,
+                        data: payload.into_iter().map(Value::Felt).collect::<Vec<_>>()
+                    }
+                ],
+            )
         }
     }
 }
@@ -1132,16 +1160,22 @@ fn eval_secp256r1_get_point_from_x(
     registry: &ProgramRegistry<CoreType, CoreLibfunc>,
     info: &SignatureOnlyConcreteLibfunc,
     args: Vec<Value>,
-    syscall_handler: &mut impl StarknetSyscallHandler
+    syscall_handler: &mut impl StarknetSyscallHandler,
 ) -> EvalAction {
     // dbg!("SIGNATURE: {}", info.signature.param_signatures.iter().map(|x| &x.ty).collect::<Vec<_>>());
     // dbg!("SIGNATURE: {}", info.signature.branch_signatures.iter().map(|x| x.vars.iter().map(|x|&x.ty).collect::<Vec<_>>()).collect::<Vec<_>>());
     // dbg!("ARGS {}", &args);
-    let [Value::U128(mut gas), system, Value::Struct(x_arg), Value::Enum { self_ty: _, index, payload: _ }]: [Value; 4] = args.try_into().unwrap() else {
+    let [Value::U128(mut gas), system, Value::Struct(x_arg), Value::Enum {
+        self_ty: _,
+        index,
+        payload: _,
+    }]: [Value; 4] = args.try_into().unwrap()
+    else {
         panic!()
     };
 
-    let [Value::U128(lo), Value::U128(hi)]: [Value; 2] = x_arg[..].to_owned().try_into().unwrap() else {
+    let [Value::U128(lo), Value::U128(hi)]: [Value; 2] = x_arg[..].to_owned().try_into().unwrap()
+    else {
         panic!();
     };
 
@@ -1152,36 +1186,43 @@ fn eval_secp256r1_get_point_from_x(
         Ok(payload) => {
             let payload_ty = info.branch_signatures()[0].vars[2].ty.clone();
             match payload {
-            Some(p) => {
-                dbg!("SOME");
-                let payload = Box::new(p.into_value());
-                EvalAction::NormalBranch(0, smallvec![
-                    Value::U128(gas),
-                    system,
-                    Value::Enum {
-                        self_ty: payload_ty,
-                        index: 0,
-                        payload
-                    }
-                ])
+                Some(p) => {
+                    dbg!("SOME");
+                    let payload = Box::new(p.into_value());
+                    EvalAction::NormalBranch(
+                        0,
+                        smallvec![
+                            Value::U128(gas),
+                            system,
+                            Value::Enum {
+                                self_ty: payload_ty,
+                                index: 0,
+                                payload
+                            }
+                        ],
+                    )
+                }
+                None => {
+                    dbg!("NONE");
+                    let payload = Box::new(Value::Struct(vec![
+                        Value::Struct(vec![Value::U128(0), Value::U128(0)]),
+                        Value::Struct(vec![Value::U128(0), Value::U128(0)]),
+                    ]));
+                    EvalAction::NormalBranch(
+                        0,
+                        smallvec![
+                            Value::U128(gas),
+                            system,
+                            Value::Enum {
+                                self_ty: payload_ty,
+                                index: 1,
+                                payload
+                            },
+                        ],
+                    )
+                }
             }
-            None => {
-                dbg!("NONE");
-                let payload = Box::new(Value::Struct(vec![
-                    Value::Struct(vec![Value::U128(0), Value::U128(0)]),
-                    Value::Struct(vec![Value::U128(0), Value::U128(0)]),
-                ]));
-                EvalAction::NormalBranch(0, smallvec![
-                    Value::U128(gas),
-                    system,
-                    Value::Enum {
-                        self_ty: payload_ty,
-                        index: 1,
-                        payload
-                    },
-                ])
-            }
-        }},
+        }
         Err(payload) => {
             let felt_ty = {
                 match registry
@@ -1193,14 +1234,17 @@ fn eval_secp256r1_get_point_from_x(
                 }
             };
 
-            EvalAction::NormalBranch(1, smallvec![
-                Value::U128(gas),
-                system,
-                Value::Array {
-                    ty:felt_ty,
-                    data: payload.into_iter().map(Value::Felt).collect::<Vec<_>>()
-                }
-            ])
+            EvalAction::NormalBranch(
+                1,
+                smallvec![
+                    Value::U128(gas),
+                    system,
+                    Value::Array {
+                        ty: felt_ty,
+                        data: payload.into_iter().map(Value::Felt).collect::<Vec<_>>()
+                    }
+                ],
+            )
         }
     }
 }
