@@ -17,9 +17,7 @@ pub fn eval(
     assert!(args
         .iter()
         .zip(&info.function.params)
-        .all(|(value, param)| {
-            value.is(registry, &param.ty)
-        }));
+        .all(|(value, param)| { value.is(registry, &param.ty) }));
 
     EvalAction::FunctionCall(info.function.id.clone(), args.into_iter().collect())
 }
