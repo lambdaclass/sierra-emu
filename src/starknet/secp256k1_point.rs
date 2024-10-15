@@ -9,7 +9,7 @@ pub struct Secp256k1Point {
 
 impl Secp256k1Point {
     #[allow(unused)]
-    pub(crate) fn into_value(self) -> Value {
+    pub fn into_value(self) -> Value {
         Value::Struct(vec![
             Value::Struct(vec![Value::U128(self.x.lo), Value::U128(self.x.hi)]),
             Value::Struct(vec![Value::U128(self.y.lo), Value::U128(self.y.hi)]),
