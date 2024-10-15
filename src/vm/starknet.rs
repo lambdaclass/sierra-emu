@@ -1,5 +1,8 @@
 use super::EvalAction;
-use crate::{starknet::{ StarknetSyscallHandler, U256}, Value};
+use crate::{
+    starknet::{StarknetSyscallHandler, U256},
+    Value,
+};
 use cairo_lang_sierra::{
     extensions::{
         consts::SignatureAndConstConcreteLibfunc,
@@ -1033,33 +1036,171 @@ fn eval_secp256(
             cairo_lang_sierra::extensions::starknet::secp256::Secp256OpConcreteLibfunc::GetXy(_) => todo!(),
         },
         Secp256ConcreteLibfunc::R1(libfunc) => match libfunc {
-            cairo_lang_sierra::extensions::starknet::secp256::Secp256OpConcreteLibfunc::New(_) => todo!(),
+            cairo_lang_sierra::extensions::starknet::secp256::Secp256OpConcreteLibfunc::New(info) => eval_secp256r1_new(registry, info, args, syscall_handler),
             cairo_lang_sierra::extensions::starknet::secp256::Secp256OpConcreteLibfunc::Add(_) => todo!(),
             cairo_lang_sierra::extensions::starknet::secp256::Secp256OpConcreteLibfunc::Mul(_) => todo!(),
-            cairo_lang_sierra::extensions::starknet::secp256::Secp256OpConcreteLibfunc::GetPointFromX(info) => {
-                dbg!("SIGNATURE: {}", info.signature.param_signatures.iter().map(|x| &x.ty).collect::<Vec<_>>());
-                dbg!("SIGNATURE: {}", info.signature.branch_signatures.iter().map(|x| x.vars.iter().map(|x|&x.ty).collect::<Vec<_>>()).collect::<Vec<_>>());
-                dbg!("ARGS {}", &args);
-                let [Value::U128(mut gas), system, Value::Struct(x_arg), Value::Enum { self_ty: _, index, payload: _ }]: [Value; 4] = args.try_into().unwrap() else {
-                    panic!()
-                };
-                let Value::U128(lo) = x_arg[0] else {
-                    panic!();
-                };
-                let Value::U128(hi) = x_arg[1] else {
-                    panic!();
-                };
-                let x = U256 { lo, hi };
-                let y_parity = index == 0;
-
-                match syscall_handler.secp256r1_get_point_from_x(x, y_parity, &mut gas) {
-                    Ok(ok) => {},
-                    Err(err) => {}
-                }
-
-                EvalAction::NormalBranch(0, smallvec![])
-            },
+            cairo_lang_sierra::extensions::starknet::secp256::Secp256OpConcreteLibfunc::GetPointFromX(info) => eval_secp256r1_get_point_from_x(registry, info, args, syscall_handler),
             cairo_lang_sierra::extensions::starknet::secp256::Secp256OpConcreteLibfunc::GetXy(_) => todo!(),
         },
+    }
+}
+
+// Secp256R1 libfuncs evaluations
+
+fn eval_secp256r1_new(
+    registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    info: &SignatureOnlyConcreteLibfunc,
+    args: Vec<Value>,
+    syscall_handler: &mut impl StarknetSyscallHandler
+) -> EvalAction {
+    dbg!("SIGNATURE: {}", info.signature.param_signatures.iter().map(|x| &x.ty).collect::<Vec<_>>());
+    dbg!("SIGNATURE: {}", info.signature.branch_signatures.iter().map(|x| x.vars.iter().map(|x|&x.ty).collect::<Vec<_>>()).collect::<Vec<_>>());
+    dbg!("ARGS {}", &args);
+
+    let [Value::U128(mut gas), system, Value::Struct(x), Value::Struct(y)]: [Value; 4] = args.try_into().unwrap() else {
+        panic!()
+    };
+
+    let [Value::U128(lo_x), Value::U128(hi_x)]: [Value; 2] = x[..].to_owned().try_into().unwrap() else {
+        panic!();
+    };
+    let [Value::U128(lo_y), Value::U128(hi_y)]: [Value; 2] = y[..].to_owned().try_into().unwrap() else {
+        panic!();
+    };
+
+    let x_u256 = U256 { lo: lo_x, hi: hi_x };
+    let y_u256 = U256 { lo: lo_y, hi: hi_y };
+
+    match syscall_handler.secp256r1_new(x_u256, y_u256, &mut gas) {
+        Ok(payload) => {
+            let payload_ty = info.branch_signatures()[0].vars[2].ty.clone();
+            match payload {
+            Some(p) => {
+                dbg!("SOME");
+                let payload = Box::new(p.into_value());
+                EvalAction::NormalBranch(0, smallvec![
+                    Value::U128(gas),
+                    system,
+                    Value::Enum {
+                        self_ty: payload_ty,
+                        index: 0,
+                        payload
+                    }
+                ])
+            }
+            None => {
+                dbg!("NONE");
+                let payload = Box::new(Value::Struct(vec![
+                    Value::Struct(vec![Value::U128(0), Value::U128(0)]),
+                    Value::Struct(vec![Value::U128(0), Value::U128(0)]),
+                ]));
+                EvalAction::NormalBranch(0, smallvec![
+                    Value::U128(gas),
+                    system,
+                    Value::Enum {
+                        self_ty: payload_ty,
+                        index: 1,
+                        payload
+                    },
+                ])
+            }
+        }},
+        Err(payload) => {
+            let felt_ty = {
+                match registry
+                    .get_type(&info.branch_signatures()[1].vars[2].ty)
+                    .unwrap()
+                {
+                    CoreTypeConcrete::Array(info) => info.ty.clone(),
+                    _ => unreachable!(),
+                }
+            };
+
+            EvalAction::NormalBranch(1, smallvec![
+                Value::U128(gas),
+                system,
+                Value::Array {
+                    ty:felt_ty,
+                    data: payload.into_iter().map(Value::Felt).collect::<Vec<_>>()
+                }
+            ])
+        }
+    }
+}
+
+fn eval_secp256r1_get_point_from_x(
+    registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    info: &SignatureOnlyConcreteLibfunc,
+    args: Vec<Value>,
+    syscall_handler: &mut impl StarknetSyscallHandler
+) -> EvalAction {
+    // dbg!("SIGNATURE: {}", info.signature.param_signatures.iter().map(|x| &x.ty).collect::<Vec<_>>());
+    // dbg!("SIGNATURE: {}", info.signature.branch_signatures.iter().map(|x| x.vars.iter().map(|x|&x.ty).collect::<Vec<_>>()).collect::<Vec<_>>());
+    // dbg!("ARGS {}", &args);
+    let [Value::U128(mut gas), system, Value::Struct(x_arg), Value::Enum { self_ty: _, index, payload: _ }]: [Value; 4] = args.try_into().unwrap() else {
+        panic!()
+    };
+
+    let [Value::U128(lo), Value::U128(hi)]: [Value; 2] = x_arg[..].to_owned().try_into().unwrap() else {
+        panic!();
+    };
+
+    let x = U256 { lo, hi };
+    let y_parity = index == 0;
+
+    match syscall_handler.secp256r1_get_point_from_x(x, y_parity, &mut gas) {
+        Ok(payload) => {
+            let payload_ty = info.branch_signatures()[0].vars[2].ty.clone();
+            match payload {
+            Some(p) => {
+                dbg!("SOME");
+                let payload = Box::new(p.into_value());
+                EvalAction::NormalBranch(0, smallvec![
+                    Value::U128(gas),
+                    system,
+                    Value::Enum {
+                        self_ty: payload_ty,
+                        index: 0,
+                        payload
+                    }
+                ])
+            }
+            None => {
+                dbg!("NONE");
+                let payload = Box::new(Value::Struct(vec![
+                    Value::Struct(vec![Value::U128(0), Value::U128(0)]),
+                    Value::Struct(vec![Value::U128(0), Value::U128(0)]),
+                ]));
+                EvalAction::NormalBranch(0, smallvec![
+                    Value::U128(gas),
+                    system,
+                    Value::Enum {
+                        self_ty: payload_ty,
+                        index: 1,
+                        payload
+                    },
+                ])
+            }
+        }},
+        Err(payload) => {
+            let felt_ty = {
+                match registry
+                    .get_type(&info.branch_signatures()[1].vars[2].ty)
+                    .unwrap()
+                {
+                    CoreTypeConcrete::Array(info) => info.ty.clone(),
+                    _ => unreachable!(),
+                }
+            };
+
+            EvalAction::NormalBranch(1, smallvec![
+                Value::U128(gas),
+                system,
+                Value::Array {
+                    ty:felt_ty,
+                    data: payload.into_iter().map(Value::Felt).collect::<Vec<_>>()
+                }
+            ])
+        }
     }
 }
