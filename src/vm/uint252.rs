@@ -20,7 +20,7 @@ pub fn eval(
         Uint256Concrete::IsZero(info) => eval_is_zero(registry, info, args),
         Uint256Concrete::Divmod(info) => eval_divmod(registry, info, args),
         Uint256Concrete::SquareRoot(_) => todo!(),
-        Uint256Concrete::InvModN(_) => todo!(),
+        Uint256Concrete::InvModN(info) => eval_inv_mod_n(registry, info, args),
     }
 }
 
@@ -106,4 +106,70 @@ pub fn eval_divmod(
             Value::Unit
         ],
     )
+}
+
+pub fn eval_inv_mod_n(
+    _registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    info: &SignatureOnlyConcreteLibfunc,
+    args: Vec<Value>,
+) -> EvalAction {
+    // dbg!(
+    //     "SIGNATURE: {}",
+    //     info.signature
+    //         .param_signatures
+    //         .iter()
+    //         .map(|x| &x.ty)
+    //         .collect::<Vec<_>>()
+    // );
+    // dbg!(
+    //     "BRANCH: {}",
+    //     info.signature
+    //         .branch_signatures
+    //         .iter()
+    //         .map(|x| x.vars.iter().map(|x| &x.ty).collect::<Vec<_>>())
+    //         .collect::<Vec<_>>()
+    // );
+    let [range_check @ Value::Unit, Value::Struct(fields), Value::Struct(modulus_struct)]: [Value;
+        3] = args.try_into().unwrap()
+    else {
+        panic!()
+    };
+
+    let [Value::U128(fields_lo), Value::U128(fields_hi)]: [Value; 2] =
+        fields.clone().try_into().unwrap()
+    else {
+        panic!()
+    };
+
+    let [Value::Struct(modulus)]: [Value; 1] = modulus_struct.try_into().unwrap() else {
+        panic!()
+    };
+
+    let [Value::U128(mod_lo), Value::U128(mod_hi)]: [Value; 2] =
+        modulus.clone().try_into().unwrap()
+    else {
+        panic!()
+    };
+
+    let num = u256_to_biguint(fields_lo, fields_hi);
+    let modulus = u256_to_biguint(mod_lo, mod_hi);
+
+    match num.modinv(&modulus) {
+        Some(r) => EvalAction::NormalBranch(
+            0,
+            smallvec![
+                range_check,
+                u256_to_value(r),
+                Value::Unit,
+                Value::Unit,
+                Value::Unit,
+                Value::Unit,
+                Value::Unit,
+                Value::Unit,
+                Value::Unit,
+                Value::Unit
+            ],
+        ),
+        None => EvalAction::NormalBranch(1, smallvec![range_check, Value::Unit, Value::Unit]),
+    }
 }

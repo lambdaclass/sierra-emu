@@ -8,7 +8,7 @@ use cairo_lang_sierra::{
         consts::SignatureAndConstConcreteLibfunc,
         core::{CoreLibfunc, CoreType, CoreTypeConcrete},
         lib_func::SignatureOnlyConcreteLibfunc,
-        starknet::{self, secp256::Secp256ConcreteLibfunc, StarkNetConcreteLibfunc},
+        starknet::{secp256::Secp256ConcreteLibfunc, StarkNetConcreteLibfunc},
         ConcreteLibfunc,
     },
     program_registry::ProgramRegistry,
@@ -1053,23 +1053,23 @@ fn eval_secp256r1_new(
     args: Vec<Value>,
     syscall_handler: &mut impl StarknetSyscallHandler,
 ) -> EvalAction {
-    dbg!(
-        "SIGNATURE: {}",
-        info.signature
-            .param_signatures
-            .iter()
-            .map(|x| &x.ty)
-            .collect::<Vec<_>>()
-    );
-    dbg!(
-        "SIGNATURE: {}",
-        info.signature
-            .branch_signatures
-            .iter()
-            .map(|x| x.vars.iter().map(|x| &x.ty).collect::<Vec<_>>())
-            .collect::<Vec<_>>()
-    );
-    dbg!("ARGS {}", &args);
+    // dbg!(
+    //     "SIGNATURE: {}",
+    //     info.signature
+    //         .param_signatures
+    //         .iter()
+    //         .map(|x| &x.ty)
+    //         .collect::<Vec<_>>()
+    // );
+    // dbg!(
+    //     "SIGNATURE: {}",
+    //     info.signature
+    //         .branch_signatures
+    //         .iter()
+    //         .map(|x| x.vars.iter().map(|x| &x.ty).collect::<Vec<_>>())
+    //         .collect::<Vec<_>>()
+    // );
+    // dbg!("ARGS {}", &args);
 
     let [Value::U128(mut gas), system, Value::Struct(x), Value::Struct(y)]: [Value; 4] =
         args.try_into().unwrap()
@@ -1077,11 +1077,11 @@ fn eval_secp256r1_new(
         panic!()
     };
 
-    let [Value::U128(lo_x), Value::U128(hi_x)]: [Value; 2] = x[..].to_owned().try_into().unwrap()
+    let [Value::U128(lo_x), Value::U128(hi_x)]: [Value; 2] = x.to_owned().try_into().unwrap()
     else {
         panic!();
     };
-    let [Value::U128(lo_y), Value::U128(hi_y)]: [Value; 2] = y[..].to_owned().try_into().unwrap()
+    let [Value::U128(lo_y), Value::U128(hi_y)]: [Value; 2] = y.to_owned().try_into().unwrap()
     else {
         panic!();
     };
@@ -1092,9 +1092,9 @@ fn eval_secp256r1_new(
     match syscall_handler.secp256r1_new(x_u256, y_u256, &mut gas) {
         Ok(payload) => {
             let payload_ty = info.branch_signatures()[0].vars[2].ty.clone();
+
             match payload {
                 Some(p) => {
-                    dbg!("SOME");
                     let payload = Box::new(p.into_value());
                     EvalAction::NormalBranch(
                         0,
@@ -1110,7 +1110,6 @@ fn eval_secp256r1_new(
                     )
                 }
                 None => {
-                    dbg!("NONE");
                     let payload = Box::new(Value::Struct(vec![
                         Value::Struct(vec![Value::U128(0), Value::U128(0)]),
                         Value::Struct(vec![Value::U128(0), Value::U128(0)]),
@@ -1131,6 +1130,7 @@ fn eval_secp256r1_new(
             }
         }
         Err(payload) => {
+            dbg!("ERR");
             let felt_ty = {
                 match registry
                     .get_type(&info.branch_signatures()[1].vars[2].ty)
@@ -1187,8 +1187,8 @@ fn eval_secp256r1_get_point_from_x(
             let payload_ty = info.branch_signatures()[0].vars[2].ty.clone();
             match payload {
                 Some(p) => {
-                    dbg!("SOME");
                     let payload = Box::new(p.into_value());
+                    dbg!(&payload);
                     EvalAction::NormalBranch(
                         0,
                         smallvec![
@@ -1203,7 +1203,6 @@ fn eval_secp256r1_get_point_from_x(
                     )
                 }
                 None => {
-                    dbg!("NONE");
                     let payload = Box::new(Value::Struct(vec![
                         Value::Struct(vec![Value::U128(0), Value::U128(0)]),
                         Value::Struct(vec![Value::U128(0), Value::U128(0)]),

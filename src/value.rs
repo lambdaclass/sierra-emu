@@ -108,7 +108,10 @@ impl Value {
                 matches!(self, Self::FeltDict { ty, .. } if *ty == info.ty)
             }
             CoreTypeConcrete::GasBuiltin(_) => matches!(self, Self::U128(_)),
-            CoreTypeConcrete::NonZero(info) => self.is(registry, &info.ty),
+            CoreTypeConcrete::NonZero(info) => {
+                dbg!("HOLA NOZERO");
+                self.is(registry, &info.ty)
+            }
             CoreTypeConcrete::Sint128(_) => matches!(self, Self::I128(_)),
             CoreTypeConcrete::Sint32(_) => matches!(self, Self::I32(_)),
             CoreTypeConcrete::Sint8(_) => matches!(self, Self::I8(_)),
@@ -120,6 +123,7 @@ impl Value {
                 | StarkNetTypeConcrete::StorageAddress(_),
             ) => matches!(self, Self::Felt(_)),
             CoreTypeConcrete::Struct(info) => {
+                dbg!("HOLA STRUCT");
                 matches!(self, Self::Struct(members)
                     if members.len() == info.members.len()
                         && members
@@ -132,6 +136,7 @@ impl Value {
             CoreTypeConcrete::Uint32(_) => matches!(self, Self::U32(_)),
             CoreTypeConcrete::Uint128(_)
             | CoreTypeConcrete::Circuit(CircuitTypeConcrete::U96Guarantee(_)) => {
+                dbg!("HOLA U128");
                 matches!(self, Self::U128(_))
             }
 
