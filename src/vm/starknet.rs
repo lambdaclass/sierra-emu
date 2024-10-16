@@ -155,7 +155,7 @@ fn eval_secp_r_new(
                 },
                 None => Value::Enum {
                     self_ty: enum_ty.clone(),
-                    index: 0,
+                    index: 1,
                     payload: Box::new(Value::Unit),
                 },
             };
@@ -219,7 +219,7 @@ fn eval_secp_r_get_point_from_x(
                 },
                 None => Value::Enum {
                     self_ty: enum_ty.clone(),
-                    index: 0,
+                    index: 1,
                     payload: Box::new(Value::Unit),
                 },
             };
