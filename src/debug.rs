@@ -29,7 +29,7 @@ use cairo_lang_sierra::{
         starknet::{
             secp256::{Secp256ConcreteLibfunc, Secp256OpConcreteLibfunc},
             testing::TestingConcreteLibfunc,
-            StarkNetConcreteLibfunc,
+            StarkNetConcreteLibfunc, StarkNetTypeConcrete,
         },
         structure::StructConcreteLibfunc,
     },
@@ -467,6 +467,19 @@ pub fn type_to_name(
         CoreTypeConcrete::Felt252Dict(_) => String::from("Felt252Dict"),
         CoreTypeConcrete::Felt252DictEntry(_) => String::from("Felt252DictEntry"),
         CoreTypeConcrete::SquashedFelt252Dict(_) => String::from("SquashedFelt252Dict"),
+        CoreTypeConcrete::StarkNet(selector) => match selector {
+            StarkNetTypeConcrete::ClassHash(_) => String::from("Starknet::ClassHash"),
+            StarkNetTypeConcrete::ContractAddress(_) => String::from("Starknet::ContractAddress"),
+            StarkNetTypeConcrete::StorageBaseAddress(_) => {
+                String::from("Starknet::StorageBaseAddress")
+            }
+            StarkNetTypeConcrete::StorageAddress(_) => String::from("Starknet::StorageAddress"),
+            StarkNetTypeConcrete::System(_) => String::from("Starknet::System"),
+            StarkNetTypeConcrete::Secp256Point(_) => String::from("Starknet::Secp256Point"),
+            StarkNetTypeConcrete::Sha256StateHandle(_) => {
+                String::from("Starknet::Sha256StateHandle")
+            }
+        },
 
         CoreTypeConcrete::Bitwise(_) => String::from("Bitwise"),
         CoreTypeConcrete::Circuit(_) => String::from("Circuit"),
@@ -493,7 +506,6 @@ pub fn type_to_name(
         CoreTypeConcrete::RangeCheck96(_) => String::from("RangeCheck96"),
         CoreTypeConcrete::Pedersen(_) => String::from("Pedersen"),
         CoreTypeConcrete::Poseidon(_) => String::from("Poseidon"),
-        CoreTypeConcrete::StarkNet(_) => String::from("StarkNet"),
         CoreTypeConcrete::SegmentArena(_) => String::from("SegmentArena"),
         CoreTypeConcrete::Bytes31(_) => String::from("Bytes31"),
         CoreTypeConcrete::BoundedInt(_) => String::from("BoundedInt"),
