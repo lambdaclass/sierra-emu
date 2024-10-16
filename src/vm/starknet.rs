@@ -1,5 +1,6 @@
 use super::EvalAction;
 use crate::{
+    debug::debug_signature,
     starknet::{Secp256r1Point, StarknetSyscallHandler, U256},
     Value,
 };
@@ -118,7 +119,7 @@ pub fn eval(
                     cairo_lang_sierra::extensions::starknet::secp256::Secp256OpConcreteLibfunc::Add(info) => eval_secp_r_add(registry, info, args, syscall_handler),
                     cairo_lang_sierra::extensions::starknet::secp256::Secp256OpConcreteLibfunc::Mul(info) => eval_secp_r_mul(registry, info, args, syscall_handler),
                     cairo_lang_sierra::extensions::starknet::secp256::Secp256OpConcreteLibfunc::GetPointFromX(info) => eval_secp_r_get_point_from_x(registry, info, args, syscall_handler),
-                    cairo_lang_sierra::extensions::starknet::secp256::Secp256OpConcreteLibfunc::GetXy(_) => todo!(),
+                    cairo_lang_sierra::extensions::starknet::secp256::Secp256OpConcreteLibfunc::GetXy(info) => secp_r_get_xy(registry, info, args, syscall_handler),
                 }
             }
         },
@@ -293,6 +294,52 @@ fn eval_secp_r_get_point_from_x(
                     Value::Array {
                         ty: felt_ty,
                         data: value
+                    }
+                ],
+            )
+        }
+    }
+}
+
+fn secp_r_get_xy(
+    registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    info: &SignatureOnlyConcreteLibfunc,
+    args: Vec<Value>,
+    syscall_handler: &mut impl StarknetSyscallHandler,
+) -> EvalAction {
+    let [Value::U128(mut gas), system @ Value::Unit, secp_value]: [Value; 3] =
+        args.try_into().unwrap()
+    else {
+        panic!()
+    };
+
+    let secp_value = Secp256r1Point::from_value(secp_value);
+
+    match syscall_handler.secp256r1_get_xy(secp_value, &mut gas) {
+        Ok(payload) => {
+            let (x, y) = (payload.0.into_value(), payload.1.into_value());
+            EvalAction::NormalBranch(0, smallvec![Value::U128(gas), system, x, y])
+        }
+        Err(payload) => {
+            let felt_ty = {
+                match registry
+                    .get_type(&info.branch_signatures()[1].vars[2].ty)
+                    .unwrap()
+                {
+                    CoreTypeConcrete::Array(info) => info.ty.clone(),
+                    _ => unreachable!(),
+                }
+            };
+
+            let payload = payload.into_iter().map(Value::Felt).collect::<Vec<_>>();
+            EvalAction::NormalBranch(
+                0,
+                smallvec![
+                    Value::U128(gas),
+                    system,
+                    Value::Array {
+                        ty: felt_ty,
+                        data: payload
                     }
                 ],
             )
