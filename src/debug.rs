@@ -6,7 +6,7 @@ use cairo_lang_sierra::{
         boxing::BoxConcreteLibfunc,
         bytes31::Bytes31ConcreteLibfunc,
         casts::CastConcreteLibfunc,
-        circuit::CircuitConcreteLibfunc,
+        circuit::{CircuitConcreteLibfunc, CircuitTypeConcrete},
         const_type::ConstConcreteLibfunc,
         core::{CoreConcreteLibfunc, CoreLibfunc, CoreType, CoreTypeConcrete},
         coupon::CouponConcreteLibfunc,
@@ -482,7 +482,31 @@ pub fn type_to_name(
         },
 
         CoreTypeConcrete::Bitwise(_) => String::from("Bitwise"),
-        CoreTypeConcrete::Circuit(_) => String::from("Circuit"),
+        CoreTypeConcrete::Circuit(selector) => match selector {
+            CircuitTypeConcrete::AddMod(_) => String::from("AddMod"),
+            CircuitTypeConcrete::MulMod(_) => String::from("MulMod"),
+            CircuitTypeConcrete::AddModGate(_) => String::from("AddModGate"),
+            CircuitTypeConcrete::Circuit(_) => String::from("Circuit"),
+            CircuitTypeConcrete::CircuitData(_) => String::from("CircuitData"),
+            CircuitTypeConcrete::CircuitOutputs(_) => String::from("CircuitOutputs"),
+            CircuitTypeConcrete::CircuitPartialOutputs(_) => String::from("CircuitPartialOutputs"),
+            CircuitTypeConcrete::CircuitDescriptor(_) => String::from("CircuitDescriptor"),
+            CircuitTypeConcrete::CircuitFailureGuarantee(_) => {
+                String::from("CircuitFailureGuarantee")
+            }
+            CircuitTypeConcrete::CircuitInput(_) => String::from("CircuitInput"),
+            CircuitTypeConcrete::CircuitInputAccumulator(_) => {
+                String::from("CircuitInputAccumulator")
+            }
+            CircuitTypeConcrete::CircuitModulus(_) => String::from("CircuitModulus"),
+            CircuitTypeConcrete::InverseGate(_) => String::from("InverseGate"),
+            CircuitTypeConcrete::MulModGate(_) => String::from("MulModGate"),
+            CircuitTypeConcrete::SubModGate(_) => String::from("SubModGate"),
+            CircuitTypeConcrete::U96Guarantee(_) => String::from("U96Guarantee"),
+            CircuitTypeConcrete::U96LimbsLessThanGuarantee(_) => {
+                String::from("U96LimbsLessThanGuarantee")
+            }
+        },
         CoreTypeConcrete::Const(_) => String::from("Const"),
         CoreTypeConcrete::Coupon(_) => String::from("Coupon"),
         CoreTypeConcrete::EcOp(_) => String::from("EcOp"),
