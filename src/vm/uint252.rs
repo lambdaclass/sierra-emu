@@ -1,11 +1,10 @@
 use super::EvalAction;
-use crate::{debug::debug_signature, Value};
+use crate::Value;
 use cairo_lang_sierra::{
     extensions::{
         core::{CoreLibfunc, CoreType},
         int::unsigned256::Uint256Concrete,
         lib_func::SignatureOnlyConcreteLibfunc,
-        ConcreteLibfunc,
     },
     program_registry::ProgramRegistry,
 };
@@ -26,18 +25,46 @@ pub fn eval(
 }
 
 fn eval_inv_mod_n(
-    registry: &ProgramRegistry<CoreType, CoreLibfunc>,
-    info: &SignatureOnlyConcreteLibfunc,
+    _registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    _info: &SignatureOnlyConcreteLibfunc,
     args: Vec<Value>,
 ) -> EvalAction {
-    debug_signature(
-        registry,
-        info.param_signatures(),
-        info.branch_signatures(),
-        &args,
-    );
+    let [range_check @ Value::Unit, Value::Struct(x), Value::Struct(modulo)]: [Value; 3] =
+        args.try_into().unwrap()
+    else {
+        panic!()
+    };
 
-    todo!();
+    let [Value::U128(x_lo), Value::U128(x_hi)]: [Value; 2] = x.clone().try_into().unwrap() else {
+        panic!()
+    };
+
+    let [Value::U128(mod_lo), Value::U128(mod_hi)]: [Value; 2] = modulo.clone().try_into().unwrap()
+    else {
+        panic!()
+    };
+
+    let x = u256_to_biguint(x_lo, x_hi);
+    let modulo = u256_to_biguint(mod_lo, mod_hi);
+
+    match x.modinv(&modulo) {
+        Some(r) => EvalAction::NormalBranch(
+            0,
+            smallvec![
+                range_check,
+                u256_to_value(r),
+                Value::Unit,
+                Value::Unit,
+                Value::Unit,
+                Value::Unit,
+                Value::Unit,
+                Value::Unit,
+                Value::Unit,
+                Value::Unit
+            ],
+        ),
+        None => EvalAction::NormalBranch(1, smallvec![range_check, Value::Unit, Value::Unit]),
+    }
 }
 
 pub fn eval_is_zero(
