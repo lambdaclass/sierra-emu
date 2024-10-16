@@ -233,7 +233,10 @@ impl<S: StarknetSyscallHandler> VirtualMachine<S> {
                                         .vars
                                 )
                                 .all(|(value, ret)| value.is(&self.registry, &ret.ty)),
-                            "invocation of {invocation} returned an invalid argument",
+                            "invocation of {} returned an invalid argument",
+                            libfunc_to_name(
+                                self.registry.get_libfunc(&invocation.libfunc_id).unwrap()
+                            )
                         );
 
                         frame.pc = frame.pc.next(&invocation.branches[branch_idx].target);
