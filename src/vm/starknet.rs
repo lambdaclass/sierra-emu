@@ -1,6 +1,5 @@
 use super::EvalAction;
 use crate::{
-    debug::debug_signature,
     starknet::{Secp256r1Point, StarknetSyscallHandler, U256},
     Value,
 };
@@ -127,12 +126,26 @@ pub fn eval(
 }
 
 fn eval_secp_r_add(
-    registry: &ProgramRegistry<CoreType, CoreLibfunc>,
-    info: &SignatureOnlyConcreteLibfunc,
+    _registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    _info: &SignatureOnlyConcreteLibfunc,
     args: Vec<Value>,
     syscall_handler: &mut impl StarknetSyscallHandler,
 ) -> EvalAction {
-    todo!()
+    let [Value::U128(mut gas), system @ Value::Unit, x, y]: [Value; 4] = args.try_into().unwrap()
+    else {
+        panic!()
+    };
+
+    let x = Secp256r1Point::from_value(x);
+    let y = Secp256r1Point::from_value(y);
+
+    match syscall_handler.secp256r1_add(x, y, &mut gas) {
+        Ok(x) => EvalAction::NormalBranch(0, smallvec![Value::U128(gas), system, x.into_value()]),
+        Err(r) => {
+            let r = Value::Struct(r.into_iter().map(Value::Felt).collect::<Vec<_>>());
+            EvalAction::NormalBranch(1, smallvec![Value::U128(gas), system, r])
+        }
+    }
 }
 
 fn eval_secp_r_mul(
