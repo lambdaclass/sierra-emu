@@ -1,6 +1,5 @@
 use super::EvalAction;
 use crate::{
-    debug::debug_signature,
     starknet::{Secp256r1Point, StarknetSyscallHandler, U256},
     Value,
 };
