@@ -160,7 +160,7 @@ impl Value {
             CoreTypeConcrete::Sint16(_) => todo!(),
             CoreTypeConcrete::Sint64(_) => todo!(),
             CoreTypeConcrete::Nullable(info) => self.is(registry, &info.ty),
-            CoreTypeConcrete::Uninitialized(_) => todo!(),
+            CoreTypeConcrete::Uninitialized(_) => matches!(self, Self::Uninitialized { .. }),
             CoreTypeConcrete::Felt252DictEntry(_) => todo!(),
             CoreTypeConcrete::SquashedFelt252Dict(_) => todo!(),
             CoreTypeConcrete::Pedersen(_) => matches!(self, Self::Unit),
