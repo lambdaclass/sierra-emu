@@ -82,7 +82,13 @@ fn inner(
             [GenericArg::Value(value)] => Value::Felt(value.into()),
             _ => unreachable!(),
         },
-        CoreTypeConcrete::NonZero(info) => inner(registry, &info.ty, inner_data),
+        CoreTypeConcrete::NonZero(_) => match inner_data {
+            [GenericArg::Type(type_id)] => match registry.get_type(type_id).unwrap() {
+                CoreTypeConcrete::Const(info) => inner(registry, &info.inner_ty, &info.inner_data),
+                _ => unreachable!(),
+            },
+            _ => unreachable!(),
+        },
         CoreTypeConcrete::Sint128(_) => match inner_data {
             [GenericArg::Value(value)] => Value::I128(value.try_into().unwrap()),
             _ => unreachable!(),
