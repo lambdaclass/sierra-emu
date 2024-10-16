@@ -1,6 +1,7 @@
 use super::EvalAction;
 use crate::{
-    starknet::{StarknetSyscallHandler, U256},
+    debug::debug_signature,
+    starknet::{Secp256r1Point, StarknetSyscallHandler, U256},
     Value,
 };
 use cairo_lang_sierra::{
@@ -116,12 +117,42 @@ pub fn eval(
                 match info {
                     cairo_lang_sierra::extensions::starknet::secp256::Secp256OpConcreteLibfunc::New(info) => eval_secp_r_new(registry, info, args, syscall_handler),
                     cairo_lang_sierra::extensions::starknet::secp256::Secp256OpConcreteLibfunc::Add(_) => todo!(),
-                    cairo_lang_sierra::extensions::starknet::secp256::Secp256OpConcreteLibfunc::Mul(_) => todo!(),
+                    cairo_lang_sierra::extensions::starknet::secp256::Secp256OpConcreteLibfunc::Mul(info) => eval_secp_r_mul(registry, info, args, syscall_handler),
                     cairo_lang_sierra::extensions::starknet::secp256::Secp256OpConcreteLibfunc::GetPointFromX(info) => eval_secp_r_get_point_from_x(registry, info, args, syscall_handler),
                     cairo_lang_sierra::extensions::starknet::secp256::Secp256OpConcreteLibfunc::GetXy(_) => todo!(),
                 }
             }
         },
+    }
+}
+
+fn eval_secp_r_mul(
+    registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    info: &SignatureOnlyConcreteLibfunc,
+    args: Vec<Value>,
+    syscall_handler: &mut impl StarknetSyscallHandler,
+) -> EvalAction {
+    debug_signature(
+        registry,
+        info.param_signatures(),
+        info.branch_signatures(),
+        &args,
+    );
+
+    let [Value::U128(mut gas), system @ Value::Unit, x, n]: [Value; 4] = args.try_into().unwrap()
+    else {
+        panic!()
+    };
+
+    let x = Secp256r1Point::from_value(x);
+    let n = U256::from_value(n);
+
+    match syscall_handler.secp256r1_mul(x, n, &mut gas) {
+        Ok(x) => EvalAction::NormalBranch(0, smallvec![Value::U128(gas), system, x.into_value()]),
+        Err(r) => {
+            let r = Value::Struct(r.into_iter().map(Value::Felt).collect::<Vec<_>>());
+            EvalAction::NormalBranch(1, smallvec![Value::U128(gas), system, r])
+        }
     }
 }
 
