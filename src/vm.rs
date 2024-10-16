@@ -10,7 +10,7 @@ use cairo_lang_sierra::{
         circuit::CircuitTypeConcrete,
         core::{CoreConcreteLibfunc, CoreLibfunc, CoreType, CoreTypeConcrete},
         starknet::StarkNetTypeConcrete,
-        ConcreteType,
+        ConcreteLibfunc, ConcreteType,
     },
     ids::{ConcreteLibfuncId, FunctionId, VarId},
     program::{GenFunction, GenStatement, Invocation, Program, StatementIdx},
@@ -219,6 +219,21 @@ impl<S: StarknetSyscallHandler> VirtualMachine<S> {
                             results.len(),
                             invocation.branches[branch_idx].results.len(),
                             "invocation of {invocation} returned the wrong number of values"
+                        );
+
+                        assert!(
+                            results
+                                .iter()
+                                .zip(
+                                    &self
+                                        .registry
+                                        .get_libfunc(&invocation.libfunc_id)
+                                        .unwrap()
+                                        .branch_signatures()[branch_idx]
+                                        .vars
+                                )
+                                .all(|(value, ret)| value.is(&self.registry, &ret.ty)),
+                            "invocation of {invocation} returned an invalid argument",
                         );
 
                         frame.pc = frame.pc.next(&invocation.branches[branch_idx].target);
