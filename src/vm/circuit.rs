@@ -235,7 +235,7 @@ pub fn eval_u96_single_limb_less_than_guarantee_verify(
     _info: &SignatureOnlyConcreteLibfunc,
     _args: Vec<Value>,
 ) -> EvalAction {
-    EvalAction::NormalBranch(0, smallvec![Value::Unit])
+    EvalAction::NormalBranch(0, smallvec![Value::U128(0)])
 }
 
 pub fn eval_u96_guarantee_verify(
