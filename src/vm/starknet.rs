@@ -116,7 +116,7 @@ pub fn eval(
             cairo_lang_sierra::extensions::starknet::secp256::Secp256ConcreteLibfunc::R1(info) => {
                 match info {
                     cairo_lang_sierra::extensions::starknet::secp256::Secp256OpConcreteLibfunc::New(info) => eval_secp_r_new(registry, info, args, syscall_handler),
-                    cairo_lang_sierra::extensions::starknet::secp256::Secp256OpConcreteLibfunc::Add(_) => todo!(),
+                    cairo_lang_sierra::extensions::starknet::secp256::Secp256OpConcreteLibfunc::Add(info) => eval_secp_r_add(registry, info, args, syscall_handler),
                     cairo_lang_sierra::extensions::starknet::secp256::Secp256OpConcreteLibfunc::Mul(info) => eval_secp_r_mul(registry, info, args, syscall_handler),
                     cairo_lang_sierra::extensions::starknet::secp256::Secp256OpConcreteLibfunc::GetPointFromX(info) => eval_secp_r_get_point_from_x(registry, info, args, syscall_handler),
                     cairo_lang_sierra::extensions::starknet::secp256::Secp256OpConcreteLibfunc::GetXy(_) => todo!(),
@@ -126,19 +126,21 @@ pub fn eval(
     }
 }
 
-fn eval_secp_r_mul(
+fn eval_secp_r_add(
     registry: &ProgramRegistry<CoreType, CoreLibfunc>,
     info: &SignatureOnlyConcreteLibfunc,
     args: Vec<Value>,
     syscall_handler: &mut impl StarknetSyscallHandler,
 ) -> EvalAction {
-    debug_signature(
-        registry,
-        info.param_signatures(),
-        info.branch_signatures(),
-        &args,
-    );
+    todo!()
+}
 
+fn eval_secp_r_mul(
+    _registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    _info: &SignatureOnlyConcreteLibfunc,
+    args: Vec<Value>,
+    syscall_handler: &mut impl StarknetSyscallHandler,
+) -> EvalAction {
     let [Value::U128(mut gas), system @ Value::Unit, x, n]: [Value; 4] = args.try_into().unwrap()
     else {
         panic!()
