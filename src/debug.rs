@@ -507,7 +507,7 @@ pub fn debug_signature(
     registry: &ProgramRegistry<CoreType, CoreLibfunc>,
     params: &[ParamSignature],
     branches: &[BranchSignature],
-    args: Vec<Value>,
+    args: &[Value],
 ) {
     println!(
         "Params: {:#?}",
