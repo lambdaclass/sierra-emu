@@ -1,10 +1,11 @@
 use super::EvalAction;
-use crate::Value;
+use crate::{debug::debug_signature, Value};
 use cairo_lang_sierra::{
     extensions::{
         core::{CoreLibfunc, CoreType},
         int::unsigned256::Uint256Concrete,
         lib_func::SignatureOnlyConcreteLibfunc,
+        ConcreteLibfunc,
     },
     program_registry::ProgramRegistry,
 };
@@ -20,8 +21,23 @@ pub fn eval(
         Uint256Concrete::IsZero(info) => eval_is_zero(registry, info, args),
         Uint256Concrete::Divmod(info) => eval_divmod(registry, info, args),
         Uint256Concrete::SquareRoot(_) => todo!(),
-        Uint256Concrete::InvModN(_) => todo!(),
+        Uint256Concrete::InvModN(info) => eval_inv_mod_n(registry, info, args),
     }
+}
+
+fn eval_inv_mod_n(
+    registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    info: &SignatureOnlyConcreteLibfunc,
+    args: Vec<Value>,
+) -> EvalAction {
+    debug_signature(
+        registry,
+        info.param_signatures(),
+        info.branch_signatures(),
+        &args,
+    );
+
+    todo!();
 }
 
 pub fn eval_is_zero(
