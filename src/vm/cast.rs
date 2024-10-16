@@ -97,6 +97,10 @@ pub fn eval_upcast(
             CoreTypeConcrete::Uint32(_) => Value::U32(value.try_into().unwrap()),
             CoreTypeConcrete::Uint64(_) => Value::U64(value.try_into().unwrap()),
             CoreTypeConcrete::Uint128(_) => Value::U128(value.try_into().unwrap()),
+            CoreTypeConcrete::Felt252(_) => Value::Felt(value.try_into().unwrap()),
+            CoreTypeConcrete::Sint16(_) => todo!("Sint16"),
+            CoreTypeConcrete::Sint64(_) => todo!("Sint64"),
+            CoreTypeConcrete::BoundedInt(_) => todo!("BoundedInt"),
             _ => todo!(),
         }],
     )
