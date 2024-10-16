@@ -1,36 +1,43 @@
-use cairo_lang_sierra::extensions::{
-    array::ArrayConcreteLibfunc,
-    boolean::BoolConcreteLibfunc,
-    bounded_int::BoundedIntConcreteLibfunc,
-    boxing::BoxConcreteLibfunc,
-    bytes31::Bytes31ConcreteLibfunc,
-    casts::CastConcreteLibfunc,
-    circuit::CircuitConcreteLibfunc,
-    const_type::ConstConcreteLibfunc,
-    core::CoreConcreteLibfunc,
-    coupon::CouponConcreteLibfunc,
-    debug::DebugConcreteLibfunc,
-    ec::EcConcreteLibfunc,
-    enm::EnumConcreteLibfunc,
-    felt252::{Felt252BinaryOperationConcrete, Felt252BinaryOperator, Felt252Concrete},
-    felt252_dict::{Felt252DictConcreteLibfunc, Felt252DictEntryConcreteLibfunc},
-    gas::GasConcreteLibfunc,
-    int::{
-        signed::SintConcrete, signed128::Sint128Concrete, unsigned::UintConcrete,
-        unsigned128::Uint128Concrete, unsigned256::Uint256Concrete, unsigned512::Uint512Concrete,
-        IntOperator,
+use cairo_lang_sierra::{
+    extensions::{
+        array::ArrayConcreteLibfunc,
+        boolean::BoolConcreteLibfunc,
+        bounded_int::BoundedIntConcreteLibfunc,
+        boxing::BoxConcreteLibfunc,
+        bytes31::Bytes31ConcreteLibfunc,
+        casts::CastConcreteLibfunc,
+        circuit::CircuitConcreteLibfunc,
+        const_type::ConstConcreteLibfunc,
+        core::{CoreConcreteLibfunc, CoreLibfunc, CoreType, CoreTypeConcrete},
+        coupon::CouponConcreteLibfunc,
+        debug::DebugConcreteLibfunc,
+        ec::EcConcreteLibfunc,
+        enm::EnumConcreteLibfunc,
+        felt252::{Felt252BinaryOperationConcrete, Felt252BinaryOperator, Felt252Concrete},
+        felt252_dict::{Felt252DictConcreteLibfunc, Felt252DictEntryConcreteLibfunc},
+        gas::GasConcreteLibfunc,
+        int::{
+            signed::SintConcrete, signed128::Sint128Concrete, unsigned::UintConcrete,
+            unsigned128::Uint128Concrete, unsigned256::Uint256Concrete,
+            unsigned512::Uint512Concrete, IntOperator,
+        },
+        lib_func::{BranchSignature, ParamSignature},
+        mem::MemConcreteLibfunc,
+        nullable::NullableConcreteLibfunc,
+        pedersen::PedersenConcreteLibfunc,
+        poseidon::PoseidonConcreteLibfunc,
+        starknet::{
+            secp256::{Secp256ConcreteLibfunc, Secp256OpConcreteLibfunc},
+            testing::TestingConcreteLibfunc,
+            StarkNetConcreteLibfunc,
+        },
+        structure::StructConcreteLibfunc,
     },
-    mem::MemConcreteLibfunc,
-    nullable::NullableConcreteLibfunc,
-    pedersen::PedersenConcreteLibfunc,
-    poseidon::PoseidonConcreteLibfunc,
-    starknet::{
-        secp256::{Secp256ConcreteLibfunc, Secp256OpConcreteLibfunc},
-        testing::TestingConcreteLibfunc,
-        StarkNetConcreteLibfunc,
-    },
-    structure::StructConcreteLibfunc,
+    ids::ConcreteTypeId,
+    program_registry::ProgramRegistry,
 };
+
+use crate::Value;
 
 pub fn libfunc_to_name(value: &CoreConcreteLibfunc) -> &'static str {
     match value {
@@ -408,4 +415,118 @@ pub fn libfunc_to_name(value: &CoreConcreteLibfunc) -> &'static str {
             BoundedIntConcreteLibfunc::WrapNonZero(_) => "bounded_int_wrap_non_zero",
         },
     }
+}
+
+pub fn type_to_name(
+    ty_id: &ConcreteTypeId,
+    registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+) -> String {
+    let ty = registry.get_type(ty_id).unwrap();
+    match ty {
+        CoreTypeConcrete::Array(info) => {
+            format!("Array<{}>", type_to_name(&info.ty, registry))
+        }
+        CoreTypeConcrete::Box(info) => {
+            format!("Box<{}>", type_to_name(&info.ty, registry))
+        }
+        CoreTypeConcrete::Uninitialized(info) => {
+            format!("Uninitialized<{}>", type_to_name(&info.ty, registry))
+        }
+        CoreTypeConcrete::NonZero(info) => {
+            format!("NonZero<{}>", type_to_name(&info.ty, registry))
+        }
+        CoreTypeConcrete::Nullable(info) => {
+            format!("Nullable<{}>", type_to_name(&info.ty, registry))
+        }
+        CoreTypeConcrete::Span(info) => {
+            format!("Span<{}>", type_to_name(&info.ty, registry))
+        }
+        CoreTypeConcrete::Snapshot(info) => {
+            format!("Snapshot<{}>", type_to_name(&info.ty, registry))
+        }
+        CoreTypeConcrete::Struct(info) => {
+            let fields = info
+                .members
+                .iter()
+                .map(|ty_id| type_to_name(ty_id, registry))
+                .collect::<Vec<_>>();
+            let fields = fields.join(", ");
+
+            format!("Struct<{}>", fields)
+        }
+        CoreTypeConcrete::Enum(info) => {
+            let fields = info
+                .variants
+                .iter()
+                .map(|ty_id| type_to_name(ty_id, registry))
+                .collect::<Vec<_>>();
+            let fields = fields.join(", ");
+
+            format!("Enum<{}>", fields)
+        }
+        CoreTypeConcrete::Felt252Dict(_) => String::from("Felt252Dict"),
+        CoreTypeConcrete::Felt252DictEntry(_) => String::from("Felt252DictEntry"),
+        CoreTypeConcrete::SquashedFelt252Dict(_) => String::from("SquashedFelt252Dict"),
+
+        CoreTypeConcrete::Bitwise(_) => String::from("Bitwise"),
+        CoreTypeConcrete::Circuit(_) => String::from("Circuit"),
+        CoreTypeConcrete::Const(_) => String::from("Const"),
+        CoreTypeConcrete::Coupon(_) => String::from("Coupon"),
+        CoreTypeConcrete::EcOp(_) => String::from("EcOp"),
+        CoreTypeConcrete::EcPoint(_) => String::from("EcPoint"),
+        CoreTypeConcrete::EcState(_) => String::from("EcState"),
+        CoreTypeConcrete::Felt252(_) => String::from("Felt252"),
+        CoreTypeConcrete::GasBuiltin(_) => String::from("GasBuiltin"),
+        CoreTypeConcrete::BuiltinCosts(_) => String::from("BuiltinCosts"),
+        CoreTypeConcrete::Uint8(_) => String::from("Uint8"),
+        CoreTypeConcrete::Uint16(_) => String::from("Uint16"),
+        CoreTypeConcrete::Uint32(_) => String::from("Uint32"),
+        CoreTypeConcrete::Uint64(_) => String::from("Uint64"),
+        CoreTypeConcrete::Uint128(_) => String::from("Uint128"),
+        CoreTypeConcrete::Uint128MulGuarantee(_) => String::from("Uint128MulGuarantee"),
+        CoreTypeConcrete::Sint8(_) => String::from("Sint8"),
+        CoreTypeConcrete::Sint16(_) => String::from("Sint16"),
+        CoreTypeConcrete::Sint32(_) => String::from("Sint32"),
+        CoreTypeConcrete::Sint64(_) => String::from("Sint64"),
+        CoreTypeConcrete::Sint128(_) => String::from("Sint128"),
+        CoreTypeConcrete::RangeCheck(_) => String::from("RangeCheck"),
+        CoreTypeConcrete::RangeCheck96(_) => String::from("RangeCheck96"),
+        CoreTypeConcrete::Pedersen(_) => String::from("Pedersen"),
+        CoreTypeConcrete::Poseidon(_) => String::from("Poseidon"),
+        CoreTypeConcrete::StarkNet(_) => String::from("StarkNet"),
+        CoreTypeConcrete::SegmentArena(_) => String::from("SegmentArena"),
+        CoreTypeConcrete::Bytes31(_) => String::from("Bytes31"),
+        CoreTypeConcrete::BoundedInt(_) => String::from("BoundedInt"),
+    }
+}
+
+/// prints all the signature information, used while debugging to learn
+/// how to implement a certain libfunc.
+#[allow(dead_code)]
+pub fn debug_signature(
+    registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    params: &[ParamSignature],
+    branches: &[BranchSignature],
+    args: Vec<Value>,
+) {
+    println!(
+        "Params: {:#?}",
+        params
+            .iter()
+            .map(|p| type_to_name(&p.ty, registry))
+            .collect::<Vec<_>>()
+    );
+    println!(
+        "Branches: {:#?}",
+        branches
+            .iter()
+            .map(|b| {
+                b.vars
+                    .iter()
+                    .map(|vars| type_to_name(&vars.ty, registry))
+                    .collect::<Vec<_>>()
+            })
+            .collect::<Vec<_>>()
+    );
+    println!("Args: {:#?}", args);
 }
