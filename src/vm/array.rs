@@ -1,5 +1,5 @@
 use super::EvalAction;
-use crate::{find_inner_type, Value};
+use crate::{find_real_type, Value};
 use cairo_lang_sierra::{
     extensions::{
         array::ArrayConcreteLibfunc,
@@ -47,7 +47,7 @@ fn eval_span_from_tuple(
     };
 
     let ty = &info.branch_signatures()[0].vars[0].ty;
-    let ty = find_inner_type(registry, ty);
+    let ty = find_real_type(registry, ty);
 
     let CoreTypeConcrete::Array(info) = registry.get_type(&ty).unwrap() else {
         panic!()

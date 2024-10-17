@@ -35,24 +35,25 @@ pub fn find_entry_point_by_name<'a>(
         .find(|x| x.id.debug_name.as_ref().map(|x| x.as_str()) == Some(name))
 }
 
-// If type is a single element container, finds it's inner type
+// If type is invisible to sierra (i.e. a single element container),
+// finds it's actual concrete type recursively.
 // If not, returns the current type
-pub fn find_inner_type(
+pub fn find_real_type(
     registry: &ProgramRegistry<CoreType, CoreLibfunc>,
     ty: &ConcreteTypeId,
 ) -> ConcreteTypeId {
     match registry.get_type(ty).unwrap() {
         cairo_lang_sierra::extensions::core::CoreTypeConcrete::Box(info) => {
-            find_inner_type(registry, &info.ty)
+            find_real_type(registry, &info.ty)
         }
         cairo_lang_sierra::extensions::core::CoreTypeConcrete::Uninitialized(info) => {
-            find_inner_type(registry, &info.ty)
+            find_real_type(registry, &info.ty)
         }
         cairo_lang_sierra::extensions::core::CoreTypeConcrete::Span(info) => {
-            find_inner_type(registry, &info.ty)
+            find_real_type(registry, &info.ty)
         }
         cairo_lang_sierra::extensions::core::CoreTypeConcrete::Snapshot(info) => {
-            find_inner_type(registry, &info.ty)
+            find_real_type(registry, &info.ty)
         }
         _ => ty.clone(),
     }
