@@ -20,7 +20,50 @@ pub fn eval(
         Uint256Concrete::IsZero(info) => eval_is_zero(registry, info, args),
         Uint256Concrete::Divmod(info) => eval_divmod(registry, info, args),
         Uint256Concrete::SquareRoot(_) => todo!(),
-        Uint256Concrete::InvModN(_) => todo!(),
+        Uint256Concrete::InvModN(info) => eval_inv_mod_n(registry, info, args),
+    }
+}
+
+fn eval_inv_mod_n(
+    _registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    _info: &SignatureOnlyConcreteLibfunc,
+    args: Vec<Value>,
+) -> EvalAction {
+    let [range_check @ Value::Unit, Value::Struct(x), Value::Struct(modulo)]: [Value; 3] =
+        args.try_into().unwrap()
+    else {
+        panic!()
+    };
+
+    let [Value::U128(x_lo), Value::U128(x_hi)]: [Value; 2] = x.clone().try_into().unwrap() else {
+        panic!()
+    };
+
+    let [Value::U128(mod_lo), Value::U128(mod_hi)]: [Value; 2] = modulo.clone().try_into().unwrap()
+    else {
+        panic!()
+    };
+
+    let x = u256_to_biguint(x_lo, x_hi);
+    let modulo = u256_to_biguint(mod_lo, mod_hi);
+
+    match x.modinv(&modulo) {
+        Some(r) => EvalAction::NormalBranch(
+            0,
+            smallvec![
+                range_check,
+                u256_to_value(r),
+                Value::Unit,
+                Value::Unit,
+                Value::Unit,
+                Value::Unit,
+                Value::Unit,
+                Value::Unit,
+                Value::Unit,
+                Value::Unit
+            ],
+        ),
+        None => EvalAction::NormalBranch(1, smallvec![range_check, Value::Unit, Value::Unit]),
     }
 }
 

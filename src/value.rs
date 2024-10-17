@@ -13,6 +13,8 @@ use serde::Serialize;
 use starknet_types_core::felt::Felt;
 use std::{collections::HashMap, fmt::Debug, ops::Range};
 
+use crate::debug::type_to_name;
+
 #[derive(Clone, Debug, Eq, PartialEq, Serialize)]
 pub enum Value {
     Array {
@@ -128,8 +130,7 @@ impl Value {
             }
             CoreTypeConcrete::Uint8(_) => matches!(self, Self::U8(_)),
             CoreTypeConcrete::Uint32(_) => matches!(self, Self::U32(_)),
-            CoreTypeConcrete::Uint128(_)
-            | CoreTypeConcrete::Circuit(CircuitTypeConcrete::U96Guarantee(_)) => {
+            CoreTypeConcrete::Uint128(_) => {
                 matches!(self, Self::U128(_))
             }
 
@@ -137,9 +138,6 @@ impl Value {
             CoreTypeConcrete::RangeCheck(_)
             | CoreTypeConcrete::SegmentArena(_)
             | CoreTypeConcrete::RangeCheck96(_)
-            | CoreTypeConcrete::Circuit(
-                CircuitTypeConcrete::AddMod(_) | CircuitTypeConcrete::MulMod(_),
-            )
             | CoreTypeConcrete::StarkNet(StarkNetTypeConcrete::System(_)) => {
                 matches!(self, Self::Unit)
             }
@@ -148,7 +146,29 @@ impl Value {
             CoreTypeConcrete::Coupon(_) => todo!(),
             CoreTypeConcrete::Bitwise(_) => matches!(self, Self::Unit),
             CoreTypeConcrete::Box(info) => self.is(registry, &info.ty),
-            CoreTypeConcrete::Circuit(_) => todo!(),
+
+            // Circuit related types
+            CoreTypeConcrete::Circuit(selector) => match selector {
+                CircuitTypeConcrete::Circuit(_) => matches!(self, Self::Circuit(_)),
+                CircuitTypeConcrete::CircuitData(_) => matches!(self, Self::Circuit(_)),
+                CircuitTypeConcrete::CircuitOutputs(_) => matches!(self, Self::CircuitOutputs(_)),
+                CircuitTypeConcrete::CircuitInput(_) => matches!(self, Self::Unit),
+                CircuitTypeConcrete::CircuitInputAccumulator(_) => matches!(self, Self::Circuit(_)),
+                CircuitTypeConcrete::CircuitModulus(_) => matches!(self, Self::CircuitModulus(_)),
+                CircuitTypeConcrete::U96Guarantee(_) => matches!(self, Self::U128(_)),
+                CircuitTypeConcrete::CircuitDescriptor(_)
+                | CircuitTypeConcrete::CircuitFailureGuarantee(_)
+                | CircuitTypeConcrete::AddMod(_)
+                | CircuitTypeConcrete::MulMod(_)
+                | CircuitTypeConcrete::AddModGate(_)
+                | CircuitTypeConcrete::CircuitPartialOutputs(_)
+                | CircuitTypeConcrete::InverseGate(_)
+                | CircuitTypeConcrete::MulModGate(_)
+                | CircuitTypeConcrete::SubModGate(_)
+                | CircuitTypeConcrete::U96LimbsLessThanGuarantee(_) => {
+                    matches!(self, Self::Unit)
+                }
+            },
             CoreTypeConcrete::Const(_) => todo!(),
             CoreTypeConcrete::EcOp(_) => matches!(self, Self::Unit),
             CoreTypeConcrete::EcPoint(_) => matches!(self, Self::EcPoint { .. }),
@@ -160,7 +180,7 @@ impl Value {
             CoreTypeConcrete::Sint16(_) => todo!(),
             CoreTypeConcrete::Sint64(_) => todo!(),
             CoreTypeConcrete::Nullable(info) => self.is(registry, &info.ty),
-            CoreTypeConcrete::Uninitialized(_) => todo!(),
+            CoreTypeConcrete::Uninitialized(_) => matches!(self, Self::Uninitialized { .. }),
             CoreTypeConcrete::Felt252DictEntry(_) => todo!(),
             CoreTypeConcrete::SquashedFelt252Dict(_) => todo!(),
             CoreTypeConcrete::Pedersen(_) => matches!(self, Self::Unit),
@@ -172,13 +192,18 @@ impl Value {
                 | StarkNetTypeConcrete::StorageBaseAddress(_)
                 | StarkNetTypeConcrete::StorageAddress(_) => matches!(self, Self::Felt(_)),
                 StarkNetTypeConcrete::System(_) => matches!(self, Self::Unit),
-                StarkNetTypeConcrete::Secp256Point(_) => todo!(),
+                StarkNetTypeConcrete::Secp256Point(_) => matches!(self, Self::Struct(_)),
                 StarkNetTypeConcrete::Sha256StateHandle(_) => matches!(self, Self::Struct { .. }),
             },
         };
 
         if !res {
-            dbg!("value is mismatch", ty.info(), self);
+            dbg!(
+                "value is mismatch",
+                ty.info(),
+                self,
+                type_to_name(type_id, registry)
+            );
         }
 
         res

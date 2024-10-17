@@ -1,10 +1,11 @@
 use super::EvalAction;
-use crate::Value;
+use crate::{find_real_type, Value};
 use cairo_lang_sierra::{
     extensions::{
         array::ArrayConcreteLibfunc,
         core::{CoreLibfunc, CoreType, CoreTypeConcrete},
         lib_func::{SignatureAndTypeConcreteLibfunc, SignatureOnlyConcreteLibfunc},
+        ConcreteLibfunc,
     },
     program_registry::ProgramRegistry,
 };
@@ -17,7 +18,7 @@ pub fn eval(
 ) -> EvalAction {
     match selector {
         ArrayConcreteLibfunc::New(info) => eval_new(registry, info, args),
-        ArrayConcreteLibfunc::SpanFromTuple(_) => todo!(),
+        ArrayConcreteLibfunc::SpanFromTuple(info) => eval_span_from_tuple(registry, info, args),
         ArrayConcreteLibfunc::TupleFromSpan(_) => todo!(),
         ArrayConcreteLibfunc::Append(info) => eval_append(registry, info, args),
         ArrayConcreteLibfunc::PopFront(info) => eval_pop_front(registry, info, args),
@@ -34,6 +35,30 @@ pub fn eval(
         }
         ArrayConcreteLibfunc::SnapshotMultiPopBack(_) => todo!(),
     }
+}
+
+fn eval_span_from_tuple(
+    registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    info: &SignatureAndTypeConcreteLibfunc,
+    args: Vec<Value>,
+) -> EvalAction {
+    let [Value::Struct(data)]: [Value; 1] = args.try_into().unwrap() else {
+        panic!()
+    };
+
+    let ty = &info.branch_signatures()[0].vars[0].ty;
+    let ty = find_real_type(registry, ty);
+
+    let CoreTypeConcrete::Array(info) = registry.get_type(&ty).unwrap() else {
+        panic!()
+    };
+
+    let value = Value::Array {
+        ty: info.ty.clone(),
+        data,
+    };
+
+    return EvalAction::NormalBranch(0, smallvec![value]);
 }
 
 pub fn eval_new(
