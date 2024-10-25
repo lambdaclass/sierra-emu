@@ -182,7 +182,9 @@ impl Value {
             CoreTypeConcrete::Nullable(info) => self.is(registry, &info.ty),
             CoreTypeConcrete::Uninitialized(_) => matches!(self, Self::Uninitialized { .. }),
             CoreTypeConcrete::Felt252DictEntry(_) => todo!(),
-            CoreTypeConcrete::SquashedFelt252Dict(_) => todo!(),
+            CoreTypeConcrete::SquashedFelt252Dict(info) => {
+                matches!(self, Self::FeltDict { ty, .. } if *ty == info.ty)
+            },
             CoreTypeConcrete::Pedersen(_) => matches!(self, Self::Unit),
             CoreTypeConcrete::Poseidon(_) => matches!(self, Self::Unit),
             CoreTypeConcrete::Span(_) => todo!(),

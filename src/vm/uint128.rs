@@ -232,3 +232,27 @@ pub fn eval_byte_reverse(
 
     EvalAction::NormalBranch(0, smallvec![bitwise, Value::U128(value)])
 }
+
+#[cfg(test)]
+mod test {
+    use crate::{load_cairo, test_utils::run_test_program, Value};
+
+    #[test]
+    fn test_square_root() {
+        let (_, program) = load_cairo!(
+            use core::num::traits::Sqrt;
+            fn main() -> u64 {
+                0xffffffffffffffffffffffffffffffff_u128.sqrt()
+            }
+        );
+
+        let result = run_test_program(program);
+
+        let Value::U64(payload) = result.last().unwrap()
+        else {
+            panic!("No output");
+        };
+
+        assert_eq!(*payload, 0xffffffffffffffff);
+    }
+}
