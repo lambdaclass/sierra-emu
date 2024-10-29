@@ -181,7 +181,7 @@ impl Value {
             CoreTypeConcrete::Sint64(_) => todo!(),
             CoreTypeConcrete::Nullable(info) => self.is(registry, &info.ty),
             CoreTypeConcrete::Uninitialized(_) => matches!(self, Self::Uninitialized { .. }),
-            CoreTypeConcrete::Felt252DictEntry(_) => todo!(),
+            CoreTypeConcrete::Felt252DictEntry(info) => matches!(self, Self::FeltDictEntry { ty, .. } if *ty == info.ty),
             CoreTypeConcrete::SquashedFelt252Dict(info) => {
                 matches!(self, Self::FeltDict { ty, .. } if *ty == info.ty)
             },
