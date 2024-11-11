@@ -98,7 +98,7 @@ impl<S: StarknetSyscallHandler> VirtualMachine<S> {
     pub fn call_contract<I>(
         &mut self,
         function: &GenFunction<StatementIdx>,
-        initial_gas: u128,
+        initial_gas: u64,
         calldata: I,
     ) where
         I: IntoIterator<Item = Felt>,
@@ -115,7 +115,7 @@ impl<S: StarknetSyscallHandler> VirtualMachine<S> {
                 .map(|type_id| {
                     let type_info = self.registry().get_type(type_id).unwrap();
                     match type_info {
-                        CoreTypeConcrete::GasBuiltin(_) => Value::U128(initial_gas),
+                        CoreTypeConcrete::GasBuiltin(_) => Value::U64(initial_gas),
                         // Add the calldata structure
                         CoreTypeConcrete::Struct(inner) => {
                             let member = self.registry().get_type(&inner.members[0]).unwrap();

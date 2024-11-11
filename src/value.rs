@@ -107,7 +107,7 @@ impl Value {
             CoreTypeConcrete::Felt252Dict(info) => {
                 matches!(self, Self::FeltDict { ty, .. } if *ty == info.ty)
             }
-            CoreTypeConcrete::GasBuiltin(_) => matches!(self, Self::U128(_)),
+            CoreTypeConcrete::GasBuiltin(_) => matches!(self, Self::U64(_)),
             CoreTypeConcrete::NonZero(info) => self.is(registry, &info.ty),
             CoreTypeConcrete::Sint128(_) => matches!(self, Self::I128(_)),
             CoreTypeConcrete::Sint32(_) => matches!(self, Self::I32(_)),
