@@ -131,7 +131,7 @@ fn eval_secp_r_add(
     args: Vec<Value>,
     syscall_handler: &mut impl StarknetSyscallHandler,
 ) -> EvalAction {
-    let [Value::U128(mut gas), system @ Value::Unit, x, y]: [Value; 4] = args.try_into().unwrap()
+    let [Value::U64(mut gas), system @ Value::Unit, x, y]: [Value; 4] = args.try_into().unwrap()
     else {
         panic!()
     };
@@ -140,10 +140,10 @@ fn eval_secp_r_add(
     let y = Secp256r1Point::from_value(y);
 
     match syscall_handler.secp256r1_add(x, y, &mut gas) {
-        Ok(x) => EvalAction::NormalBranch(0, smallvec![Value::U128(gas), system, x.into_value()]),
+        Ok(x) => EvalAction::NormalBranch(0, smallvec![Value::U64(gas), system, x.into_value()]),
         Err(r) => {
             let r = Value::Struct(r.into_iter().map(Value::Felt).collect::<Vec<_>>());
-            EvalAction::NormalBranch(1, smallvec![Value::U128(gas), system, r])
+            EvalAction::NormalBranch(1, smallvec![Value::U64(gas), system, r])
         }
     }
 }
@@ -154,7 +154,7 @@ fn eval_secp_r_mul(
     args: Vec<Value>,
     syscall_handler: &mut impl StarknetSyscallHandler,
 ) -> EvalAction {
-    let [Value::U128(mut gas), system @ Value::Unit, x, n]: [Value; 4] = args.try_into().unwrap()
+    let [Value::U64(mut gas), system @ Value::Unit, x, n]: [Value; 4] = args.try_into().unwrap()
     else {
         panic!()
     };
@@ -163,10 +163,10 @@ fn eval_secp_r_mul(
     let n = U256::from_value(n);
 
     match syscall_handler.secp256r1_mul(x, n, &mut gas) {
-        Ok(x) => EvalAction::NormalBranch(0, smallvec![Value::U128(gas), system, x.into_value()]),
+        Ok(x) => EvalAction::NormalBranch(0, smallvec![Value::U64(gas), system, x.into_value()]),
         Err(r) => {
             let r = Value::Struct(r.into_iter().map(Value::Felt).collect::<Vec<_>>());
-            EvalAction::NormalBranch(1, smallvec![Value::U128(gas), system, r])
+            EvalAction::NormalBranch(1, smallvec![Value::U64(gas), system, r])
         }
     }
 }
@@ -177,7 +177,7 @@ fn eval_secp_r_new(
     args: Vec<Value>,
     syscall_handler: &mut impl StarknetSyscallHandler,
 ) -> EvalAction {
-    let [Value::U128(mut gas), system @ Value::Unit, Value::Struct(x), Value::Struct(y)]: [Value;
+    let [Value::U64(mut gas), system @ Value::Unit, Value::Struct(x), Value::Struct(y)]: [Value;
         4] = args.try_into().unwrap()
     else {
         panic!()
@@ -206,7 +206,7 @@ fn eval_secp_r_new(
                 },
             };
 
-            EvalAction::NormalBranch(0, smallvec![Value::U128(gas), system, value])
+            EvalAction::NormalBranch(0, smallvec![Value::U64(gas), system, value])
         }
         Err(payload) => {
             // get felt type from the error branch array
@@ -224,7 +224,7 @@ fn eval_secp_r_new(
             EvalAction::NormalBranch(
                 1,
                 smallvec![
-                    Value::U128(gas),
+                    Value::U64(gas),
                     system,
                     Value::Array {
                         ty: felt_ty,
@@ -242,7 +242,7 @@ fn eval_secp_r_get_point_from_x(
     args: Vec<Value>,
     syscall_handler: &mut impl StarknetSyscallHandler,
 ) -> EvalAction {
-    let [Value::U128(mut gas), system @ Value::Unit, Value::Struct(x), Value::Enum {
+    let [Value::U64(mut gas), system @ Value::Unit, Value::Struct(x), Value::Enum {
         index: y_parity, ..
     }]: [Value; 4] = args.try_into().unwrap()
     else {
@@ -270,7 +270,7 @@ fn eval_secp_r_get_point_from_x(
                 },
             };
 
-            EvalAction::NormalBranch(0, smallvec![Value::U128(gas), system, value])
+            EvalAction::NormalBranch(0, smallvec![Value::U64(gas), system, value])
         }
         Err(payload) => {
             // get felt type from the error branch array
@@ -288,7 +288,7 @@ fn eval_secp_r_get_point_from_x(
             EvalAction::NormalBranch(
                 1,
                 smallvec![
-                    Value::U128(gas),
+                    Value::U64(gas),
                     system,
                     Value::Array {
                         ty: felt_ty,
@@ -306,7 +306,7 @@ fn secp_r_get_xy(
     args: Vec<Value>,
     syscall_handler: &mut impl StarknetSyscallHandler,
 ) -> EvalAction {
-    let [Value::U128(mut gas), system @ Value::Unit, secp_value]: [Value; 3] =
+    let [Value::U64(mut gas), system @ Value::Unit, secp_value]: [Value; 3] =
         args.try_into().unwrap()
     else {
         panic!()
@@ -317,7 +317,7 @@ fn secp_r_get_xy(
     match syscall_handler.secp256r1_get_xy(secp_value, &mut gas) {
         Ok(payload) => {
             let (x, y) = (payload.0.into_value(), payload.1.into_value());
-            EvalAction::NormalBranch(0, smallvec![Value::U128(gas), system, x, y])
+            EvalAction::NormalBranch(0, smallvec![Value::U64(gas), system, x, y])
         }
         Err(payload) => {
             let felt_ty = {
@@ -334,7 +334,7 @@ fn secp_r_get_xy(
             EvalAction::NormalBranch(
                 0,
                 smallvec![
-                    Value::U128(gas),
+                    Value::U64(gas),
                     system,
                     Value::Array {
                         ty: felt_ty,
@@ -505,7 +505,7 @@ fn eval_call_contract(
     args: Vec<Value>,
     syscall_handler: &mut impl StarknetSyscallHandler,
 ) -> EvalAction {
-    let [Value::U128(mut gas), system, Value::Felt(address), Value::Felt(entry_point_selector), Value::Struct(calldata)]: [Value; 5] =
+    let [Value::U64(mut gas), system, Value::Felt(address), Value::Felt(entry_point_selector), Value::Struct(calldata)]: [Value; 5] =
         args.try_into().unwrap()
     else {
         panic!()
@@ -544,7 +544,7 @@ fn eval_call_contract(
         Ok(return_values) => EvalAction::NormalBranch(
             0,
             smallvec![
-                Value::U128(gas),
+                Value::U64(gas),
                 system,
                 Value::Struct(vec![Value::Array {
                     ty: felt_ty,
@@ -558,7 +558,7 @@ fn eval_call_contract(
         Err(e) => EvalAction::NormalBranch(
             1,
             smallvec![
-                Value::U128(gas),
+                Value::U64(gas),
                 system,
                 Value::Array {
                     ty: felt_ty,
@@ -575,7 +575,9 @@ fn eval_storage_read(
     args: Vec<Value>,
     syscall_handler: &mut impl StarknetSyscallHandler,
 ) -> EvalAction {
-    let [Value::U128(mut gas), system, Value::U32(address_domain), Value::Felt(storage_key)]: [Value; 4] = args.try_into().unwrap() else {
+    let [Value::U64(mut gas), system, Value::U32(address_domain), Value::Felt(storage_key)]: [Value;
+        4] = args.try_into().unwrap()
+    else {
         panic!()
     };
     let error_felt_ty = {
@@ -592,12 +594,12 @@ fn eval_storage_read(
 
     match result {
         Ok(value) => {
-            EvalAction::NormalBranch(0, smallvec![Value::U128(gas), system, Value::Felt(value)])
+            EvalAction::NormalBranch(0, smallvec![Value::U64(gas), system, Value::Felt(value)])
         }
         Err(e) => EvalAction::NormalBranch(
             1,
             smallvec![
-                Value::U128(gas),
+                Value::U64(gas),
                 system,
                 Value::Array {
                     ty: error_felt_ty,
@@ -614,7 +616,7 @@ fn eval_storage_write(
     args: Vec<Value>,
     syscall_handler: &mut impl StarknetSyscallHandler,
 ) -> EvalAction {
-    let [Value::U128(mut gas), system, Value::U32(address_domain), Value::Felt(storage_key), Value::Felt(value)]: [Value; 5] = args.try_into().unwrap() else {
+    let [Value::U64(mut gas), system, Value::U32(address_domain), Value::Felt(storage_key), Value::Felt(value)]: [Value; 5] = args.try_into().unwrap() else {
         panic!()
     };
 
@@ -631,11 +633,11 @@ fn eval_storage_write(
     let result = syscall_handler.storage_write(address_domain, storage_key, value, &mut gas);
 
     match result {
-        Ok(_) => EvalAction::NormalBranch(0, smallvec![Value::U128(gas), system]),
+        Ok(_) => EvalAction::NormalBranch(0, smallvec![Value::U64(gas), system]),
         Err(e) => EvalAction::NormalBranch(
             1,
             smallvec![
-                Value::U128(gas),
+                Value::U64(gas),
                 system,
                 Value::Array {
                     ty: error_felt_ty,
@@ -652,8 +654,8 @@ fn eval_emit_event(
     args: Vec<Value>,
     syscall_handler: &mut impl StarknetSyscallHandler,
 ) -> EvalAction {
-    let [Value::U128(mut gas), system, Value::Struct(key_arr), Value::Struct(data_arr)]: [Value;
-        4] = args.try_into().unwrap()
+    let [Value::U64(mut gas), system, Value::Struct(key_arr), Value::Struct(data_arr)]: [Value; 4] =
+        args.try_into().unwrap()
     else {
         panic!()
     };
@@ -694,11 +696,11 @@ fn eval_emit_event(
     let result = syscall_handler.emit_event(keys, data, &mut gas);
 
     match result {
-        Ok(_) => EvalAction::NormalBranch(0, smallvec![Value::U128(gas), system]),
+        Ok(_) => EvalAction::NormalBranch(0, smallvec![Value::U64(gas), system]),
         Err(e) => EvalAction::NormalBranch(
             1,
             smallvec![
-                Value::U128(gas),
+                Value::U64(gas),
                 system,
                 Value::Array {
                     ty: error_felt_ty,
@@ -715,7 +717,7 @@ fn eval_get_block_hash(
     args: Vec<Value>,
     syscall_handler: &mut impl StarknetSyscallHandler,
 ) -> EvalAction {
-    let [Value::U128(mut gas), system, Value::U64(block_number)]: [Value; 3] =
+    let [Value::U64(mut gas), system, Value::U64(block_number)]: [Value; 3] =
         args.try_into().unwrap()
     else {
         panic!()
@@ -734,12 +736,12 @@ fn eval_get_block_hash(
 
     match result {
         Ok(res) => {
-            EvalAction::NormalBranch(0, smallvec![Value::U128(gas), system, Value::Felt(res)])
+            EvalAction::NormalBranch(0, smallvec![Value::U64(gas), system, Value::Felt(res)])
         }
         Err(e) => EvalAction::NormalBranch(
             1,
             smallvec![
-                Value::U128(gas),
+                Value::U64(gas),
                 system,
                 Value::Array {
                     ty: error_felt_ty,
@@ -756,7 +758,7 @@ fn eval_get_execution_info(
     args: Vec<Value>,
     syscall_handler: &mut impl StarknetSyscallHandler,
 ) -> EvalAction {
-    let [Value::U128(mut gas), system]: [Value; 2] = args.try_into().unwrap() else {
+    let [Value::U64(mut gas), system]: [Value; 2] = args.try_into().unwrap() else {
         panic!()
     };
     // get felt type from the error branch array
@@ -775,12 +777,12 @@ fn eval_get_execution_info(
     match result {
         Ok(res) => EvalAction::NormalBranch(
             0,
-            smallvec![Value::U128(gas), system, res.into_value(felt_ty)],
+            smallvec![Value::U64(gas), system, res.into_value(felt_ty)],
         ),
         Err(e) => EvalAction::NormalBranch(
             1,
             smallvec![
-                Value::U128(gas),
+                Value::U64(gas),
                 system,
                 Value::Array {
                     ty: felt_ty,
@@ -797,7 +799,7 @@ fn eval_get_execution_info_v2(
     args: Vec<Value>,
     syscall_handler: &mut impl StarknetSyscallHandler,
 ) -> EvalAction {
-    let [Value::U128(mut gas), system]: [Value; 2] = args.try_into().unwrap() else {
+    let [Value::U64(mut gas), system]: [Value; 2] = args.try_into().unwrap() else {
         panic!()
     };
     // get felt type from the error branch array
@@ -854,7 +856,7 @@ fn eval_get_execution_info_v2(
         Ok(res) => EvalAction::NormalBranch(
             0,
             smallvec![
-                Value::U128(gas),
+                Value::U64(gas),
                 system,
                 res.into_value(felt_ty, out_ty_id.clone())
             ],
@@ -862,7 +864,7 @@ fn eval_get_execution_info_v2(
         Err(e) => EvalAction::NormalBranch(
             1,
             smallvec![
-                Value::U128(gas),
+                Value::U64(gas),
                 system,
                 Value::Array {
                     ty: felt_ty,
@@ -879,7 +881,7 @@ fn eval_deploy(
     args: Vec<Value>,
     syscall_handler: &mut impl StarknetSyscallHandler,
 ) -> EvalAction {
-    let [Value::U128(mut gas), system, Value::Felt(class_hash), Value::Felt(contract_address_salt), Value::Struct(calldata), Value::Enum {
+    let [Value::U64(mut gas), system, Value::Felt(class_hash), Value::Felt(contract_address_salt), Value::Struct(calldata), Value::Enum {
         self_ty: _,
         index: deploy_from_zero,
         payload: _,
@@ -929,7 +931,7 @@ fn eval_deploy(
         Ok((contract_address, return_values)) => EvalAction::NormalBranch(
             0,
             smallvec![
-                Value::U128(gas),
+                Value::U64(gas),
                 system,
                 Value::Felt(contract_address),
                 Value::Struct(vec![Value::Array {
@@ -944,7 +946,7 @@ fn eval_deploy(
         Err(e) => EvalAction::NormalBranch(
             1,
             smallvec![
-                Value::U128(gas),
+                Value::U64(gas),
                 system,
                 Value::Array {
                     ty: felt_ty,
@@ -961,7 +963,7 @@ fn eval_keccak(
     args: Vec<Value>,
     syscall_handler: &mut impl StarknetSyscallHandler,
 ) -> EvalAction {
-    let [Value::U128(mut gas), system, Value::Struct(input)]: [Value; 3] = args.try_into().unwrap()
+    let [Value::U64(mut gas), system, Value::Struct(input)]: [Value; 3] = args.try_into().unwrap()
     else {
         panic!()
     };
@@ -993,12 +995,12 @@ fn eval_keccak(
 
     match result {
         Ok(res) => {
-            EvalAction::NormalBranch(0, smallvec![Value::U128(gas), system, res.into_value()])
+            EvalAction::NormalBranch(0, smallvec![Value::U64(gas), system, res.into_value()])
         }
         Err(e) => EvalAction::NormalBranch(
             1,
             smallvec![
-                Value::U128(gas),
+                Value::U64(gas),
                 system,
                 Value::Array {
                     ty: felt_ty,
@@ -1015,7 +1017,7 @@ fn eval_library_call(
     args: Vec<Value>,
     syscall_handler: &mut impl StarknetSyscallHandler,
 ) -> EvalAction {
-    let [Value::U128(mut gas), system, Value::Felt(class_hash), Value::Felt(function_selector), Value::Struct(calldata)]: [Value; 5] =
+    let [Value::U64(mut gas), system, Value::Felt(class_hash), Value::Felt(function_selector), Value::Struct(calldata)]: [Value; 5] =
         args.try_into().unwrap()
     else {
         panic!()
@@ -1054,7 +1056,7 @@ fn eval_library_call(
         Ok(return_values) => EvalAction::NormalBranch(
             0,
             smallvec![
-                Value::U128(gas),
+                Value::U64(gas),
                 system,
                 Value::Struct(vec![Value::Array {
                     ty: felt_ty,
@@ -1068,7 +1070,7 @@ fn eval_library_call(
         Err(e) => EvalAction::NormalBranch(
             1,
             smallvec![
-                Value::U128(gas),
+                Value::U64(gas),
                 system,
                 Value::Array {
                     ty: felt_ty,
@@ -1085,7 +1087,7 @@ fn eval_replace_class(
     args: Vec<Value>,
     syscall_handler: &mut impl StarknetSyscallHandler,
 ) -> EvalAction {
-    let [Value::U128(mut gas), system, Value::Felt(class_hash)]: [Value; 3] =
+    let [Value::U64(mut gas), system, Value::Felt(class_hash)]: [Value; 3] =
         args.try_into().unwrap()
     else {
         panic!()
@@ -1104,11 +1106,11 @@ fn eval_replace_class(
     let result = syscall_handler.replace_class(class_hash, &mut gas);
 
     match result {
-        Ok(()) => EvalAction::NormalBranch(0, smallvec![Value::U128(gas), system]),
+        Ok(()) => EvalAction::NormalBranch(0, smallvec![Value::U64(gas), system]),
         Err(e) => EvalAction::NormalBranch(
             1,
             smallvec![
-                Value::U128(gas),
+                Value::U64(gas),
                 system,
                 Value::Array {
                     ty: felt_ty,
@@ -1125,7 +1127,7 @@ fn eval_send_message_to_l1(
     args: Vec<Value>,
     syscall_handler: &mut impl StarknetSyscallHandler,
 ) -> EvalAction {
-    let [Value::U128(mut gas), system, Value::Felt(address), Value::Struct(payload)]: [Value; 4] =
+    let [Value::U64(mut gas), system, Value::Felt(address), Value::Struct(payload)]: [Value; 4] =
         args.try_into().unwrap()
     else {
         panic!()
@@ -1161,11 +1163,11 @@ fn eval_send_message_to_l1(
     let result = syscall_handler.send_message_to_l1(address, payload, &mut gas);
 
     match result {
-        Ok(()) => EvalAction::NormalBranch(0, smallvec![Value::U128(gas), system]),
+        Ok(()) => EvalAction::NormalBranch(0, smallvec![Value::U64(gas), system]),
         Err(e) => EvalAction::NormalBranch(
             1,
             smallvec![
-                Value::U128(gas),
+                Value::U64(gas),
                 system,
                 Value::Array {
                     ty: felt_ty,
@@ -1204,7 +1206,7 @@ fn eval_sha256_process_block(
     args: Vec<Value>,
     syscall_handler: &mut impl StarknetSyscallHandler,
 ) -> EvalAction {
-    let [Value::U128(mut gas), system, Value::Struct(prev_state), Value::Struct(current_block)]: [Value; 4] = args.try_into().unwrap() else {
+    let [Value::U64(mut gas), system, Value::Struct(prev_state), Value::Struct(current_block)]: [Value; 4] = args.try_into().unwrap() else {
         panic!()
     };
 
@@ -1243,13 +1245,13 @@ fn eval_sha256_process_block(
             let payload = payload.into_iter().map(Value::U32).collect::<Vec<_>>();
             EvalAction::NormalBranch(
                 0,
-                smallvec![Value::U128(gas), system, Value::Struct(payload)],
+                smallvec![Value::U64(gas), system, Value::Struct(payload)],
             )
         }
         Err(payload) => EvalAction::NormalBranch(
             1,
             smallvec![
-                Value::U128(gas),
+                Value::U64(gas),
                 system,
                 Value::Array {
                     ty: felt_ty,

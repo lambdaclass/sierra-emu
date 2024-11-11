@@ -55,7 +55,7 @@ impl Serialize for StateDump {
 
 #[derive(Debug, Clone)]
 pub struct ContractExecutionResult {
-    pub remaining_gas: u128,
+    pub remaining_gas: u64,
     pub failure_flag: bool,
     pub return_values: Vec<Felt>,
     pub error_msg: Option<String>,
@@ -72,7 +72,7 @@ impl ContractExecutionResult {
 
         for value in last.items.values() {
             match value {
-                Value::U128(gas) => remaining_gas = Some(*gas),
+                Value::U64(gas) => remaining_gas = Some(*gas),
                 Value::Enum {
                     self_ty: _,
                     index,

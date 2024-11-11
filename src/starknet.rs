@@ -29,16 +29,12 @@ mod u256;
 pub type SyscallResult<T> = Result<T, Vec<Felt>>;
 
 pub trait StarknetSyscallHandler {
-    fn get_block_hash(
-        &mut self,
-        block_number: u64,
-        remaining_gas: &mut u128,
-    ) -> SyscallResult<Felt>;
+    fn get_block_hash(&mut self, block_number: u64, remaining_gas: &mut u64)
+        -> SyscallResult<Felt>;
 
-    fn get_execution_info(&mut self, remaining_gas: &mut u128) -> SyscallResult<ExecutionInfo>;
+    fn get_execution_info(&mut self, remaining_gas: &mut u64) -> SyscallResult<ExecutionInfo>;
 
-    fn get_execution_info_v2(&mut self, remaining_gas: &mut u128)
-        -> SyscallResult<ExecutionInfoV2>;
+    fn get_execution_info_v2(&mut self, remaining_gas: &mut u64) -> SyscallResult<ExecutionInfoV2>;
 
     fn deploy(
         &mut self,
@@ -46,17 +42,17 @@ pub trait StarknetSyscallHandler {
         contract_address_salt: Felt,
         calldata: Vec<Felt>,
         deploy_from_zero: bool,
-        remaining_gas: &mut u128,
+        remaining_gas: &mut u64,
     ) -> SyscallResult<(Felt, Vec<Felt>)>;
 
-    fn replace_class(&mut self, class_hash: Felt, remaining_gas: &mut u128) -> SyscallResult<()>;
+    fn replace_class(&mut self, class_hash: Felt, remaining_gas: &mut u64) -> SyscallResult<()>;
 
     fn library_call(
         &mut self,
         class_hash: Felt,
         function_selector: Felt,
         calldata: Vec<Felt>,
-        remaining_gas: &mut u128,
+        remaining_gas: &mut u64,
     ) -> SyscallResult<Vec<Felt>>;
 
     fn call_contract(
@@ -64,14 +60,14 @@ pub trait StarknetSyscallHandler {
         address: Felt,
         entry_point_selector: Felt,
         calldata: Vec<Felt>,
-        remaining_gas: &mut u128,
+        remaining_gas: &mut u64,
     ) -> SyscallResult<Vec<Felt>>;
 
     fn storage_read(
         &mut self,
         address_domain: u32,
         address: Felt,
-        remaining_gas: &mut u128,
+        remaining_gas: &mut u64,
     ) -> SyscallResult<Felt>;
 
     fn storage_write(
@@ -79,98 +75,98 @@ pub trait StarknetSyscallHandler {
         address_domain: u32,
         address: Felt,
         value: Felt,
-        remaining_gas: &mut u128,
+        remaining_gas: &mut u64,
     ) -> SyscallResult<()>;
 
     fn emit_event(
         &mut self,
         keys: Vec<Felt>,
         data: Vec<Felt>,
-        remaining_gas: &mut u128,
+        remaining_gas: &mut u64,
     ) -> SyscallResult<()>;
 
     fn send_message_to_l1(
         &mut self,
         to_address: Felt,
         payload: Vec<Felt>,
-        remaining_gas: &mut u128,
+        remaining_gas: &mut u64,
     ) -> SyscallResult<()>;
 
-    fn keccak(&mut self, input: Vec<u64>, remaining_gas: &mut u128) -> SyscallResult<U256>;
+    fn keccak(&mut self, input: Vec<u64>, remaining_gas: &mut u64) -> SyscallResult<U256>;
 
     fn secp256k1_new(
         &mut self,
         x: U256,
         y: U256,
-        remaining_gas: &mut u128,
+        remaining_gas: &mut u64,
     ) -> SyscallResult<Option<Secp256k1Point>>;
 
     fn secp256k1_add(
         &mut self,
         p0: Secp256k1Point,
         p1: Secp256k1Point,
-        remaining_gas: &mut u128,
+        remaining_gas: &mut u64,
     ) -> SyscallResult<Secp256k1Point>;
 
     fn secp256k1_mul(
         &mut self,
         p: Secp256k1Point,
         m: U256,
-        remaining_gas: &mut u128,
+        remaining_gas: &mut u64,
     ) -> SyscallResult<Secp256k1Point>;
 
     fn secp256k1_get_point_from_x(
         &mut self,
         x: U256,
         y_parity: bool,
-        remaining_gas: &mut u128,
+        remaining_gas: &mut u64,
     ) -> SyscallResult<Option<Secp256k1Point>>;
 
     fn secp256k1_get_xy(
         &mut self,
         p: Secp256k1Point,
-        remaining_gas: &mut u128,
+        remaining_gas: &mut u64,
     ) -> SyscallResult<(U256, U256)>;
 
     fn secp256r1_new(
         &mut self,
         x: U256,
         y: U256,
-        remaining_gas: &mut u128,
+        remaining_gas: &mut u64,
     ) -> SyscallResult<Option<Secp256r1Point>>;
 
     fn secp256r1_add(
         &mut self,
         p0: Secp256r1Point,
         p1: Secp256r1Point,
-        remaining_gas: &mut u128,
+        remaining_gas: &mut u64,
     ) -> SyscallResult<Secp256r1Point>;
 
     fn secp256r1_mul(
         &mut self,
         p: Secp256r1Point,
         m: U256,
-        remaining_gas: &mut u128,
+        remaining_gas: &mut u64,
     ) -> SyscallResult<Secp256r1Point>;
 
     fn secp256r1_get_point_from_x(
         &mut self,
         x: U256,
         y_parity: bool,
-        remaining_gas: &mut u128,
+        remaining_gas: &mut u64,
     ) -> SyscallResult<Option<Secp256r1Point>>;
 
     fn secp256r1_get_xy(
         &mut self,
         p: Secp256r1Point,
-        remaining_gas: &mut u128,
+        remaining_gas: &mut u64,
     ) -> SyscallResult<(U256, U256)>;
 
     fn sha256_process_block(
         &mut self,
         prev_state: [u32; 8],
         current_block: [u32; 16],
-        remaining_gas: &mut u128,
+        remaining_gas: &mut u64,
     ) -> SyscallResult<[u32; 8]>;
 
     fn cheatcode(&mut self, _selector: Felt, _input: Vec<Felt>) -> Vec<Felt> {
@@ -246,12 +242,12 @@ impl StarknetSyscallHandler for StubSyscallHandler {
     fn get_block_hash(
         &mut self,
         block_number: u64,
-        _remaining_gas: &mut u128,
+        _remaining_gas: &mut u64,
     ) -> SyscallResult<Felt> {
         Ok(block_number.into())
     }
 
-    fn get_execution_info(&mut self, _remaining_gas: &mut u128) -> SyscallResult<ExecutionInfo> {
+    fn get_execution_info(&mut self, _remaining_gas: &mut u64) -> SyscallResult<ExecutionInfo> {
         Ok(ExecutionInfo {
             block_info: self.execution_info.block_info,
             tx_info: TxInfo {
@@ -271,7 +267,7 @@ impl StarknetSyscallHandler for StubSyscallHandler {
 
     fn get_execution_info_v2(
         &mut self,
-        _remaining_gas: &mut u128,
+        _remaining_gas: &mut u64,
     ) -> SyscallResult<ExecutionInfoV2> {
         Ok(self.execution_info.clone())
     }
@@ -282,12 +278,12 @@ impl StarknetSyscallHandler for StubSyscallHandler {
         _contract_address_salt: Felt,
         _calldata: Vec<Felt>,
         _deploy_from_zero: bool,
-        _remaining_gas: &mut u128,
+        _remaining_gas: &mut u64,
     ) -> SyscallResult<(Felt, Vec<Felt>)> {
         unimplemented!()
     }
 
-    fn replace_class(&mut self, _class_hash: Felt, _remaining_gas: &mut u128) -> SyscallResult<()> {
+    fn replace_class(&mut self, _class_hash: Felt, _remaining_gas: &mut u64) -> SyscallResult<()> {
         unimplemented!()
     }
 
@@ -296,7 +292,7 @@ impl StarknetSyscallHandler for StubSyscallHandler {
         _class_hash: Felt,
         _function_selector: Felt,
         _calldata: Vec<Felt>,
-        _remaining_gas: &mut u128,
+        _remaining_gas: &mut u64,
     ) -> SyscallResult<Vec<Felt>> {
         unimplemented!()
     }
@@ -306,7 +302,7 @@ impl StarknetSyscallHandler for StubSyscallHandler {
         _address: Felt,
         _entry_point_selector: Felt,
         _calldata: Vec<Felt>,
-        _remaining_gas: &mut u128,
+        _remaining_gas: &mut u64,
     ) -> SyscallResult<Vec<Felt>> {
         unimplemented!()
     }
@@ -315,7 +311,7 @@ impl StarknetSyscallHandler for StubSyscallHandler {
         &mut self,
         address_domain: u32,
         address: Felt,
-        _remaining_gas: &mut u128,
+        _remaining_gas: &mut u64,
     ) -> SyscallResult<Felt> {
         if let Some(value) = self.storage.get(&(address_domain, address)) {
             Ok(*value)
@@ -329,7 +325,7 @@ impl StarknetSyscallHandler for StubSyscallHandler {
         address_domain: u32,
         address: Felt,
         value: Felt,
-        _remaining_gas: &mut u128,
+        _remaining_gas: &mut u64,
     ) -> SyscallResult<()> {
         self.storage.insert((address_domain, address), value);
         Ok(())
@@ -339,7 +335,7 @@ impl StarknetSyscallHandler for StubSyscallHandler {
         &mut self,
         keys: Vec<Felt>,
         data: Vec<Felt>,
-        _remaining_gas: &mut u128,
+        _remaining_gas: &mut u64,
     ) -> SyscallResult<()> {
         self.events.push(StubEvent {
             keys: keys.to_vec(),
@@ -352,12 +348,12 @@ impl StarknetSyscallHandler for StubSyscallHandler {
         &mut self,
         _to_address: Felt,
         _payload: Vec<Felt>,
-        _remaining_gas: &mut u128,
+        _remaining_gas: &mut u64,
     ) -> SyscallResult<()> {
         unimplemented!()
     }
 
-    fn keccak(&mut self, input: Vec<u64>, gas: &mut u128) -> SyscallResult<U256> {
+    fn keccak(&mut self, input: Vec<u64>, gas: &mut u64) -> SyscallResult<U256> {
         let length = input.len();
 
         if length % 17 != 0 {
@@ -369,13 +365,14 @@ impl StarknetSyscallHandler for StubSyscallHandler {
         let n_chunks = length / 17;
         let mut state = [0u64; 25];
 
+        const KECCAK_ROUND_COST: u64 = 180000;
         for i in 0..n_chunks {
             if *gas < KECCAK_ROUND_COST {
                 let error_msg = b"Syscall out of gas";
                 let felt_error = Felt::from_bytes_be_slice(error_msg);
                 return Err(vec![felt_error]);
             }
-            const KECCAK_ROUND_COST: u128 = 180000;
+
             *gas -= KECCAK_ROUND_COST;
             let chunk = &input[i * 17..(i + 1) * 17]; //(request.input_start + i * 17)?;
             for (i, val) in chunk.iter().enumerate() {
@@ -396,7 +393,7 @@ impl StarknetSyscallHandler for StubSyscallHandler {
         &mut self,
         x: U256,
         y: U256,
-        _remaining_gas: &mut u128,
+        _remaining_gas: &mut u64,
     ) -> SyscallResult<Option<Secp256k1Point>> {
         // The following unwraps should be unreachable because the iterator we provide has the
         // expected number of bytes.
@@ -425,7 +422,7 @@ impl StarknetSyscallHandler for StubSyscallHandler {
         &mut self,
         p0: Secp256k1Point,
         p1: Secp256k1Point,
-        _remaining_gas: &mut u128,
+        _remaining_gas: &mut u64,
     ) -> SyscallResult<Secp256k1Point> {
         // The inner unwraps should be unreachable because the iterator we provide has the expected
         // number of bytes. The outer unwraps depend on the felt values, which should be valid since
@@ -503,7 +500,7 @@ impl StarknetSyscallHandler for StubSyscallHandler {
         &mut self,
         p: Secp256k1Point,
         m: U256,
-        _remaining_gas: &mut u128,
+        _remaining_gas: &mut u64,
     ) -> SyscallResult<Secp256k1Point> {
         // The inner unwrap should be unreachable because the iterator we provide has the expected
         // number of bytes. The outer unwrap depends on the felt values, which should be valid since
@@ -567,7 +564,7 @@ impl StarknetSyscallHandler for StubSyscallHandler {
         &mut self,
         x: U256,
         y_parity: bool,
-        _remaining_gas: &mut u128,
+        _remaining_gas: &mut u64,
     ) -> SyscallResult<Option<Secp256k1Point>> {
         // The inner unwrap should be unreachable because the iterator we provide has the expected
         // number of bytes. The outer unwrap depends on the encoding format, which should be valid
@@ -617,7 +614,7 @@ impl StarknetSyscallHandler for StubSyscallHandler {
     fn secp256k1_get_xy(
         &mut self,
         p: Secp256k1Point,
-        _remaining_gas: &mut u128,
+        _remaining_gas: &mut u64,
     ) -> SyscallResult<(U256, U256)> {
         Ok((p.x, p.y))
     }
@@ -626,7 +623,7 @@ impl StarknetSyscallHandler for StubSyscallHandler {
         &mut self,
         x: U256,
         y: U256,
-        _remaining_gas: &mut u128,
+        _remaining_gas: &mut u64,
     ) -> SyscallResult<Option<Secp256r1Point>> {
         // The following unwraps should be unreachable because the iterator we provide has the
         // expected number of bytes.
@@ -655,7 +652,7 @@ impl StarknetSyscallHandler for StubSyscallHandler {
         &mut self,
         p0: Secp256r1Point,
         p1: Secp256r1Point,
-        _remaining_gas: &mut u128,
+        _remaining_gas: &mut u64,
     ) -> SyscallResult<Secp256r1Point> {
         // The inner unwraps should be unreachable because the iterator we provide has the expected
         // number of bytes. The outer unwraps depend on the felt values, which should be valid since
@@ -733,7 +730,7 @@ impl StarknetSyscallHandler for StubSyscallHandler {
         &mut self,
         p: Secp256r1Point,
         m: U256,
-        _remaining_gas: &mut u128,
+        _remaining_gas: &mut u64,
     ) -> SyscallResult<Secp256r1Point> {
         // The inner unwrap should be unreachable because the iterator we provide has the expected
         // number of bytes. The outer unwrap depends on the felt values, which should be valid since
@@ -796,7 +793,7 @@ impl StarknetSyscallHandler for StubSyscallHandler {
         &mut self,
         x: U256,
         y_parity: bool,
-        _remaining_gas: &mut u128,
+        _remaining_gas: &mut u64,
     ) -> SyscallResult<Option<Secp256r1Point>> {
         let point = p256::ProjectivePoint::from_encoded_point(
             &p256::EncodedPoint::from_bytes(
@@ -835,7 +832,7 @@ impl StarknetSyscallHandler for StubSyscallHandler {
     fn secp256r1_get_xy(
         &mut self,
         p: Secp256r1Point,
-        _remaining_gas: &mut u128,
+        _remaining_gas: &mut u64,
     ) -> SyscallResult<(U256, U256)> {
         Ok((p.x, p.y))
     }
@@ -844,7 +841,7 @@ impl StarknetSyscallHandler for StubSyscallHandler {
         &mut self,
         prev_state: [u32; 8],
         current_block: [u32; 16],
-        _remaining_gas: &mut u128,
+        _remaining_gas: &mut u64,
     ) -> SyscallResult<[u32; 8]> {
         let mut state = prev_state;
         let data_as_bytes = sha2::digest::generic_array::GenericArray::from_exact_iter(

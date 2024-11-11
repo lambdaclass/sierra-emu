@@ -38,7 +38,7 @@ pub fn eval_builtin_withdraw_gas(
     gas_meta: &GasMetadata,
     statement_idx: StatementIdx,
 ) -> EvalAction {
-    let [range_check @ Value::Unit, Value::U128(gas), _builtin_costs @ Value::Unit]: [Value; 3] =
+    let [range_check @ Value::Unit, Value::U64(gas), _builtin_costs @ Value::Unit]: [Value; 3] =
         args.try_into().unwrap()
     else {
         panic!()
@@ -49,12 +49,12 @@ pub fn eval_builtin_withdraw_gas(
     if let Some(gas_cost) = gas_cost {
         let new_gas = gas.saturating_sub(gas_cost);
         if gas >= gas_cost {
-            EvalAction::NormalBranch(0, smallvec![range_check, Value::U128(new_gas)])
+            EvalAction::NormalBranch(0, smallvec![range_check, Value::U64(new_gas)])
         } else {
-            EvalAction::NormalBranch(1, smallvec![range_check, Value::U128(new_gas)])
+            EvalAction::NormalBranch(1, smallvec![range_check, Value::U64(new_gas)])
         }
     } else {
-        EvalAction::NormalBranch(1, smallvec![range_check, Value::U128(gas)])
+        EvalAction::NormalBranch(1, smallvec![range_check, Value::U64(gas)])
     }
 }
 
@@ -65,7 +65,7 @@ pub fn eval_withdraw_gas(
     gas_meta: &GasMetadata,
     statement_idx: StatementIdx,
 ) -> EvalAction {
-    let [range_check @ Value::Unit, Value::U128(gas)]: [Value; 2] = args.try_into().unwrap() else {
+    let [range_check @ Value::Unit, Value::U64(gas)]: [Value; 2] = args.try_into().unwrap() else {
         panic!()
     };
 
@@ -74,12 +74,12 @@ pub fn eval_withdraw_gas(
     if let Some(gas_cost) = gas_cost {
         let new_gas = gas.saturating_sub(gas_cost);
         if gas >= gas_cost {
-            EvalAction::NormalBranch(0, smallvec![range_check, Value::U128(new_gas)])
+            EvalAction::NormalBranch(0, smallvec![range_check, Value::U64(new_gas)])
         } else {
-            EvalAction::NormalBranch(1, smallvec![range_check, Value::U128(new_gas)])
+            EvalAction::NormalBranch(1, smallvec![range_check, Value::U64(new_gas)])
         }
     } else {
-        EvalAction::NormalBranch(1, smallvec![range_check, Value::U128(gas)])
+        EvalAction::NormalBranch(1, smallvec![range_check, Value::U64(gas)])
     }
 }
 

@@ -8,7 +8,7 @@ pub struct CmdArgs {
 
     pub args: Vec<String>,
     #[clap(long)]
-    pub available_gas: Option<u128>,
+    pub available_gas: Option<u64>,
 
     #[clap(long, short)]
     pub output: Option<PathBuf>,

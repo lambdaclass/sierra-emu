@@ -65,7 +65,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 let type_info = vm.registry().get_type(type_id).unwrap();
                 match type_info {
                     CoreTypeConcrete::Felt252(_) => Value::parse_felt(&iter.next().unwrap()),
-                    CoreTypeConcrete::GasBuiltin(_) => Value::U128(args.available_gas.unwrap()),
+                    CoreTypeConcrete::GasBuiltin(_) => Value::U64(args.available_gas.unwrap()),
                     CoreTypeConcrete::RangeCheck(_)
                     | CoreTypeConcrete::RangeCheck96(_)
                     | CoreTypeConcrete::Bitwise(_)
