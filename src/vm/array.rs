@@ -58,7 +58,7 @@ fn eval_span_from_tuple(
         data,
     };
 
-    return EvalAction::NormalBranch(0, smallvec![value]);
+    EvalAction::NormalBranch(0, smallvec![value])
 }
 
 pub fn eval_new(
