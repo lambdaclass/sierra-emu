@@ -1,5 +1,5 @@
 use super::EvalAction;
-use crate::{debug::debug_signature, Value};
+use crate::Value;
 use cairo_lang_sierra::{
     extensions::{
         core::{CoreLibfunc, CoreType},
@@ -248,8 +248,7 @@ mod test {
 
         let result = run_test_program(program);
 
-        let Value::U64(payload) = result.last().unwrap()
-        else {
+        let Value::U64(payload) = result.last().unwrap() else {
             panic!("No output");
         };
 

@@ -6,7 +6,7 @@ use starknet_types_core::felt::Felt;
 pub struct ResourceBounds {
     pub resource: Felt,
     pub max_amount: u64,
-    pub max_price_per_unit: u128,
+    pub max_price_per_unit: u64,
 }
 
 impl ResourceBounds {
@@ -14,7 +14,7 @@ impl ResourceBounds {
         Value::Struct(vec![
             Value::Felt(self.resource),
             Value::U64(self.max_amount),
-            Value::U128(self.max_price_per_unit),
+            Value::U64(self.max_price_per_unit),
         ])
     }
 }
