@@ -122,6 +122,7 @@ pub fn eval(
                 }
             }
         },
+        StarkNetConcreteLibfunc::GetClassHashAt(_) => todo!(),
     }
 }
 

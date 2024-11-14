@@ -378,5 +378,6 @@ fn eval<'a>(
 
             EvalAction::NormalBranch(0, smallvec![value])
         }
+        CoreConcreteLibfunc::IntRange(_) => todo!(),
     }
 }
