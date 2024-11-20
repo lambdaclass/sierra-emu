@@ -51,7 +51,7 @@ pub fn eval_builtin_withdraw_gas(
         if gas >= gas_cost {
             EvalAction::NormalBranch(0, smallvec![range_check, Value::U64(new_gas)])
         } else {
-            EvalAction::NormalBranch(1, smallvec![range_check, Value::U64(new_gas)])
+            EvalAction::NormalBranch(1, smallvec![range_check, Value::U64(gas)])
         }
     } else {
         EvalAction::NormalBranch(1, smallvec![range_check, Value::U64(gas)])
@@ -76,7 +76,7 @@ pub fn eval_withdraw_gas(
         if gas >= gas_cost {
             EvalAction::NormalBranch(0, smallvec![range_check, Value::U64(new_gas)])
         } else {
-            EvalAction::NormalBranch(1, smallvec![range_check, Value::U64(new_gas)])
+            EvalAction::NormalBranch(1, smallvec![range_check, Value::U64(gas)])
         }
     } else {
         EvalAction::NormalBranch(1, smallvec![range_check, Value::U64(gas)])
