@@ -4,12 +4,12 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-cairo-lang-compiler = "2.8.4"
-cairo-lang-filesystem = "2.8.4"
-cairo-lang-sierra = "2.8.4"
-cairo-lang-sierra-ap-change = "2.8.4"
-cairo-lang-sierra-gas = "2.8.4"
-cairo-lang-utils = "2.8.4"
+cairo-lang-compiler = "2.9.0-dev.0"
+cairo-lang-filesystem = "2.9.0-dev.0"
+cairo-lang-sierra = "2.9.0-dev.0"
+cairo-lang-sierra-ap-change = "2.9.0-dev.0"
+cairo-lang-sierra-gas = "2.9.0-dev.0"
+cairo-lang-utils = "2.9.0-dev.0"
 clap = { version = "4.5.20", features = ["derive"] }
 k256 = "0.13.4"
 keccak = "0.1.5"
@@ -31,8 +31,8 @@ tracing = "0.1.40"
 tracing-subscriber = { version = "0.3.18", features = ["env-filter"] }
 
 [dev-dependencies]
-cairo-lang-compiler = "2.8.4"
-cairo-lang-starknet = "2.8.4"
+cairo-lang-compiler = "2.9.0-dev.0"
+cairo-lang-starknet = "2.9.0-dev.0"
 
 # On dev optimize dependencies a bit so it's not as slow.
 [profile.dev.package."*"]

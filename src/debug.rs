@@ -26,6 +26,7 @@ use cairo_lang_sierra::{
         nullable::NullableConcreteLibfunc,
         pedersen::PedersenConcreteLibfunc,
         poseidon::PoseidonConcreteLibfunc,
+        range::IntRangeConcreteLibfunc,
         starknet::{
             secp256::{Secp256ConcreteLibfunc, Secp256OpConcreteLibfunc},
             testing::TestingConcreteLibfunc,
@@ -378,6 +379,7 @@ pub fn libfunc_to_name(value: &CoreConcreteLibfunc) -> &'static str {
             StarkNetConcreteLibfunc::Sha256ProcessBlock(_) => "sha256_process_block",
             StarkNetConcreteLibfunc::Sha256StateHandleInit(_) => "sha256_state_handle_init",
             StarkNetConcreteLibfunc::Sha256StateHandleDigest(_) => "sha256_state_handle_digest",
+            StarkNetConcreteLibfunc::GetClassHashAt(_) => "get_class_hash_at",
         },
         CoreConcreteLibfunc::Debug(value) => match value {
             DebugConcreteLibfunc::Print(_) => "debug_print",
@@ -413,6 +415,10 @@ pub fn libfunc_to_name(value: &CoreConcreteLibfunc) -> &'static str {
             BoundedIntConcreteLibfunc::Constrain(_) => "bounded_int_constrain",
             BoundedIntConcreteLibfunc::IsZero(_) => "bounded_int_is_zero",
             BoundedIntConcreteLibfunc::WrapNonZero(_) => "bounded_int_wrap_non_zero",
+        },
+        CoreConcreteLibfunc::IntRange(selector) => match selector {
+            IntRangeConcreteLibfunc::TryNew(_) => "int_range_try_new",
+            IntRangeConcreteLibfunc::PopFront(_) => "int_range_pop_front",
         },
     }
 }
@@ -533,6 +539,9 @@ pub fn type_to_name(
         CoreTypeConcrete::SegmentArena(_) => String::from("SegmentArena"),
         CoreTypeConcrete::Bytes31(_) => String::from("Bytes31"),
         CoreTypeConcrete::BoundedInt(_) => String::from("BoundedInt"),
+        CoreTypeConcrete::IntRange(info) => {
+            format!("IntRange<{}>", type_to_name(&info.ty, registry))
+        }
     }
 }
 

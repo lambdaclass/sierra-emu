@@ -199,6 +199,7 @@ impl Value {
                 StarkNetTypeConcrete::Secp256Point(_) => matches!(self, Self::Struct(_)),
                 StarkNetTypeConcrete::Sha256StateHandle(_) => matches!(self, Self::Struct { .. }),
             },
+            CoreTypeConcrete::IntRange(_) => todo!(),
         };
 
         if !res {
