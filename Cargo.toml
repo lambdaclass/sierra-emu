@@ -6,9 +6,11 @@ edition = "2021"
 [dependencies]
 cairo-lang-compiler = "2.9.0-dev.0"
 cairo-lang-filesystem = "2.9.0-dev.0"
+cairo-lang-runner = "2.9.0-dev.0"
 cairo-lang-sierra = "2.9.0-dev.0"
 cairo-lang-sierra-ap-change = "2.9.0-dev.0"
 cairo-lang-sierra-gas = "2.9.0-dev.0"
+cairo-lang-starknet-classes = "2.9.0-dev.0"
 cairo-lang-utils = "2.9.0-dev.0"
 clap = { version = "4.5.20", features = ["derive"] }
 k256 = "0.13.4"

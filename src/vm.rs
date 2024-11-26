@@ -9,12 +9,16 @@ use cairo_lang_sierra::{
     extensions::{
         circuit::CircuitTypeConcrete,
         core::{CoreConcreteLibfunc, CoreLibfunc, CoreType, CoreTypeConcrete},
+        gas::CostTokenType,
         starknet::StarkNetTypeConcrete,
         ConcreteLibfunc, ConcreteType,
     },
     ids::{ConcreteLibfuncId, FunctionId, VarId},
     program::{GenFunction, GenStatement, Invocation, Program, StatementIdx},
     program_registry::ProgramRegistry,
+};
+use cairo_lang_starknet_classes::{
+    casm_contract_class::ENTRY_POINT_COST, contract_class::ContractEntryPoints,
 };
 use cairo_lang_utils::ordered_hash_map::OrderedHashMap;
 use smallvec::{smallvec, SmallVec};
@@ -79,10 +83,33 @@ impl VirtualMachine {
 }
 
 impl<S: StarknetSyscallHandler> VirtualMachine<S> {
-    pub fn new_starknet(program: Arc<Program>, syscall_handler: S) -> Self {
+    pub fn new_starknet(
+        program: Arc<Program>,
+        entry_points: &ContractEntryPoints,
+        syscall_handler: S,
+    ) -> Self {
         let registry = ProgramRegistry::new(&program).unwrap();
         Self {
-            gas: GasMetadata::new(&program, Some(MetadataComputationConfig::default())).unwrap(),
+            gas: GasMetadata::new(
+                &program,
+                Some(MetadataComputationConfig {
+                    function_set_costs: entry_points
+                        .constructor
+                        .iter()
+                        .chain(entry_points.external.iter())
+                        .chain(entry_points.l1_handler.iter())
+                        .map(|id| {
+                            (
+                                program.funcs[id.function_idx].id.clone(),
+                                [(CostTokenType::Const, ENTRY_POINT_COST)].into(),
+                            )
+                        })
+                        .collect(),
+                    linear_gas_solver: true,
+                    linear_ap_change_solver: true,
+                }),
+            )
+            .unwrap(),
             program,
             registry,
             syscall_handler,
