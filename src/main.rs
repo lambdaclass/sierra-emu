@@ -6,7 +6,7 @@ use cairo_lang_sierra::{
     ProgramParser,
 };
 use clap::Parser;
-use sierra_emu::{starknet::StubSyscallHandler, ProgramTrace, StateDump, Value, VirtualMachine};
+use sierra_emu::{starknet::StubSyscallHandler, Value, VirtualMachine};
 use std::{
     fs::{self, File},
     io::stdout,
@@ -85,13 +85,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             .collect::<Vec<_>>(),
     );
 
-    let mut trace = ProgramTrace::new();
-
     info!("Running the program.");
     let syscall_handler = &mut StubSyscallHandler::default();
-    while let Some((statement_idx, state)) = vm.step(syscall_handler) {
-        trace.push(StateDump::new(statement_idx, state));
-    }
+    let trace = vm.run_with_trace(syscall_handler);
 
     match args.output {
         Some(path) => serde_json::to_writer(File::create(path)?, &trace)?,
@@ -108,7 +104,7 @@ mod test {
     use cairo_lang_compiler::CompilerConfig;
     use cairo_lang_starknet::compile::compile_path;
     use sierra_emu::{
-        starknet::StubSyscallHandler, ContractExecutionResult, ProgramTrace, StateDump,
+        starknet::StubSyscallHandler, ContractExecutionResult,
         VirtualMachine,
     };
 
@@ -139,13 +135,12 @@ mod test {
         let initial_gas = 1000000;
 
         let syscall_handler = &mut StubSyscallHandler::default();
+
+        // Set the VM at the contract entrypoint
         vm.call_contract(entry_point.selector.clone().into(), initial_gas, calldata);
 
-        let mut trace = ProgramTrace::new();
-
-        while let Some((statement_idx, state)) = vm.step(syscall_handler) {
-            trace.push(StateDump::new(statement_idx, state));
-        }
+        // Run all the steps generating a program execution trace. (Not to be confused with a proof trace)
+        let _trace = vm.run_with_trace(syscall_handler);
 
         // let trace_str = serde_json::to_string_pretty(&trace).unwrap();
         // std::fs::write("contract_trace.json", trace_str).unwrap();
@@ -180,11 +175,7 @@ mod test {
         let syscall_handler = &mut StubSyscallHandler::default();
         vm.call_contract(entry_point.selector.clone().into(), initial_gas, calldata);
 
-        let mut trace = ProgramTrace::new();
-
-        while let Some((statement_idx, state)) = vm.step(syscall_handler) {
-            trace.push(StateDump::new(statement_idx, state));
-        }
+        let trace = vm.run_with_trace(syscall_handler);
 
         assert!(!syscall_handler.storage.is_empty());
 

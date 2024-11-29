@@ -3,7 +3,7 @@ use std::{path::Path, sync::Arc};
 use cairo_lang_compiler::{compile_cairo_project_at_path, CompilerConfig};
 use cairo_lang_sierra::program::{GenFunction, Program, StatementIdx};
 use num_bigint::BigInt;
-use sierra_emu::{starknet::StubSyscallHandler, ProgramTrace, StateDump, Value, VirtualMachine};
+use sierra_emu::{starknet::StubSyscallHandler, Value, VirtualMachine};
 
 fn run_program(path: &str, func_name: &str, args: &[Value]) -> Vec<Value> {
     let path = Path::new(path);
@@ -28,12 +28,8 @@ fn run_program(path: &str, func_name: &str, args: &[Value]) -> Vec<Value> {
 
     vm.call_program(function, initial_gas, args);
 
-    let mut trace = ProgramTrace::new();
-
     let syscall_handler = &mut StubSyscallHandler::default();
-    while let Some((statement_idx, state)) = vm.step(syscall_handler) {
-        trace.push(StateDump::new(statement_idx, state));
-    }
+    let trace = vm.run_with_trace(syscall_handler);
 
     trace
         .states

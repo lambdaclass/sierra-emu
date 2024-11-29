@@ -10,7 +10,7 @@ use cairo_lang_filesystem::db::init_dev_corelib;
 use cairo_lang_sierra::program::Program;
 
 use crate::{
-    find_entry_point_by_idx, starknet::StubSyscallHandler, ProgramTrace, StateDump, Value,
+    find_entry_point_by_idx, starknet::StubSyscallHandler, Value,
     VirtualMachine,
 };
 
@@ -64,12 +64,8 @@ pub fn run_test_program(sierra_program: Program) -> Vec<Value> {
     let args: &[Value] = &[];
     vm.call_program(function, initial_gas, args.iter().cloned());
 
-    let mut trace = ProgramTrace::new();
-
     let syscall_handler = &mut StubSyscallHandler::default();
-    while let Some((statement_idx, state)) = vm.step(syscall_handler) {
-        trace.push(StateDump::new(statement_idx, state));
-    }
+    let trace = vm.run_with_trace(syscall_handler);
 
     trace
         .states
