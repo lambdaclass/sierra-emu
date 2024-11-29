@@ -174,9 +174,6 @@ pub trait StarknetSyscallHandler {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Serialize)]
-pub struct StubSyscallHandle2r;
-
 /// A (somewhat) usable implementation of the starknet syscall handler trait.
 ///
 /// Currently gas is not deducted.
