@@ -2,7 +2,7 @@
 
 ### ⚡ Cairo Sierra Emulator ⚡
 
-An emulator directly using the Cairo's intermediate representation "Sierra" instead of CASM.<br>
+An Cairo emulator directly using the Cairo's intermediate representation "Sierra" instead of CASM.<br>
 An useful usecase is to aid in debugging other Cairo related VMs.
 
 [Report Bug](https://github.com/lambdaclass/sierra-emu/issues/new) · [Request Feature](https://github.com/lambdaclass/sierra-emu/issues/new)
