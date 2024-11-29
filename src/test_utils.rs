@@ -7,14 +7,12 @@ use cairo_lang_compiler::{
     project::setup_project, CompilerConfig,
 };
 use cairo_lang_filesystem::db::init_dev_corelib;
-use cairo_lang_sierra::{
-    extensions::{
-        circuit::CircuitTypeConcrete, core::CoreTypeConcrete, starknet::StarkNetTypeConcrete,
-    },
-    program::Program,
-};
+use cairo_lang_sierra::program::Program;
 
-use crate::{find_entry_point_by_idx, ProgramTrace, StateDump, Value, VirtualMachine};
+use crate::{
+    find_entry_point_by_idx, starknet::StubSyscallHandler, ProgramTrace, StateDump, Value,
+    VirtualMachine,
+};
 
 #[macro_export]
 macro_rules! load_cairo {
@@ -63,36 +61,13 @@ pub fn run_test_program(sierra_program: Program) -> Vec<Value> {
 
     let initial_gas = 1000000;
 
-    vm.push_frame(
-        function.id.clone(),
-        function
-            .signature
-            .param_types
-            .iter()
-            .map(|type_id| {
-                let type_info = vm.registry().get_type(type_id).unwrap();
-                match type_info {
-                    CoreTypeConcrete::GasBuiltin(_) => crate::Value::U128(initial_gas),
-                    CoreTypeConcrete::StarkNet(StarkNetTypeConcrete::System(_)) => Value::Unit,
-                    CoreTypeConcrete::RangeCheck(_)
-                    | CoreTypeConcrete::RangeCheck96(_)
-                    | CoreTypeConcrete::Pedersen(_)
-                    | CoreTypeConcrete::Poseidon(_)
-                    | CoreTypeConcrete::Bitwise(_)
-                    | CoreTypeConcrete::BuiltinCosts(_)
-                    | CoreTypeConcrete::SegmentArena(_)
-                    | CoreTypeConcrete::Circuit(
-                        CircuitTypeConcrete::AddMod(_) | CircuitTypeConcrete::MulMod(_),
-                    ) => Value::Unit,
-                    _ => unreachable!(),
-                }
-            })
-            .collect::<Vec<_>>(),
-    );
+    let args: &[Value] = &[];
+    vm.call_program(function, initial_gas, args.iter().cloned());
 
     let mut trace = ProgramTrace::new();
 
-    while let Some((statement_idx, state)) = vm.step() {
+    let syscall_handler = &mut StubSyscallHandler::default();
+    while let Some((statement_idx, state)) = vm.step(syscall_handler) {
         trace.push(StateDump::new(statement_idx, state));
     }
 

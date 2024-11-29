@@ -6,7 +6,7 @@ use cairo_lang_sierra::{
     ProgramParser,
 };
 use clap::Parser;
-use sierra_emu::{ProgramTrace, StateDump, Value, VirtualMachine};
+use sierra_emu::{starknet::StubSyscallHandler, ProgramTrace, StateDump, Value, VirtualMachine};
 use std::{
     fs::{self, File},
     io::stdout,
@@ -88,7 +88,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut trace = ProgramTrace::new();
 
     info!("Running the program.");
-    while let Some((statement_idx, state)) = vm.step() {
+    let syscall_handler = &mut StubSyscallHandler::default();
+    while let Some((statement_idx, state)) = vm.step(syscall_handler) {
         trace.push(StateDump::new(statement_idx, state));
     }
 
@@ -107,7 +108,8 @@ mod test {
     use cairo_lang_compiler::CompilerConfig;
     use cairo_lang_starknet::compile::compile_path;
     use sierra_emu::{
-        find_entry_point_by_idx, ContractExecutionResult, ProgramTrace, StateDump, VirtualMachine,
+        starknet::StubSyscallHandler, ContractExecutionResult, ProgramTrace, StateDump,
+        VirtualMachine,
     };
 
     #[test]
@@ -127,18 +129,21 @@ mod test {
         let sierra_program = contract.extract_sierra_program().unwrap();
 
         let entry_point = contract.entry_points_by_type.external.first().unwrap();
-        let function = find_entry_point_by_idx(&sierra_program, entry_point.function_idx).unwrap();
 
-        let mut vm = VirtualMachine::new(sierra_program.clone().into());
+        let mut vm = VirtualMachine::new_starknet(
+            sierra_program.clone().into(),
+            &contract.entry_points_by_type,
+        );
 
         let calldata = [2.into()];
         let initial_gas = 1000000;
 
-        vm.call_contract(function, initial_gas, calldata);
+        let syscall_handler = &mut StubSyscallHandler::default();
+        vm.call_contract(entry_point.selector.clone().into(), initial_gas, calldata);
 
         let mut trace = ProgramTrace::new();
 
-        while let Some((statement_idx, state)) = vm.step() {
+        while let Some((statement_idx, state)) = vm.step(syscall_handler) {
             trace.push(StateDump::new(statement_idx, state));
         }
 
@@ -163,22 +168,25 @@ mod test {
         let sierra_program = contract.extract_sierra_program().unwrap();
 
         let entry_point = contract.entry_points_by_type.constructor.first().unwrap();
-        let function = find_entry_point_by_idx(&sierra_program, entry_point.function_idx).unwrap();
 
-        let mut vm = VirtualMachine::new(sierra_program.clone().into());
+        let mut vm = VirtualMachine::new_starknet(
+            sierra_program.clone().into(),
+            &contract.entry_points_by_type,
+        );
 
         let calldata = [2.into()];
         let initial_gas = 1000000;
 
-        vm.call_contract(function, initial_gas, calldata);
+        let syscall_handler = &mut StubSyscallHandler::default();
+        vm.call_contract(entry_point.selector.clone().into(), initial_gas, calldata);
 
         let mut trace = ProgramTrace::new();
 
-        while let Some((statement_idx, state)) = vm.step() {
+        while let Some((statement_idx, state)) = vm.step(syscall_handler) {
             trace.push(StateDump::new(statement_idx, state));
         }
 
-        assert!(!vm.syscall_handler.storage.is_empty());
+        assert!(!syscall_handler.storage.is_empty());
 
         let result = ContractExecutionResult::from_trace(&trace).unwrap();
         assert!(!result.failure_flag);
