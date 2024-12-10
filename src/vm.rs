@@ -1,24 +1,26 @@
 use crate::{
-    debug::libfunc_to_name,
-    gas::{GasMetadata, MetadataComputationConfig},
-    starknet::{StarknetSyscallHandler, StubSyscallHandler},
-    Value,
+    debug::libfunc_to_name, gas::{GasMetadata, MetadataComputationConfig}, starknet::StarknetSyscallHandler, ProgramTrace, StateDump, Value
 };
 use cairo_lang_sierra::{
     edit_state,
     extensions::{
+        circuit::CircuitTypeConcrete,
         core::{CoreConcreteLibfunc, CoreLibfunc, CoreType, CoreTypeConcrete},
+        gas::CostTokenType,
         starknet::StarkNetTypeConcrete,
-        ConcreteType,
+        ConcreteLibfunc, ConcreteType,
     },
     ids::{ConcreteLibfuncId, FunctionId, VarId},
     program::{GenFunction, GenStatement, Invocation, Program, StatementIdx},
     program_registry::ProgramRegistry,
 };
+use cairo_lang_starknet_classes::{
+    casm_contract_class::ENTRY_POINT_COST, contract_class::ContractEntryPoints,
+};
 use cairo_lang_utils::ordered_hash_map::OrderedHashMap;
 use smallvec::{smallvec, SmallVec};
 use starknet_types_core::felt::Felt;
-use std::{cell::Cell, sync::Arc};
+use std::{fmt::Debug, sync::Arc};
 use tracing::{debug, trace};
 
 mod ap_tracking;
@@ -40,6 +42,7 @@ mod felt252_dict;
 mod felt252_dict_entry;
 mod function_call;
 mod gas;
+mod int128;
 mod jump;
 mod mem;
 mod pedersen;
@@ -55,12 +58,22 @@ mod uint512;
 mod uint64;
 mod uint8;
 
-pub struct VirtualMachine<S: StarknetSyscallHandler = StubSyscallHandler> {
+#[derive(Clone)]
+pub struct VirtualMachine {
     pub program: Arc<Program>,
-    pub registry: ProgramRegistry<CoreType, CoreLibfunc>,
-    pub syscall_handler: S,
+    pub registry: Arc<ProgramRegistry<CoreType, CoreLibfunc>>,
     frames: Vec<SierraFrame>,
     pub gas: GasMetadata,
+    entry_points: Option<ContractEntryPoints>,
+}
+
+impl Debug for VirtualMachine {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("VirtualMachine")
+            .field("frames", &self.frames)
+            .field("gas", &self.gas)
+            .finish_non_exhaustive()
+    }
 }
 
 impl VirtualMachine {
@@ -69,22 +82,41 @@ impl VirtualMachine {
         Self {
             gas: GasMetadata::new(&program, Some(MetadataComputationConfig::default())).unwrap(),
             program,
-            registry,
-            syscall_handler: StubSyscallHandler::default(),
+            registry: Arc::new(registry),
             frames: Vec::new(),
+            entry_points: None,
         }
     }
 }
 
-impl<S: StarknetSyscallHandler> VirtualMachine<S> {
-    pub fn new_starknet(program: Arc<Program>, syscall_handler: S) -> Self {
+impl VirtualMachine {
+    pub fn new_starknet(program: Arc<Program>, entry_points: &ContractEntryPoints) -> Self {
         let registry = ProgramRegistry::new(&program).unwrap();
         Self {
-            gas: GasMetadata::new(&program, Some(MetadataComputationConfig::default())).unwrap(),
+            gas: GasMetadata::new(
+                &program,
+                Some(MetadataComputationConfig {
+                    function_set_costs: entry_points
+                        .constructor
+                        .iter()
+                        .chain(entry_points.external.iter())
+                        .chain(entry_points.l1_handler.iter())
+                        .map(|id| {
+                            (
+                                program.funcs[id.function_idx].id.clone(),
+                                [(CostTokenType::Const, ENTRY_POINT_COST)].into(),
+                            )
+                        })
+                        .collect(),
+                    linear_gas_solver: true,
+                    linear_ap_change_solver: true,
+                }),
+            )
+            .unwrap(),
             program,
-            registry,
-            syscall_handler,
+            registry: Arc::new(registry),
             frames: Vec::new(),
+            entry_points: Some(entry_points.clone()),
         }
     }
 
@@ -93,16 +125,23 @@ impl<S: StarknetSyscallHandler> VirtualMachine<S> {
     }
 
     /// Utility to call a contract.
-    pub fn call_contract<I>(
-        &mut self,
-        function: &GenFunction<StatementIdx>,
-        initial_gas: u128,
-        calldata: I,
-    ) where
+    pub fn call_contract<I>(&mut self, selector: Felt, initial_gas: u64, calldata: I)
+    where
         I: IntoIterator<Item = Felt>,
         I::IntoIter: ExactSizeIterator,
     {
         let args: Vec<_> = calldata.into_iter().map(Value::Felt).collect();
+        let entry_points = self.entry_points.as_ref().expect("contract should have");
+        let selector_uint = selector.to_biguint();
+        let function_idx = entry_points
+            .constructor
+            .iter()
+            .chain(entry_points.external.iter())
+            .chain(entry_points.l1_handler.iter())
+            .find(|x| x.selector == selector_uint)
+            .map(|x| x.function_idx)
+            .expect("function id not found");
+        let function = &self.program.funcs[function_idx];
 
         self.push_frame(
             function.id.clone(),
@@ -113,7 +152,7 @@ impl<S: StarknetSyscallHandler> VirtualMachine<S> {
                 .map(|type_id| {
                     let type_info = self.registry().get_type(type_id).unwrap();
                     match type_info {
-                        CoreTypeConcrete::GasBuiltin(_) => Value::U128(initial_gas),
+                        CoreTypeConcrete::GasBuiltin(_) => Value::U64(initial_gas),
                         // Add the calldata structure
                         CoreTypeConcrete::Struct(inner) => {
                             let member = self.registry().get_type(&inner.members[0]).unwrap();
@@ -136,6 +175,10 @@ impl<S: StarknetSyscallHandler> VirtualMachine<S> {
                         }
                         CoreTypeConcrete::StarkNet(StarkNetTypeConcrete::System(_)) => Value::Unit,
                         CoreTypeConcrete::RangeCheck(_)
+                        | CoreTypeConcrete::RangeCheck96(_)
+                        | CoreTypeConcrete::Circuit(
+                            CircuitTypeConcrete::MulMod(_) | CircuitTypeConcrete::AddMod(_),
+                        )
                         | CoreTypeConcrete::Pedersen(_)
                         | CoreTypeConcrete::Poseidon(_)
                         | CoreTypeConcrete::Bitwise(_)
@@ -145,6 +188,47 @@ impl<S: StarknetSyscallHandler> VirtualMachine<S> {
                         x => {
                             todo!("{:?}", x.info())
                         }
+                    }
+                })
+                .collect::<Vec<_>>(),
+        );
+    }
+
+    /// Utility to call a contract.
+    pub fn call_program<I>(
+        &mut self,
+        function: &GenFunction<StatementIdx>,
+        initial_gas: u64,
+        args: I,
+    ) where
+        I: IntoIterator<Item = Value>,
+        I::IntoIter: ExactSizeIterator,
+    {
+        let mut iter = args.into_iter();
+        self.push_frame(
+            function.id.clone(),
+            function
+                .signature
+                .param_types
+                .iter()
+                .map(|type_id| {
+                    let type_info = self.registry().get_type(type_id).unwrap();
+                    match type_info {
+                        CoreTypeConcrete::GasBuiltin(_) => Value::U64(initial_gas),
+                        CoreTypeConcrete::RangeCheck(_)
+                        | CoreTypeConcrete::RangeCheck96(_)
+                        | CoreTypeConcrete::Bitwise(_)
+                        | CoreTypeConcrete::Pedersen(_)
+                        | CoreTypeConcrete::Poseidon(_)
+                        | CoreTypeConcrete::SegmentArena(_)
+                        | CoreTypeConcrete::Circuit(
+                            CircuitTypeConcrete::AddMod(_) | CircuitTypeConcrete::MulMod(_),
+                        ) => Value::Unit,
+                        CoreTypeConcrete::StarkNet(inner) => match inner {
+                            StarkNetTypeConcrete::System(_) => Value::Unit,
+                            _ => todo!(),
+                        },
+                        _ => iter.next().unwrap(),
                     }
                 })
                 .collect::<Vec<_>>(),
@@ -163,27 +247,29 @@ impl<S: StarknetSyscallHandler> VirtualMachine<S> {
         assert_eq!(args.len(), function.params.len());
         self.frames.push(SierraFrame {
             _function_id: function_id,
-            state: Cell::new(
-                function
-                    .params
-                    .iter()
-                    .zip(args)
-                    .map(|(param, value)| {
-                        assert!(value.is(&self.registry, &param.ty));
-                        (param.id.clone(), value)
-                    })
-                    .collect(),
-            ),
+            state: function
+                .params
+                .iter()
+                .zip(args)
+                .map(|(param, value)| {
+                    assert!(value.is(&self.registry, &param.ty));
+                    (param.id.clone(), value)
+                })
+                .collect(),
+
             pc: function.entry_point,
         })
     }
 
     /// Run a single statement and return the state before its execution.
-    pub fn step(&mut self) -> Option<(StatementIdx, OrderedHashMap<VarId, Value>)> {
+    pub fn step(
+        &mut self,
+        syscall_handler: &mut impl StarknetSyscallHandler,
+    ) -> Option<(StatementIdx, OrderedHashMap<VarId, Value>)> {
         let frame = self.frames.last_mut()?;
 
         let pc_snapshot = frame.pc;
-        let state_snapshot = frame.state.get_mut().clone();
+        let state_snapshot = frame.state.clone();
 
         debug!(
             "Evaluating statement {} ({})",
@@ -198,13 +284,14 @@ impl<S: StarknetSyscallHandler> VirtualMachine<S> {
                     libfunc_to_name(libfunc)
                 );
                 let (state, values) =
-                    edit_state::take_args(frame.state.take(), invocation.args.iter()).unwrap();
+                    edit_state::take_args(std::mem::take(&mut frame.state), invocation.args.iter())
+                        .unwrap();
 
                 match eval(
                     &self.registry,
                     &invocation.libfunc_id,
                     values,
-                    &mut self.syscall_handler,
+                    syscall_handler,
                     &self.gas,
                     &frame.pc,
                 ) {
@@ -215,38 +302,54 @@ impl<S: StarknetSyscallHandler> VirtualMachine<S> {
                             "invocation of {invocation} returned the wrong number of values"
                         );
 
-                        frame.pc = frame.pc.next(&invocation.branches[branch_idx].target);
-                        frame.state.set(
-                            edit_state::put_results(
-                                state,
-                                invocation.branches[branch_idx].results.iter().zip(results),
+                        assert!(
+                            results
+                                .iter()
+                                .zip(
+                                    &self
+                                        .registry
+                                        .get_libfunc(&invocation.libfunc_id)
+                                        .unwrap()
+                                        .branch_signatures()[branch_idx]
+                                        .vars
+                                )
+                                .all(|(value, ret)| value.is(&self.registry, &ret.ty)),
+                            "invocation of {} returned an invalid argument",
+                            libfunc_to_name(
+                                self.registry.get_libfunc(&invocation.libfunc_id).unwrap()
                             )
-                            .unwrap(),
                         );
+
+                        frame.pc = frame.pc.next(&invocation.branches[branch_idx].target);
+                        frame.state = edit_state::put_results(
+                            state,
+                            invocation.branches[branch_idx].results.iter().zip(results),
+                        )
+                        .unwrap();
                     }
                     EvalAction::FunctionCall(function_id, args) => {
                         let function = self.registry.get_function(&function_id).unwrap();
-                        frame.state.set(state);
+                        frame.state = state;
                         self.frames.push(SierraFrame {
                             _function_id: function_id,
-                            state: Cell::new(
-                                function
-                                    .params
-                                    .iter()
-                                    .map(|param| param.id.clone())
-                                    .zip(args.iter().cloned())
-                                    .collect(),
-                            ),
+                            state: function
+                                .params
+                                .iter()
+                                .map(|param| param.id.clone())
+                                .zip(args.iter().cloned())
+                                .collect(),
+
                             pc: function.entry_point,
                         });
                     }
                 }
             }
             GenStatement::Return(ids) => {
-                let curr_frame = self.frames.pop().unwrap();
+                let mut curr_frame = self.frames.pop().unwrap();
                 if let Some(prev_frame) = self.frames.last_mut() {
                     let (state, values) =
-                        edit_state::take_args(curr_frame.state.take(), ids.iter()).unwrap();
+                        edit_state::take_args(std::mem::take(&mut curr_frame.state), ids.iter())
+                            .unwrap();
                     assert!(state.is_empty());
 
                     let target_branch = match &self.program.statements[prev_frame.pc.0] {
@@ -259,25 +362,35 @@ impl<S: StarknetSyscallHandler> VirtualMachine<S> {
 
                     assert_eq!(target_branch.results.len(), values.len());
                     prev_frame.pc = prev_frame.pc.next(&target_branch.target);
-                    prev_frame.state.set(
-                        edit_state::put_results(
-                            prev_frame.state.take(),
-                            target_branch.results.iter().zip(values),
-                        )
-                        .unwrap(),
-                    );
+                    prev_frame.state = edit_state::put_results(
+                        std::mem::take(&mut prev_frame.state),
+                        target_branch.results.iter().zip(values),
+                    )
+                    .unwrap();
                 }
             }
         }
 
         Some((pc_snapshot, state_snapshot))
     }
+
+     /// Run all the statement and return the trace.
+    pub fn run_with_trace(&mut self, syscall_handler: &mut impl StarknetSyscallHandler) -> ProgramTrace {
+        let mut trace = ProgramTrace::new();
+
+        while let Some((statement_idx, state)) = self.step(syscall_handler) {
+            trace.push(StateDump::new(statement_idx, state));
+        }
+
+        trace
+    }
 }
 
+#[derive(Clone, Debug)]
 struct SierraFrame {
     _function_id: FunctionId,
 
-    state: Cell<OrderedHashMap<VarId, Value>>,
+    state: OrderedHashMap<VarId, Value>,
     pc: StatementIdx,
 }
 
@@ -331,7 +444,7 @@ fn eval<'a>(
         CoreConcreteLibfunc::Nullable(_) => todo!(),
         CoreConcreteLibfunc::Pedersen(selector) => self::pedersen::eval(registry, selector, args),
         CoreConcreteLibfunc::Poseidon(selector) => self::poseidon::eval(registry, selector, args),
-        CoreConcreteLibfunc::Sint128(_) => todo!(),
+        CoreConcreteLibfunc::Sint128(selector) => self::int128::eval(registry, selector, args),
         CoreConcreteLibfunc::Sint16(_) => todo!(),
         CoreConcreteLibfunc::Sint32(_) => todo!(),
         CoreConcreteLibfunc::Sint64(_) => todo!(),
@@ -354,5 +467,6 @@ fn eval<'a>(
 
             EvalAction::NormalBranch(0, smallvec![value])
         }
+        CoreConcreteLibfunc::IntRange(_) => todo!(),
     }
 }

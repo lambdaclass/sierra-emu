@@ -2,7 +2,7 @@ use std::{path::Path, sync::Arc};
 
 use cairo_lang_compiler::{compile_cairo_project_at_path, CompilerConfig};
 use cairo_lang_sierra::program::{GenFunction, Program, StatementIdx};
-use sierra_emu::{ProgramTrace, StateDump, VirtualMachine};
+use sierra_emu::{starknet::StubSyscallHandler, ProgramTrace, VirtualMachine};
 
 fn run_syscall(func_name: &str) -> ProgramTrace {
     let path = Path::new("programs/syscalls.cairo");
@@ -25,15 +25,12 @@ fn run_syscall(func_name: &str) -> ProgramTrace {
     let calldata = [];
     let initial_gas = 1000000;
 
-    vm.call_contract(function, initial_gas, calldata);
+    vm.call_program(function, initial_gas, calldata);
 
-    let mut trace = ProgramTrace::new();
+    let syscall_handler = &mut StubSyscallHandler::default();
 
-    while let Some((statement_idx, state)) = vm.step() {
-        trace.push(StateDump::new(statement_idx, state));
-    }
 
-    trace
+    vm.run_with_trace(syscall_handler)
 }
 
 #[test]

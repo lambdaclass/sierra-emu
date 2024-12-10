@@ -50,6 +50,7 @@ pub fn eval_downcast(
                 range_check,
                 match registry.get_type(&info.to_ty).unwrap() {
                     CoreTypeConcrete::Sint8(_) => Value::I8(value.try_into().unwrap()),
+                    CoreTypeConcrete::Sint128(_) => Value::I128(value.try_into().unwrap()),
                     CoreTypeConcrete::Uint8(_) => Value::U8(value.try_into().unwrap()),
                     CoreTypeConcrete::Uint16(_) => Value::U16(value.try_into().unwrap()),
                     CoreTypeConcrete::Uint32(_) => Value::U32(value.try_into().unwrap()),
@@ -89,11 +90,17 @@ pub fn eval_upcast(
             .unwrap()
         {
             CoreTypeConcrete::Sint8(_) => Value::I8(value.try_into().unwrap()),
+            CoreTypeConcrete::Sint32(_) => Value::I32(value.try_into().unwrap()),
+            CoreTypeConcrete::Sint128(_) => Value::I128(value.try_into().unwrap()),
             CoreTypeConcrete::Uint8(_) => Value::U8(value.try_into().unwrap()),
             CoreTypeConcrete::Uint16(_) => Value::U16(value.try_into().unwrap()),
             CoreTypeConcrete::Uint32(_) => Value::U32(value.try_into().unwrap()),
             CoreTypeConcrete::Uint64(_) => Value::U64(value.try_into().unwrap()),
             CoreTypeConcrete::Uint128(_) => Value::U128(value.try_into().unwrap()),
+            CoreTypeConcrete::Felt252(_) => Value::Felt(value.into()),
+            CoreTypeConcrete::Sint16(_) => todo!("Sint16"),
+            CoreTypeConcrete::Sint64(_) => todo!("Sint64"),
+            CoreTypeConcrete::BoundedInt(_) => todo!("BoundedInt"),
             _ => todo!(),
         }],
     )

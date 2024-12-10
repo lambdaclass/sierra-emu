@@ -2,7 +2,9 @@ use super::EvalAction;
 use crate::Value;
 use cairo_lang_sierra::{
     extensions::{
-        const_type::{ConstAsImmediateConcreteLibfunc, ConstConcreteLibfunc},
+        const_type::{
+            ConstAsBoxConcreteLibfunc, ConstAsImmediateConcreteLibfunc, ConstConcreteLibfunc,
+        },
         core::{CoreLibfunc, CoreType, CoreTypeConcrete},
     },
     ids::ConcreteTypeId,
@@ -17,7 +19,7 @@ pub fn eval(
     args: Vec<Value>,
 ) -> EvalAction {
     match selector {
-        ConstConcreteLibfunc::AsBox(_) => todo!(),
+        ConstConcreteLibfunc::AsBox(info) => eval_as_box(registry, info, args),
         ConstConcreteLibfunc::AsImmediate(info) => eval_as_immediate(registry, info, args),
     }
 }
@@ -29,111 +31,22 @@ pub fn eval_as_immediate(
 ) -> EvalAction {
     let [] = args.try_into().unwrap();
 
-    fn inner(
-        registry: &ProgramRegistry<CoreType, CoreLibfunc>,
-        type_id: &ConcreteTypeId,
-        inner_data: &[GenericArg],
-    ) -> Value {
-        match registry.get_type(type_id).unwrap() {
-            CoreTypeConcrete::BoundedInt(info) => match inner_data {
-                [GenericArg::Type(type_id)] => match registry.get_type(type_id).unwrap() {
-                    CoreTypeConcrete::Const(info) => {
-                        inner(registry, &info.inner_ty, &info.inner_data)
-                    }
-                    _ => unreachable!(),
-                },
-                [GenericArg::Value(value)] => {
-                    assert!(value >= &info.range.lower && value < &info.range.upper);
-                    Value::BoundedInt {
-                        range: info.range.lower.clone()..info.range.upper.clone(),
-                        value: value.clone(),
-                    }
-                }
-                _ => unreachable!(),
-            },
-            CoreTypeConcrete::Felt252(_) => match inner_data {
-                [GenericArg::Value(value)] => Value::Felt(value.into()),
-                _ => unreachable!(),
-            },
-            CoreTypeConcrete::NonZero(info) => inner(registry, &info.ty, inner_data),
-            CoreTypeConcrete::Sint8(_) => match inner_data {
-                [GenericArg::Value(value)] => Value::I8(value.try_into().unwrap()),
-                _ => unreachable!(),
-            },
-            CoreTypeConcrete::Uint32(_) => match inner_data {
-                [GenericArg::Value(value)] => Value::U32(value.try_into().unwrap()),
-                _ => unreachable!(),
-            },
-            CoreTypeConcrete::Uint64(_) => match inner_data {
-                [GenericArg::Value(value)] => Value::U64(value.try_into().unwrap()),
-                _ => unreachable!(),
-            },
-            CoreTypeConcrete::Uint8(_) => match inner_data {
-                [GenericArg::Value(value)] => Value::U8(value.try_into().unwrap()),
-                _ => unreachable!(),
-            },
-            CoreTypeConcrete::Uint128(_) => match inner_data {
-                [GenericArg::Value(value)] => Value::U128(value.try_into().unwrap()),
-                _ => unreachable!(),
-            },
-            CoreTypeConcrete::Struct(_) => {
-                let mut fields = Vec::new();
+    let const_ty = match registry.get_type(&info.const_type).unwrap() {
+        CoreTypeConcrete::Const(x) => x,
+        _ => unreachable!(),
+    };
+    EvalAction::NormalBranch(
+        0,
+        smallvec![inner(registry, &const_ty.inner_ty, &const_ty.inner_data)],
+    )
+}
 
-                for field in inner_data {
-                    match field {
-                        GenericArg::Type(const_field_ty) => {
-                            let field_type = registry.get_type(const_field_ty).unwrap();
-
-                            match &field_type {
-                                CoreTypeConcrete::Const(const_ty) => {
-                                    let field_value =
-                                        inner(registry, &const_ty.inner_ty, &const_ty.inner_data);
-                                    fields.push(field_value);
-                                }
-                                _ => unreachable!(),
-                            };
-                        }
-                        _ => unreachable!(),
-                    }
-                }
-
-                Value::Struct(fields)
-            }
-            CoreTypeConcrete::Array(_) => todo!(),
-            CoreTypeConcrete::Coupon(_) => todo!(),
-            CoreTypeConcrete::Bitwise(_) => todo!(),
-            CoreTypeConcrete::Box(_) => todo!(),
-            CoreTypeConcrete::Circuit(_) => todo!(),
-            CoreTypeConcrete::Const(_) => todo!(),
-            CoreTypeConcrete::EcOp(_) => todo!(),
-            CoreTypeConcrete::EcPoint(_) => todo!(),
-            CoreTypeConcrete::EcState(_) => todo!(),
-            CoreTypeConcrete::GasBuiltin(_) => todo!(),
-            CoreTypeConcrete::BuiltinCosts(_) => todo!(),
-            CoreTypeConcrete::Uint16(_) => todo!(),
-            CoreTypeConcrete::Uint128MulGuarantee(_) => todo!(),
-            CoreTypeConcrete::Sint16(_) => todo!(),
-            CoreTypeConcrete::Sint32(_) => todo!(),
-            CoreTypeConcrete::Sint64(_) => todo!(),
-            CoreTypeConcrete::Sint128(_) => todo!(),
-            CoreTypeConcrete::Nullable(_) => todo!(),
-            CoreTypeConcrete::RangeCheck(_) => todo!(),
-            CoreTypeConcrete::RangeCheck96(_) => todo!(),
-            CoreTypeConcrete::Uninitialized(_) => todo!(),
-            CoreTypeConcrete::Enum(_) => todo!(),
-            CoreTypeConcrete::Felt252Dict(_) => todo!(),
-            CoreTypeConcrete::Felt252DictEntry(_) => todo!(),
-            CoreTypeConcrete::SquashedFelt252Dict(_) => todo!(),
-            CoreTypeConcrete::Pedersen(_) => todo!(),
-            CoreTypeConcrete::Poseidon(_) => todo!(),
-            CoreTypeConcrete::Span(_) => todo!(),
-            CoreTypeConcrete::StarkNet(_) => todo!(),
-            CoreTypeConcrete::SegmentArena(_) => todo!(),
-            CoreTypeConcrete::Snapshot(_) => todo!(),
-            CoreTypeConcrete::Bytes31(_) => todo!(),
-            // _ => todo!("{:?}", type_id),
-        }
-    }
+pub fn eval_as_box(
+    registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    info: &ConstAsBoxConcreteLibfunc,
+    args: Vec<Value>,
+) -> EvalAction {
+    let [] = args.try_into().unwrap();
 
     let const_ty = match registry.get_type(&info.const_type).unwrap() {
         CoreTypeConcrete::Const(x) => x,
@@ -143,4 +56,98 @@ pub fn eval_as_immediate(
         0,
         smallvec![inner(registry, &const_ty.inner_ty, &const_ty.inner_data)],
     )
+}
+
+fn inner(
+    registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    type_id: &ConcreteTypeId,
+    inner_data: &[GenericArg],
+) -> Value {
+    match registry.get_type(type_id).unwrap() {
+        CoreTypeConcrete::BoundedInt(info) => match inner_data {
+            [GenericArg::Type(type_id)] => match registry.get_type(type_id).unwrap() {
+                CoreTypeConcrete::Const(info) => inner(registry, &info.inner_ty, &info.inner_data),
+                _ => unreachable!(),
+            },
+            [GenericArg::Value(value)] => {
+                assert!(value >= &info.range.lower && value < &info.range.upper);
+                Value::BoundedInt {
+                    range: info.range.lower.clone()..info.range.upper.clone(),
+                    value: value.clone(),
+                }
+            }
+            _ => unreachable!(),
+        },
+        CoreTypeConcrete::Felt252(_) => match inner_data {
+            [GenericArg::Value(value)] => Value::Felt(value.into()),
+            _ => unreachable!(),
+        },
+        CoreTypeConcrete::NonZero(_) => match inner_data {
+            [GenericArg::Type(type_id)] => match registry.get_type(type_id).unwrap() {
+                CoreTypeConcrete::Const(info) => inner(registry, &info.inner_ty, &info.inner_data),
+                _ => unreachable!(),
+            },
+            _ => unreachable!(),
+        },
+        CoreTypeConcrete::Sint128(_) => match inner_data {
+            [GenericArg::Value(value)] => Value::I128(value.try_into().unwrap()),
+            _ => unreachable!(),
+        },
+        CoreTypeConcrete::Sint32(_) => match inner_data {
+            [GenericArg::Value(value)] => Value::I32(value.try_into().unwrap()),
+            _ => unreachable!(),
+        },
+        CoreTypeConcrete::Sint8(_) => match inner_data {
+            [GenericArg::Value(value)] => Value::I8(value.try_into().unwrap()),
+            _ => unreachable!(),
+        },
+        CoreTypeConcrete::Uint64(_) => match inner_data {
+            [GenericArg::Value(value)] => Value::U64(value.try_into().unwrap()),
+            _ => unreachable!(),
+        },
+        CoreTypeConcrete::Uint32(_) => match inner_data {
+            [GenericArg::Value(value)] => Value::U32(value.try_into().unwrap()),
+            [GenericArg::Type(type_id)] => match registry.get_type(type_id).unwrap() {
+                CoreTypeConcrete::Const(info) => inner(registry, &info.inner_ty, &info.inner_data),
+                _ => unreachable!(),
+            },
+            _ => unreachable!(),
+        },
+        CoreTypeConcrete::Uint8(_) => match inner_data {
+            [GenericArg::Value(value)] => Value::U8(value.try_into().unwrap()),
+            _ => unreachable!(),
+        },
+        CoreTypeConcrete::Uint128(_) => match inner_data {
+            [GenericArg::Value(value)] => Value::U128(value.try_into().unwrap()),
+            [GenericArg::Type(type_id)] => match registry.get_type(type_id).unwrap() {
+                CoreTypeConcrete::Const(info) => inner(registry, &info.inner_ty, &info.inner_data),
+                _ => unreachable!(),
+            },
+            _ => unreachable!(),
+        },
+        CoreTypeConcrete::Struct(_) => {
+            let mut fields = Vec::new();
+
+            for field in inner_data {
+                match field {
+                    GenericArg::Type(const_field_ty) => {
+                        let field_type = registry.get_type(const_field_ty).unwrap();
+
+                        match &field_type {
+                            CoreTypeConcrete::Const(const_ty) => {
+                                let field_value =
+                                    inner(registry, &const_ty.inner_ty, &const_ty.inner_data);
+                                fields.push(field_value);
+                            }
+                            _ => unreachable!(),
+                        };
+                    }
+                    _ => unreachable!(),
+                }
+            }
+
+            Value::Struct(fields)
+        }
+        _ => todo!("{}", type_id),
+    }
 }

@@ -1,3 +1,4 @@
+use cairo_lang_runner::token_gas_cost;
 use cairo_lang_sierra::{
     extensions::gas::CostTokenType,
     ids::FunctionId,
@@ -46,7 +47,7 @@ pub enum GasMetadataError {
     #[error(transparent)]
     CostError(#[from] CostError),
     #[error("Not enough gas to run the operation. Required: {:?}, Available: {:?}.", gas.0, gas.1)]
-    NotEnoughGas { gas: Box<(u128, u128)> },
+    NotEnoughGas { gas: Box<(u64, u64)> },
 }
 
 impl GasMetadata {
@@ -66,8 +67,8 @@ impl GasMetadata {
     pub fn get_initial_available_gas(
         &self,
         func: &FunctionId,
-        available_gas: Option<u128>,
-    ) -> Result<u128, GasMetadataError> {
+        available_gas: Option<u64>,
+    ) -> Result<u64, GasMetadataError> {
         let Some(available_gas) = available_gas else {
             return Ok(0);
         };
@@ -86,7 +87,7 @@ impl GasMetadata {
             })
     }
 
-    pub fn initial_required_gas(&self, func: &FunctionId) -> Option<u128> {
+    pub fn initial_required_gas(&self, func: &FunctionId) -> Option<u64> {
         if self.gas_info.function_costs.is_empty() {
             return None;
         }
@@ -94,17 +95,17 @@ impl GasMetadata {
             self.gas_info.function_costs[func]
                 .iter()
                 .map(|(token_type, val)| val.into_or_panic::<usize>() * token_gas_cost(*token_type))
-                .sum::<usize>() as u128,
+                .sum::<usize>() as u64,
         )
     }
 
-    pub fn get_gas_cost_for_statement(&self, idx: StatementIdx) -> Option<u128> {
+    pub fn get_gas_cost_for_statement(&self, idx: StatementIdx) -> Option<u64> {
         let mut cost = None;
         for cost_type in CostTokenType::iter_casm_tokens() {
             if let Some(amount) =
                 self.get_gas_cost_for_statement_and_cost_token_type(idx, *cost_type)
             {
-                *cost.get_or_insert(0) += amount * token_gas_cost(*cost_type) as u128;
+                *cost.get_or_insert(0) += amount * token_gas_cost(*cost_type) as u64;
             }
         }
         cost
@@ -114,7 +115,7 @@ impl GasMetadata {
         &self,
         idx: StatementIdx,
         cost_type: CostTokenType,
-    ) -> Option<u128> {
+    ) -> Option<u64> {
         self.gas_info
             .variable_values
             .get(&(idx, cost_type))
@@ -141,7 +142,7 @@ impl Clone for GasMetadata {
     }
 }
 
-/// Methods from https://github.com/starkware-libs/cairo/blob/fbdbbe4c42a6808eccbff8436078f73d0710c772/crates/cairo-lang-sierra-to-casm/src/metadata.rs#L71
+// Methods from https://github.com/starkware-libs/cairo/blob/fbdbbe4c42a6808eccbff8436078f73d0710c772/crates/cairo-lang-sierra-to-casm/src/metadata.rs#L71
 
 /// Calculates the metadata for a Sierra program, with ap change info only.
 fn calc_metadata_ap_change_only(program: &Program) -> Result<GasMetadata, GasMetadataError> {
@@ -194,22 +195,4 @@ fn calc_metadata(
         ap_change_info,
         gas_info: pre_gas_info.combine(post_gas_info),
     })
-}
-
-pub fn token_gas_cost(token_type: CostTokenType) -> usize {
-    match token_type {
-        CostTokenType::Const => 1,
-        CostTokenType::Step
-        | CostTokenType::Hole
-        | CostTokenType::RangeCheck
-        | CostTokenType::RangeCheck96 => {
-            panic!("Token type {:?} has no gas cost.", token_type)
-        }
-        CostTokenType::Pedersen => 4130,
-        CostTokenType::Poseidon => 500,
-        CostTokenType::Bitwise => 594,
-        CostTokenType::EcOp => 4166,
-        CostTokenType::AddMod => 234,
-        CostTokenType::MulMod => 616,
-    }
 }

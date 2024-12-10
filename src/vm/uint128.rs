@@ -24,7 +24,7 @@ pub fn eval(
     match selector {
         Uint128Concrete::Const(info) => eval_const(registry, info, args),
         Uint128Concrete::Operation(info) => eval_operation(registry, info, args),
-        Uint128Concrete::SquareRoot(_) => todo!(),
+        Uint128Concrete::SquareRoot(info) => eval_square_root(registry, info, args),
         Uint128Concrete::Equal(info) => eval_equal(registry, info, args),
         Uint128Concrete::ToFelt252(info) => eval_to_felt(registry, info, args),
         Uint128Concrete::FromFelt252(info) => eval_from_felt(registry, info, args),
@@ -33,7 +33,7 @@ pub fn eval(
         Uint128Concrete::Bitwise(info) => eval_bitwise(registry, info, args),
         Uint128Concrete::GuaranteeMul(info) => eval_guarantee_mul(registry, info, args),
         Uint128Concrete::MulGuaranteeVerify(info) => eval_guarantee_verify(registry, info, args),
-        Uint128Concrete::ByteReverse(_) => todo!(),
+        Uint128Concrete::ByteReverse(info) => eval_byte_reverse(registry, info, args),
     }
 }
 
@@ -52,6 +52,23 @@ pub fn eval_guarantee_mul(
     let low = Value::U128((result & mask128).try_into().unwrap());
 
     EvalAction::NormalBranch(0, smallvec![high, low, Value::Unit])
+}
+
+pub fn eval_square_root(
+    _registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    _info: &SignatureOnlyConcreteLibfunc,
+    args: Vec<Value>,
+) -> EvalAction {
+    let [range_check @ Value::Unit, Value::U128(value)]: [Value; 2] = args.try_into().unwrap()
+    else {
+        panic!()
+    };
+
+    let value_big = BigUint::from(value);
+
+    let result: u64 = value_big.sqrt().try_into().unwrap();
+
+    EvalAction::NormalBranch(0, smallvec![range_check, Value::U64(result)])
 }
 
 pub fn eval_guarantee_verify(
@@ -199,5 +216,42 @@ pub fn eval_from_felt(
             1,
             smallvec![range_check, Value::U128(new_value), Value::U128(overflow)],
         )
+    }
+}
+
+pub fn eval_byte_reverse(
+    _registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    _info: &SignatureOnlyConcreteLibfunc,
+    args: Vec<Value>,
+) -> EvalAction {
+    let [bitwise @ Value::Unit, Value::U128(value)]: [Value; 2] = args.try_into().unwrap() else {
+        panic!()
+    };
+
+    let value = value.swap_bytes();
+
+    EvalAction::NormalBranch(0, smallvec![bitwise, Value::U128(value)])
+}
+
+#[cfg(test)]
+mod test {
+    use crate::{load_cairo, test_utils::run_test_program, Value};
+
+    #[test]
+    fn test_square_root() {
+        let (_, program) = load_cairo!(
+            use core::num::traits::Sqrt;
+            fn main() -> u64 {
+                0xffffffffffffffffffffffffffffffff_u128.sqrt()
+            }
+        );
+
+        let result = run_test_program(program);
+
+        let Value::U64(payload) = result.last().unwrap() else {
+            panic!("No output");
+        };
+
+        assert_eq!(*payload, 0xffffffffffffffff);
     }
 }
