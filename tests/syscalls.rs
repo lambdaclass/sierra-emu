@@ -29,7 +29,6 @@ fn run_syscall(func_name: &str) -> ProgramTrace {
 
     let syscall_handler = &mut StubSyscallHandler::default();
 
-
     vm.run_with_trace(syscall_handler)
 }
 

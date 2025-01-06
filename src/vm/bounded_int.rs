@@ -1,10 +1,10 @@
 use super::EvalAction;
-use crate::Value;
+use crate::{debug::debug_signature, Value};
 use cairo_lang_sierra::{
     extensions::{
         bounded_int::{
             BoundedIntConcreteLibfunc, BoundedIntConstrainConcreteLibfunc,
-            BoundedIntDivRemConcreteLibfunc,
+            BoundedIntDivRemConcreteLibfunc, BoundedIntTrimConcreteLibfunc,
         },
         core::{CoreLibfunc, CoreType, CoreTypeConcrete},
         lib_func::SignatureOnlyConcreteLibfunc,
@@ -12,6 +12,7 @@ use cairo_lang_sierra::{
     },
     program_registry::ProgramRegistry,
 };
+use num_bigint::BigInt;
 use smallvec::smallvec;
 
 pub fn eval(
@@ -27,6 +28,7 @@ pub fn eval(
         BoundedIntConcreteLibfunc::Constrain(info) => eval_constrain(registry, info, args),
         BoundedIntConcreteLibfunc::IsZero(info) => eval_is_zero(registry, info, args),
         BoundedIntConcreteLibfunc::WrapNonZero(info) => eval_wrap_non_zero(registry, info, args),
+        BoundedIntConcreteLibfunc::Trim(info) => eval_trim(registry, info, args),
     }
 }
 
@@ -270,4 +272,73 @@ pub fn eval_wrap_non_zero(
     let [value] = args.try_into().unwrap();
 
     EvalAction::NormalBranch(0, smallvec![value])
+}
+
+pub fn eval_trim(
+    registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    info: &BoundedIntTrimConcreteLibfunc,
+    args: Vec<Value>,
+) -> EvalAction {
+    debug_signature(registry, info.param_signatures(), info.branch_signatures(), &args);
+    let [value] = args.try_into().unwrap();
+    let value = match value {
+        Value::I8(v) => BigInt::from(v),
+        Value::I16(v) => BigInt::from(v),
+        Value::I32(v) => BigInt::from(v),
+        Value::I64(v) => BigInt::from(v),
+        Value::I128(v) => BigInt::from(v),
+        Value::U8(v) => BigInt::from(v),
+        Value::U16(v) => BigInt::from(v),
+        Value::U32(v) => BigInt::from(v),
+        Value::U64(v) => BigInt::from(v),
+        Value::U128(v) => BigInt::from(v),
+        _ => panic!("Not a valid integer type"),
+    };
+    let is_invalid = value == info.trimmed_value;
+    let int_range = match registry.get_type(&info.branch_signatures()[1].vars[0].ty).unwrap() {
+        CoreTypeConcrete::BoundedInt(info) => info.range.clone(),
+        _ => panic!("should be bounded int")
+    };
+
+    if !is_invalid {
+        let range = int_range.lower.clone()..int_range.upper.clone();
+        EvalAction::NormalBranch(1, smallvec![Value::BoundedInt { range, value }])
+    } else {
+        EvalAction::NormalBranch(0, smallvec![])
+    }
+}
+
+#[cfg(test)]
+mod tests {
+
+    use num_bigint::BigInt;
+
+    use super::Value;
+
+    use crate::{load_cairo, test_utils::run_test_program};
+
+    #[test]
+    fn test_trim_i8() {
+        let (_, program) = load_cairo!(
+            use core::internal::{OptionRev, bounded_int::BoundedInt};
+            use core::internal::bounded_int;
+            fn main() -> BoundedInt<-127, 127> {
+                let num = match bounded_int::trim::<i8, -0x80>(1) {
+                    OptionRev::Some(n) => n,
+                    OptionRev::None => 1,
+                };
+
+                num
+            }
+        );
+
+        let result = run_test_program(program);
+        let result = result.last().unwrap();
+        let expected = Value::BoundedInt {
+            range: BigInt::from(-127)..BigInt::from(128),
+            value: BigInt::from(1u8),
+        };
+
+        assert_eq!(*result, expected);
+    }
 }

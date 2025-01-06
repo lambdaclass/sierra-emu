@@ -1,5 +1,8 @@
 use crate::{
-    debug::libfunc_to_name, gas::{GasMetadata, MetadataComputationConfig}, starknet::StarknetSyscallHandler, ProgramTrace, StateDump, Value
+    debug::libfunc_to_name,
+    gas::{GasMetadata, MetadataComputationConfig},
+    starknet::StarknetSyscallHandler,
+    ProgramTrace, StateDump, Value,
 };
 use cairo_lang_sierra::{
     edit_state,
@@ -374,8 +377,11 @@ impl VirtualMachine {
         Some((pc_snapshot, state_snapshot))
     }
 
-     /// Run all the statement and return the trace.
-    pub fn run_with_trace(&mut self, syscall_handler: &mut impl StarknetSyscallHandler) -> ProgramTrace {
+    /// Run all the statement and return the trace.
+    pub fn run_with_trace(
+        &mut self,
+        syscall_handler: &mut impl StarknetSyscallHandler,
+    ) -> ProgramTrace {
         let mut trace = ProgramTrace::new();
 
         while let Some((statement_idx, state)) = self.step(syscall_handler) {

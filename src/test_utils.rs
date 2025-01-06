@@ -9,10 +9,7 @@ use cairo_lang_compiler::{
 use cairo_lang_filesystem::db::init_dev_corelib;
 use cairo_lang_sierra::program::Program;
 
-use crate::{
-    find_entry_point_by_idx, starknet::StubSyscallHandler, Value,
-    VirtualMachine,
-};
+use crate::{find_entry_point_by_idx, starknet::StubSyscallHandler, Value, VirtualMachine};
 
 #[macro_export]
 macro_rules! load_cairo {

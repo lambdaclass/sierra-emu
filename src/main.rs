@@ -103,10 +103,7 @@ mod test {
 
     use cairo_lang_compiler::CompilerConfig;
     use cairo_lang_starknet::compile::compile_path;
-    use sierra_emu::{
-        starknet::StubSyscallHandler, ContractExecutionResult,
-        VirtualMachine,
-    };
+    use sierra_emu::{starknet::StubSyscallHandler, ContractExecutionResult, VirtualMachine};
 
     #[test]
     fn test_contract() {
