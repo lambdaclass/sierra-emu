@@ -22,7 +22,9 @@ pub fn eval(
         GasConcreteLibfunc::WithdrawGas(info) => {
             eval_withdraw_gas(registry, info, args, gas, statement_idx)
         }
-        GasConcreteLibfunc::RedepositGas(_) => todo!(),
+        GasConcreteLibfunc::RedepositGas(info) => {
+            eval_redeposit_gas(registry, info, args, gas, statement_idx)
+        }
         GasConcreteLibfunc::GetAvailableGas(_) => todo!(),
         GasConcreteLibfunc::BuiltinWithdrawGas(info) => {
             eval_builtin_withdraw_gas(registry, info, args, gas, statement_idx)
@@ -80,6 +82,27 @@ pub fn eval_withdraw_gas(
         }
     } else {
         EvalAction::NormalBranch(1, smallvec![range_check, Value::U64(gas)])
+    }
+}
+
+pub fn eval_redeposit_gas(
+    _registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    _info: &SignatureOnlyConcreteLibfunc,
+    args: Vec<Value>,
+    gas_meta: &GasMetadata,
+    statement_idx: StatementIdx,
+) -> EvalAction {
+    let [Value::U64(gas)]: [Value; 1] = args.try_into().unwrap() else {
+        panic!()
+    };
+
+    match gas_meta.get_gas_cost_for_statement(statement_idx) {
+        Some(c) => {
+            let new_gas = gas.saturating_add(c);
+
+            EvalAction::NormalBranch(0, smallvec![Value::U64(new_gas)])
+        }
+        None => EvalAction::NormalBranch(0, smallvec![Value::U64(gas)]),
     }
 }
 
