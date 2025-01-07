@@ -92,7 +92,7 @@ pub fn eval_redeposit_gas(
     gas_meta: &GasMetadata,
     statement_idx: StatementIdx,
 ) -> EvalAction {
-    let [range_check @ Value::Unit, Value::U64(gas)]: [Value; 2] = args.try_into().unwrap() else {
+    let [Value::U64(gas)]: [Value; 1] = args.try_into().unwrap() else {
         panic!()
     };
 
@@ -100,9 +100,9 @@ pub fn eval_redeposit_gas(
         Some(c) => {
             let new_gas = gas.saturating_add(c);
 
-            EvalAction::NormalBranch(0, smallvec![range_check, Value::U64(new_gas)])
+            EvalAction::NormalBranch(0, smallvec![Value::U64(new_gas)])
         }
-        None => EvalAction::NormalBranch(0, smallvec![range_check, Value::U64(gas)])
+        None => EvalAction::NormalBranch(0, smallvec![Value::U64(gas)]),
     }
 }
 
