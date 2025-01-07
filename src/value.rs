@@ -179,8 +179,8 @@ impl Value {
             CoreTypeConcrete::Uint16(_) => matches!(self, Self::U16(_)),
             CoreTypeConcrete::Uint64(_) => matches!(self, Self::U64(_)),
             CoreTypeConcrete::Uint128MulGuarantee(_) => matches!(self, Self::Unit),
-            CoreTypeConcrete::Sint16(_) => todo!(),
-            CoreTypeConcrete::Sint64(_) => todo!(),
+            CoreTypeConcrete::Sint16(_) => matches!(self, Self::I16(_)),
+            CoreTypeConcrete::Sint64(_) => matches!(self, Self::I64(_)),
             CoreTypeConcrete::Nullable(info) => self.is(registry, &info.ty),
             CoreTypeConcrete::Uninitialized(_) => matches!(self, Self::Uninitialized { .. }),
             CoreTypeConcrete::Felt252DictEntry(info) => {

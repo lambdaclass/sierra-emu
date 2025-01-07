@@ -341,4 +341,54 @@ mod tests {
 
         assert_eq!(*result, expected);
     }
+
+    #[test]
+    fn test_trim_u32() {
+        let (_, program) = load_cairo!(
+            use core::internal::{OptionRev, bounded_int::BoundedInt};
+            use core::internal::bounded_int;
+            fn main() -> BoundedInt<0, 4294967294> {
+                let num = match bounded_int::trim::<u32, 0xffffffff>(0xfffffffe) {
+                    OptionRev::Some(n) => n,
+                    OptionRev::None => 0,
+                };
+
+                num
+            }
+        );
+
+        let result = run_test_program(program);
+        let result = result.last().unwrap();
+        let expected = Value::BoundedInt {
+            range: BigInt::from(0)..BigInt::from(4294967295u32),
+            value: BigInt::from(0xfffffffeu32),
+        };
+
+        assert_eq!(*result, expected);
+    }
+
+    #[test]
+    fn test_trim_none() {
+        let (_, program) = load_cairo!(
+            use core::internal::{OptionRev, bounded_int::BoundedInt};
+            use core::internal::bounded_int;
+            fn main() -> BoundedInt<-32767, 32767> {
+                let num = match bounded_int::trim::<i16, -0x8000>(-0x8000) {
+                    OptionRev::Some(n) => n,
+                    OptionRev::None => 0,
+                };
+
+                num
+            }
+        );
+
+        let result = run_test_program(program);
+        let result = result.last().unwrap();
+        let expected = Value::BoundedInt {
+            range: BigInt::from(-32767)..BigInt::from(32768),
+            value: BigInt::from(0),
+        };
+
+        assert_eq!(*result, expected);
+    }
 }

@@ -93,12 +93,28 @@ fn inner(
             [GenericArg::Value(value)] => Value::I128(value.try_into().unwrap()),
             _ => unreachable!(),
         },
+        CoreTypeConcrete::Sint64(_) => match inner_data {
+            [GenericArg::Value(value)] => Value::U64(value.try_into().unwrap()),
+            _ => unreachable!(),
+        },
         CoreTypeConcrete::Sint32(_) => match inner_data {
             [GenericArg::Value(value)] => Value::I32(value.try_into().unwrap()),
             _ => unreachable!(),
         },
+        CoreTypeConcrete::Sint16(_) => match inner_data {
+            [GenericArg::Value(value)] => Value::I16(value.try_into().unwrap()),
+            _ => unreachable!(),
+        },
         CoreTypeConcrete::Sint8(_) => match inner_data {
             [GenericArg::Value(value)] => Value::I8(value.try_into().unwrap()),
+            _ => unreachable!(),
+        },
+        CoreTypeConcrete::Uint128(_) => match inner_data {
+            [GenericArg::Value(value)] => Value::U128(value.try_into().unwrap()),
+            [GenericArg::Type(type_id)] => match registry.get_type(type_id).unwrap() {
+                CoreTypeConcrete::Const(info) => inner(registry, &info.inner_ty, &info.inner_data),
+                _ => unreachable!(),
+            },
             _ => unreachable!(),
         },
         CoreTypeConcrete::Uint64(_) => match inner_data {
@@ -113,16 +129,12 @@ fn inner(
             },
             _ => unreachable!(),
         },
-        CoreTypeConcrete::Uint8(_) => match inner_data {
-            [GenericArg::Value(value)] => Value::U8(value.try_into().unwrap()),
+        CoreTypeConcrete::Uint16(_) => match inner_data {
+            [GenericArg::Value(value)] => Value::U16(value.try_into().unwrap()),
             _ => unreachable!(),
         },
-        CoreTypeConcrete::Uint128(_) => match inner_data {
-            [GenericArg::Value(value)] => Value::U128(value.try_into().unwrap()),
-            [GenericArg::Type(type_id)] => match registry.get_type(type_id).unwrap() {
-                CoreTypeConcrete::Const(info) => inner(registry, &info.inner_ty, &info.inner_data),
-                _ => unreachable!(),
-            },
+        CoreTypeConcrete::Uint8(_) => match inner_data {
+            [GenericArg::Value(value)] => Value::U8(value.try_into().unwrap()),
             _ => unreachable!(),
         },
         CoreTypeConcrete::Struct(_) => {
