@@ -279,7 +279,12 @@ pub fn eval_trim(
     info: &BoundedIntTrimConcreteLibfunc,
     args: Vec<Value>,
 ) -> EvalAction {
-    debug_signature(registry, info.param_signatures(), info.branch_signatures(), &args);
+    debug_signature(
+        registry,
+        info.param_signatures(),
+        info.branch_signatures(),
+        &args,
+    );
     let [value] = args.try_into().unwrap();
     let value = match value {
         Value::I8(v) => BigInt::from(v),
@@ -295,9 +300,12 @@ pub fn eval_trim(
         _ => panic!("Not a valid integer type"),
     };
     let is_invalid = value == info.trimmed_value;
-    let int_range = match registry.get_type(&info.branch_signatures()[1].vars[0].ty).unwrap() {
+    let int_range = match registry
+        .get_type(&info.branch_signatures()[1].vars[0].ty)
+        .unwrap()
+    {
         CoreTypeConcrete::BoundedInt(info) => info.range.clone(),
-        _ => panic!("should be bounded int")
+        _ => panic!("should be bounded int"),
     };
 
     if !is_invalid {
