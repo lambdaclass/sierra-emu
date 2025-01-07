@@ -279,12 +279,6 @@ pub fn eval_trim(
     info: &BoundedIntTrimConcreteLibfunc,
     args: Vec<Value>,
 ) -> EvalAction {
-    debug_signature(
-        registry,
-        info.param_signatures(),
-        info.branch_signatures(),
-        &args,
-    );
     let [value] = args.try_into().unwrap();
     let value = match value {
         Value::I8(v) => BigInt::from(v),
