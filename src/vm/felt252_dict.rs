@@ -56,17 +56,17 @@ pub fn eval_squash(
     _info: &SignatureOnlyConcreteLibfunc,
     args: Vec<Value>,
 ) -> EvalAction {
-    let [range_check @ Value::Unit, Value::U128(gas_builtin), segment_arena @ Value::Unit, Value::FeltDict { ty, data }]: [Value; 4] =
+    let [range_check @ Value::Unit, Value::U64(gas_builtin), segment_arena @ Value::Unit, Value::FeltDict { ty, data }]: [Value; 4] =
         args.try_into().unwrap()
     else {
-        panic!()
+        panic!();
     };
 
     EvalAction::NormalBranch(
         0,
         smallvec![
             range_check,
-            Value::U128(gas_builtin),
+            Value::U64(gas_builtin),
             segment_arena,
             Value::FeltDict { ty, data }
         ],
