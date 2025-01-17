@@ -2,7 +2,7 @@ use crate::{
     debug::libfunc_to_name,
     gas::{GasMetadata, MetadataComputationConfig},
     starknet::StarknetSyscallHandler,
-    ProgramTrace, StateDump, Value,
+    ContractExecutionResult, ProgramTrace, StateDump, Value,
 };
 use cairo_lang_sierra::{
     edit_state,
@@ -389,6 +389,20 @@ impl VirtualMachine {
         }
 
         trace
+    }
+
+    /// Run all the statement and return the trace.
+    pub fn run(
+        &mut self,
+        syscall_handler: &mut impl StarknetSyscallHandler,
+    ) -> Option<ContractExecutionResult> {
+        let mut last = None;
+
+        while let Some((statement_idx, state)) = self.step(syscall_handler) {
+            last = Some(StateDump::new(statement_idx, state));
+        }
+
+        ContractExecutionResult::from_state(&last?)
     }
 }
 

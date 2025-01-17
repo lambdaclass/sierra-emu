@@ -64,13 +64,16 @@ pub struct ContractExecutionResult {
 impl ContractExecutionResult {
     pub fn from_trace(trace: &ProgramTrace) -> Option<Self> {
         let last = trace.states.last()?;
+        Self::from_state(last)
+    }
 
+    pub fn from_state(state: &StateDump) -> Option<Self> {
         let mut remaining_gas = None;
         let mut error_msg = None;
         let mut failure_flag = false;
         let mut return_values = Vec::new();
 
-        for value in last.items.values() {
+        for value in state.items.values() {
             match value {
                 Value::U64(gas) => remaining_gas = Some(*gas),
                 Value::Enum {
