@@ -1,5 +1,5 @@
 use super::EvalAction;
-use crate::{debug::debug_signature, Value};
+use crate::Value;
 use cairo_lang_sierra::{
     extensions::{
         bounded_int::{
@@ -28,7 +28,9 @@ pub fn eval(
         BoundedIntConcreteLibfunc::Constrain(info) => eval_constrain(registry, info, args),
         BoundedIntConcreteLibfunc::IsZero(info) => eval_is_zero(registry, info, args),
         BoundedIntConcreteLibfunc::WrapNonZero(info) => eval_wrap_non_zero(registry, info, args),
-        BoundedIntConcreteLibfunc::Trim(info) => eval_trim(registry, info, args),
+        BoundedIntConcreteLibfunc::TrimMin(info) | BoundedIntConcreteLibfunc::TrimMax(info) => {
+            eval_trim(registry, info, args)
+        }
     }
 }
 
