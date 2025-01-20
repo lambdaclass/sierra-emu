@@ -28,7 +28,9 @@ pub fn eval(
         BoundedIntConcreteLibfunc::Constrain(info) => eval_constrain(registry, info, args),
         BoundedIntConcreteLibfunc::IsZero(info) => eval_is_zero(registry, info, args),
         BoundedIntConcreteLibfunc::WrapNonZero(info) => eval_wrap_non_zero(registry, info, args),
-        BoundedIntConcreteLibfunc::Trim(info) => eval_trim(registry, info, args),
+        BoundedIntConcreteLibfunc::TrimMin(info) | BoundedIntConcreteLibfunc::TrimMax(info) => {
+            eval_trim(registry, info, args)
+        }
     }
 }
 
@@ -325,7 +327,7 @@ mod tests {
             use core::internal::{OptionRev, bounded_int::BoundedInt};
             use core::internal::bounded_int;
             fn main() -> BoundedInt<-127, 127> {
-                let num = match bounded_int::trim::<i8, -0x80>(1) {
+                let num = match bounded_int::trim_min::<i8>(1) {
                     OptionRev::Some(n) => n,
                     OptionRev::None => 1,
                 };
@@ -350,7 +352,7 @@ mod tests {
             use core::internal::{OptionRev, bounded_int::BoundedInt};
             use core::internal::bounded_int;
             fn main() -> BoundedInt<0, 4294967294> {
-                let num = match bounded_int::trim::<u32, 0xffffffff>(0xfffffffe) {
+                let num = match bounded_int::trim_max::<u32>(0xfffffffe) {
                     OptionRev::Some(n) => n,
                     OptionRev::None => 0,
                 };
@@ -375,7 +377,7 @@ mod tests {
             use core::internal::{OptionRev, bounded_int::BoundedInt};
             use core::internal::bounded_int;
             fn main() -> BoundedInt<-32767, 32767> {
-                let num = match bounded_int::trim::<i16, -0x8000>(-0x8000) {
+                let num = match bounded_int::trim_min::<i16>(-0x8000) {
                     OptionRev::Some(n) => n,
                     OptionRev::None => 0,
                 };
