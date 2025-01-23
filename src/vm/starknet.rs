@@ -1,6 +1,6 @@
 use super::EvalAction;
 use crate::{
-    starknet::{Secp256r1Point, StarknetSyscallHandler, U256},
+    starknet::{Secp256k1Point, Secp256r1Point, StarknetSyscallHandler, U256},
     Value,
 };
 use cairo_lang_sierra::{
@@ -105,11 +105,11 @@ pub fn eval(
         StarkNetConcreteLibfunc::Secp256(info) => match info {
             cairo_lang_sierra::extensions::starknet::secp256::Secp256ConcreteLibfunc::K1(info) => {
                 match info {
-                    cairo_lang_sierra::extensions::starknet::secp256::Secp256OpConcreteLibfunc::New(_) => todo!(),
-                    cairo_lang_sierra::extensions::starknet::secp256::Secp256OpConcreteLibfunc::Add(_) => todo!(),
-                    cairo_lang_sierra::extensions::starknet::secp256::Secp256OpConcreteLibfunc::Mul(_) => todo!(),
-                    cairo_lang_sierra::extensions::starknet::secp256::Secp256OpConcreteLibfunc::GetPointFromX(_) => todo!(),
-                    cairo_lang_sierra::extensions::starknet::secp256::Secp256OpConcreteLibfunc::GetXy(_) => todo!(),
+                    cairo_lang_sierra::extensions::starknet::secp256::Secp256OpConcreteLibfunc::New(info) => eval_secp_k_new(registry, info, args, syscall_handler),
+                    cairo_lang_sierra::extensions::starknet::secp256::Secp256OpConcreteLibfunc::Add(info) => eval_secp_k_add(registry, info, args, syscall_handler),
+                    cairo_lang_sierra::extensions::starknet::secp256::Secp256OpConcreteLibfunc::Mul(info) => eval_secp_k_mul(registry, info, args, syscall_handler),
+                    cairo_lang_sierra::extensions::starknet::secp256::Secp256OpConcreteLibfunc::GetPointFromX(info) => eval_secp_k_get_point_from_x(registry, info, args, syscall_handler),
+                    cairo_lang_sierra::extensions::starknet::secp256::Secp256OpConcreteLibfunc::GetXy(info) => secp_k_get_xy(registry, info, args, syscall_handler),
                 }
             }
             cairo_lang_sierra::extensions::starknet::secp256::Secp256ConcreteLibfunc::R1(info) => {
@@ -316,6 +316,227 @@ fn secp_r_get_xy(
     let secp_value = Secp256r1Point::from_value(secp_value);
 
     match syscall_handler.secp256r1_get_xy(secp_value, &mut gas) {
+        Ok(payload) => {
+            let (x, y) = (payload.0.into_value(), payload.1.into_value());
+            EvalAction::NormalBranch(0, smallvec![Value::U64(gas), system, x, y])
+        }
+        Err(payload) => {
+            let felt_ty = {
+                match registry
+                    .get_type(&info.branch_signatures()[1].vars[2].ty)
+                    .unwrap()
+                {
+                    CoreTypeConcrete::Array(info) => info.ty.clone(),
+                    _ => unreachable!(),
+                }
+            };
+
+            let payload = payload.into_iter().map(Value::Felt).collect::<Vec<_>>();
+            EvalAction::NormalBranch(
+                0,
+                smallvec![
+                    Value::U64(gas),
+                    system,
+                    Value::Array {
+                        ty: felt_ty,
+                        data: payload
+                    }
+                ],
+            )
+        }
+    }
+}
+
+fn eval_secp_k_add(
+    _registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    _info: &SignatureOnlyConcreteLibfunc,
+    args: Vec<Value>,
+    syscall_handler: &mut impl StarknetSyscallHandler,
+) -> EvalAction {
+    let [Value::U64(mut gas), system @ Value::Unit, x, y]: [Value; 4] = args.try_into().unwrap()
+    else {
+        panic!()
+    };
+
+    let x = Secp256k1Point::from_value(x);
+    let y = Secp256k1Point::from_value(y);
+
+    match syscall_handler.secp256k1_add(x, y, &mut gas) {
+        Ok(x) => EvalAction::NormalBranch(0, smallvec![Value::U64(gas), system, x.into_value()]),
+        Err(r) => {
+            let r = Value::Struct(r.into_iter().map(Value::Felt).collect::<Vec<_>>());
+            EvalAction::NormalBranch(1, smallvec![Value::U64(gas), system, r])
+        }
+    }
+}
+
+fn eval_secp_k_mul(
+    _registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    _info: &SignatureOnlyConcreteLibfunc,
+    args: Vec<Value>,
+    syscall_handler: &mut impl StarknetSyscallHandler,
+) -> EvalAction {
+    let [Value::U64(mut gas), system @ Value::Unit, x, n]: [Value; 4] = args.try_into().unwrap()
+    else {
+        panic!()
+    };
+
+    let x = Secp256k1Point::from_value(x);
+    let n = U256::from_value(n);
+
+    match syscall_handler.secp256k1_mul(x, n, &mut gas) {
+        Ok(x) => EvalAction::NormalBranch(0, smallvec![Value::U64(gas), system, x.into_value()]),
+        Err(r) => {
+            let r = Value::Struct(r.into_iter().map(Value::Felt).collect::<Vec<_>>());
+            EvalAction::NormalBranch(1, smallvec![Value::U64(gas), system, r])
+        }
+    }
+}
+
+fn eval_secp_k_new(
+    registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    info: &SignatureOnlyConcreteLibfunc,
+    args: Vec<Value>,
+    syscall_handler: &mut impl StarknetSyscallHandler,
+) -> EvalAction {
+    let [Value::U64(mut gas), system @ Value::Unit, Value::Struct(x), Value::Struct(y)]: [Value;
+        4] = args.try_into().unwrap()
+    else {
+        panic!()
+    };
+
+    let Value::U128(x_lo) = x[0] else { panic!() };
+    let Value::U128(x_hi) = x[1] else { panic!() };
+    let x = U256 { lo: x_lo, hi: x_hi };
+    let Value::U128(y_lo) = y[0] else { panic!() };
+    let Value::U128(y_hi) = y[1] else { panic!() };
+    let y = U256 { lo: y_lo, hi: y_hi };
+
+    match syscall_handler.secp256k1_new(x, y, &mut gas) {
+        Ok(p) => {
+            let enum_ty = &info.branch_signatures()[0].vars[2].ty;
+            let value = match p {
+                Some(p) => Value::Enum {
+                    self_ty: enum_ty.clone(),
+                    index: 0,
+                    payload: Box::new(p.into_value()),
+                },
+                None => Value::Enum {
+                    self_ty: enum_ty.clone(),
+                    index: 1,
+                    payload: Box::new(Value::Unit),
+                },
+            };
+
+            EvalAction::NormalBranch(0, smallvec![Value::U64(gas), system, value])
+        }
+        Err(payload) => {
+            // get felt type from the error branch array
+            let felt_ty = {
+                match registry
+                    .get_type(&info.branch_signatures()[1].vars[2].ty)
+                    .unwrap()
+                {
+                    CoreTypeConcrete::Array(info) => info.ty.clone(),
+                    _ => unreachable!(),
+                }
+            };
+
+            let value = payload.into_iter().map(Value::Felt).collect::<Vec<_>>();
+            EvalAction::NormalBranch(
+                1,
+                smallvec![
+                    Value::U64(gas),
+                    system,
+                    Value::Array {
+                        ty: felt_ty,
+                        data: value
+                    }
+                ],
+            )
+        }
+    }
+}
+
+fn eval_secp_k_get_point_from_x(
+    registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    info: &SignatureOnlyConcreteLibfunc,
+    args: Vec<Value>,
+    syscall_handler: &mut impl StarknetSyscallHandler,
+) -> EvalAction {
+    let [Value::U64(mut gas), system @ Value::Unit, Value::Struct(x), Value::Enum {
+        index: y_parity, ..
+    }]: [Value; 4] = args.try_into().unwrap()
+    else {
+        panic!()
+    };
+
+    let Value::U128(x_lo) = x[0] else { panic!() };
+    let Value::U128(x_hi) = x[1] else { panic!() };
+    let x = U256 { lo: x_lo, hi: x_hi };
+    let y_parity = y_parity.is_one();
+
+    match syscall_handler.secp256k1_get_point_from_x(x, y_parity, &mut gas) {
+        Ok(p) => {
+            let enum_ty = &info.branch_signatures()[0].vars[2].ty;
+            let value = match p {
+                Some(p) => Value::Enum {
+                    self_ty: enum_ty.clone(),
+                    index: 0,
+                    payload: Box::new(p.into_value()),
+                },
+                None => Value::Enum {
+                    self_ty: enum_ty.clone(),
+                    index: 1,
+                    payload: Box::new(Value::Unit),
+                },
+            };
+
+            EvalAction::NormalBranch(0, smallvec![Value::U64(gas), system, value])
+        }
+        Err(payload) => {
+            // get felt type from the error branch array
+            let felt_ty = {
+                match registry
+                    .get_type(&info.branch_signatures()[1].vars[2].ty)
+                    .unwrap()
+                {
+                    CoreTypeConcrete::Array(info) => info.ty.clone(),
+                    _ => unreachable!(),
+                }
+            };
+
+            let value = payload.into_iter().map(Value::Felt).collect::<Vec<_>>();
+            EvalAction::NormalBranch(
+                1,
+                smallvec![
+                    Value::U64(gas),
+                    system,
+                    Value::Array {
+                        ty: felt_ty,
+                        data: value
+                    }
+                ],
+            )
+        }
+    }
+}
+
+fn secp_k_get_xy(
+    registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    info: &SignatureOnlyConcreteLibfunc,
+    args: Vec<Value>,
+    syscall_handler: &mut impl StarknetSyscallHandler,
+) -> EvalAction {
+    let [Value::U64(mut gas), system @ Value::Unit, secp_value]: [Value; 3] =
+        args.try_into().unwrap()
+    else {
+        panic!()
+    };
+
+    let secp_value = Secp256k1Point::from_value(secp_value);
+
+    match syscall_handler.secp256k1_get_xy(secp_value, &mut gas) {
         Ok(payload) => {
             let (x, y) = (payload.0.into_value(), payload.1.into_value());
             EvalAction::NormalBranch(0, smallvec![Value::U64(gas), system, x, y])
