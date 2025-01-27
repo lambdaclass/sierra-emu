@@ -5,7 +5,7 @@ use cairo_lang_sierra::{
     program_registry::ProgramRegistry,
 };
 
-pub use self::{dump::*, value::*, vm::VirtualMachine};
+pub use self::{dump::*, gas::BuiltinCosts, value::*, vm::VirtualMachine};
 
 mod debug;
 mod dump;
