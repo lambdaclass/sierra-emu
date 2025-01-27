@@ -176,7 +176,7 @@ impl Value {
             CoreTypeConcrete::EcOp(_) => matches!(self, Self::Unit),
             CoreTypeConcrete::EcPoint(_) => matches!(self, Self::EcPoint { .. }),
             CoreTypeConcrete::EcState(_) => matches!(self, Self::EcState { .. }),
-            CoreTypeConcrete::BuiltinCosts(_) => matches!(self, Self::Unit),
+            CoreTypeConcrete::BuiltinCosts(_) => matches!(self, Self::BuiltinCosts(_)),
             CoreTypeConcrete::Uint16(_) => matches!(self, Self::U16(_)),
             CoreTypeConcrete::Uint64(_) => matches!(self, Self::U64(_)),
             CoreTypeConcrete::Uint128MulGuarantee(_) => matches!(self, Self::Unit),
