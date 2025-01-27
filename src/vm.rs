@@ -308,7 +308,7 @@ impl VirtualMachine {
                     syscall_handler,
                     &self.gas,
                     &frame.pc,
-                    self.builtin_costs
+                    self.builtin_costs,
                 ) {
                     EvalAction::NormalBranch(branch_idx, results) => {
                         assert_eq!(
@@ -438,7 +438,7 @@ fn eval<'a>(
     syscall_handler: &mut impl StarknetSyscallHandler,
     gas: &GasMetadata,
     statement_idx: &StatementIdx,
-    builtin_costs: BuiltinCosts
+    builtin_costs: BuiltinCosts,
 ) -> EvalAction {
     match registry.get_libfunc(id).unwrap() {
         CoreConcreteLibfunc::ApTracking(selector) => {

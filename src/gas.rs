@@ -39,6 +39,22 @@ impl Default for BuiltinCosts {
     }
 }
 
+impl From<BuiltinCosts> for [u64; 7] {
+    // Order matters, for the libfunc impl
+    // https://github.com/starkware-libs/sequencer/blob/1b7252f8a30244d39614d7666aa113b81291808e/crates/blockifier/src/execution/entry_point_execution.rs#L208
+    fn from(value: BuiltinCosts) -> Self {
+        [
+            value.r#const,
+            value.pedersen,
+            value.bitwise,
+            value.ecop,
+            value.poseidon,
+            value.add_mod,
+            value.mul_mod,
+        ]
+    }
+}
+
 /// Holds global gas info.
 #[derive(Debug, Default)]
 pub struct GasMetadata {
@@ -125,16 +141,18 @@ impl GasMetadata {
         )
     }
 
-    pub fn get_gas_cost_for_statement(&self, idx: StatementIdx) -> Option<u64> {
-        let mut cost = None;
+    pub fn get_gas_costs_for_statement(&self, idx: StatementIdx) -> Vec<(u64, CostTokenType)> {
+        let mut costs = Vec::new();
         for cost_type in CostTokenType::iter_casm_tokens() {
-            if let Some(amount) =
+            if let Some(cost_count) =
                 self.get_gas_cost_for_statement_and_cost_token_type(idx, *cost_type)
             {
-                *cost.get_or_insert(0) += amount * token_gas_cost(*cost_type) as u64;
+                if cost_count > 0 {
+                    costs.push((cost_count, *cost_type));
+                }
             }
         }
-        cost
+        costs
     }
 
     pub fn get_gas_cost_for_statement_and_cost_token_type(
