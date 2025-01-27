@@ -12,9 +12,35 @@ use cairo_lang_sierra_gas::{
     compute_postcost_info, compute_precost_info, gas_info::GasInfo, CostError,
 };
 use cairo_lang_utils::{casts::IntoOrPanic, ordered_hash_map::OrderedHashMap};
+use serde::Serialize;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize)]
+pub struct BuiltinCosts {
+    pub r#const: u64,
+    pub pedersen: u64,
+    pub bitwise: u64,
+    pub ecop: u64,
+    pub poseidon: u64,
+    pub add_mod: u64,
+    pub mul_mod: u64,
+}
+
+impl Default for BuiltinCosts {
+    fn default() -> Self {
+        Self {
+            r#const: token_gas_cost(CostTokenType::Const) as u64,
+            pedersen: token_gas_cost(CostTokenType::Pedersen) as u64,
+            bitwise: token_gas_cost(CostTokenType::Bitwise) as u64,
+            ecop: token_gas_cost(CostTokenType::EcOp) as u64,
+            poseidon: token_gas_cost(CostTokenType::Poseidon) as u64,
+            add_mod: token_gas_cost(CostTokenType::AddMod) as u64,
+            mul_mod: token_gas_cost(CostTokenType::MulMod) as u64,
+        }
+    }
+}
 
 /// Holds global gas info.
-#[derive(Debug, Default, PartialEq, Eq)]
+#[derive(Debug, Default)]
 pub struct GasMetadata {
     pub ap_change_info: ApChangeInfo,
     pub gas_info: GasInfo,

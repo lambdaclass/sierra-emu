@@ -13,7 +13,7 @@ use serde::Serialize;
 use starknet_types_core::felt::Felt;
 use std::{collections::HashMap, fmt::Debug, ops::Range};
 
-use crate::debug::type_to_name;
+use crate::{debug::type_to_name, gas::BuiltinCosts};
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize)]
 pub enum Value {
@@ -69,6 +69,7 @@ pub enum Value {
     Uninitialized {
         ty: ConcreteTypeId,
     },
+    BuiltinCosts(BuiltinCosts),
     Unit,
 }
 

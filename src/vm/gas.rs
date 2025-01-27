@@ -1,5 +1,8 @@
 use super::EvalAction;
-use crate::{gas::GasMetadata, Value};
+use crate::{
+    gas::{BuiltinCosts, GasMetadata},
+    Value,
+};
 use cairo_lang_sierra::{
     extensions::{
         core::{CoreLibfunc, CoreType},
@@ -17,6 +20,7 @@ pub fn eval(
     args: Vec<Value>,
     gas: &GasMetadata,
     statement_idx: StatementIdx,
+    builtin_costs: BuiltinCosts
 ) -> EvalAction {
     match selector {
         GasConcreteLibfunc::WithdrawGas(info) => {
@@ -29,7 +33,7 @@ pub fn eval(
         GasConcreteLibfunc::BuiltinWithdrawGas(info) => {
             eval_builtin_withdraw_gas(registry, info, args, gas, statement_idx)
         }
-        GasConcreteLibfunc::GetBuiltinCosts(info) => eval_get_builtin_costs(registry, info, args),
+        GasConcreteLibfunc::GetBuiltinCosts(info) => eval_get_builtin_costs(registry, info, args, builtin_costs),
     }
 }
 
@@ -110,7 +114,7 @@ pub fn eval_get_builtin_costs(
     _registry: &ProgramRegistry<CoreType, CoreLibfunc>,
     _info: &SignatureOnlyConcreteLibfunc,
     _args: Vec<Value>,
+    builtin_costs: BuiltinCosts,
 ) -> EvalAction {
-    // TODO: Implement properly.
-    EvalAction::NormalBranch(0, smallvec![Value::Unit])
+    EvalAction::NormalBranch(0, smallvec![Value::BuiltinCosts(builtin_costs)])
 }
