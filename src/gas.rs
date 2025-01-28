@@ -12,9 +12,51 @@ use cairo_lang_sierra_gas::{
     compute_postcost_info, compute_precost_info, gas_info::GasInfo, CostError,
 };
 use cairo_lang_utils::{casts::IntoOrPanic, ordered_hash_map::OrderedHashMap};
+use serde::Serialize;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize)]
+pub struct BuiltinCosts {
+    pub r#const: u64,
+    pub pedersen: u64,
+    pub bitwise: u64,
+    pub ecop: u64,
+    pub poseidon: u64,
+    pub add_mod: u64,
+    pub mul_mod: u64,
+}
+
+impl Default for BuiltinCosts {
+    fn default() -> Self {
+        Self {
+            r#const: token_gas_cost(CostTokenType::Const) as u64,
+            pedersen: token_gas_cost(CostTokenType::Pedersen) as u64,
+            bitwise: token_gas_cost(CostTokenType::Bitwise) as u64,
+            ecop: token_gas_cost(CostTokenType::EcOp) as u64,
+            poseidon: token_gas_cost(CostTokenType::Poseidon) as u64,
+            add_mod: token_gas_cost(CostTokenType::AddMod) as u64,
+            mul_mod: token_gas_cost(CostTokenType::MulMod) as u64,
+        }
+    }
+}
+
+impl From<BuiltinCosts> for [u64; 7] {
+    // Order matters, for the libfunc impl
+    // https://github.com/starkware-libs/sequencer/blob/1b7252f8a30244d39614d7666aa113b81291808e/crates/blockifier/src/execution/entry_point_execution.rs#L208
+    fn from(value: BuiltinCosts) -> Self {
+        [
+            value.r#const,
+            value.pedersen,
+            value.bitwise,
+            value.ecop,
+            value.poseidon,
+            value.add_mod,
+            value.mul_mod,
+        ]
+    }
+}
 
 /// Holds global gas info.
-#[derive(Debug, Default, PartialEq, Eq)]
+#[derive(Debug, Default)]
 pub struct GasMetadata {
     pub ap_change_info: ApChangeInfo,
     pub gas_info: GasInfo,
@@ -99,16 +141,18 @@ impl GasMetadata {
         )
     }
 
-    pub fn get_gas_cost_for_statement(&self, idx: StatementIdx) -> Option<u64> {
-        let mut cost = None;
+    pub fn get_gas_costs_for_statement(&self, idx: StatementIdx) -> Vec<(u64, CostTokenType)> {
+        let mut costs = Vec::new();
         for cost_type in CostTokenType::iter_casm_tokens() {
-            if let Some(amount) =
+            if let Some(cost_count) =
                 self.get_gas_cost_for_statement_and_cost_token_type(idx, *cost_type)
             {
-                *cost.get_or_insert(0) += amount * token_gas_cost(*cost_type) as u64;
+                if cost_count > 0 {
+                    costs.push((cost_count, *cost_type));
+                }
             }
         }
-        cost
+        costs
     }
 
     pub fn get_gas_cost_for_statement_and_cost_token_type(

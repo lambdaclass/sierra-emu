@@ -1,6 +1,6 @@
 use crate::{
     debug::libfunc_to_name,
-    gas::{GasMetadata, MetadataComputationConfig},
+    gas::{BuiltinCosts, GasMetadata, MetadataComputationConfig},
     starknet::StarknetSyscallHandler,
     ContractExecutionResult, ProgramTrace, StateDump, Value,
 };
@@ -68,6 +68,7 @@ pub struct VirtualMachine {
     frames: Vec<SierraFrame>,
     pub gas: GasMetadata,
     entry_points: Option<ContractEntryPoints>,
+    builtin_costs: BuiltinCosts,
 }
 
 impl Debug for VirtualMachine {
@@ -88,6 +89,7 @@ impl VirtualMachine {
             registry: Arc::new(registry),
             frames: Vec::new(),
             entry_points: None,
+            builtin_costs: Default::default(),
         }
     }
 }
@@ -120,6 +122,7 @@ impl VirtualMachine {
             registry: Arc::new(registry),
             frames: Vec::new(),
             entry_points: Some(entry_points.clone()),
+            builtin_costs: Default::default(),
         }
     }
 
@@ -128,11 +131,17 @@ impl VirtualMachine {
     }
 
     /// Utility to call a contract.
-    pub fn call_contract<I>(&mut self, selector: Felt, initial_gas: u64, calldata: I)
-    where
+    pub fn call_contract<I>(
+        &mut self,
+        selector: Felt,
+        initial_gas: u64,
+        calldata: I,
+        builtin_costs: Option<BuiltinCosts>,
+    ) where
         I: IntoIterator<Item = Felt>,
         I::IntoIter: ExactSizeIterator,
     {
+        self.builtin_costs = builtin_costs.unwrap_or_default();
         let args: Vec<_> = calldata.into_iter().map(Value::Felt).collect();
         let entry_points = self.entry_points.as_ref().expect("contract should have");
         let selector_uint = selector.to_biguint();
@@ -176,6 +185,9 @@ impl VirtualMachine {
                                 _ => unreachable!(),
                             }
                         }
+                        CoreTypeConcrete::BuiltinCosts(_) => {
+                            Value::BuiltinCosts(builtin_costs.unwrap_or_default())
+                        }
                         CoreTypeConcrete::StarkNet(StarkNetTypeConcrete::System(_)) => Value::Unit,
                         CoreTypeConcrete::RangeCheck(_)
                         | CoreTypeConcrete::RangeCheck96(_)
@@ -185,7 +197,6 @@ impl VirtualMachine {
                         | CoreTypeConcrete::Pedersen(_)
                         | CoreTypeConcrete::Poseidon(_)
                         | CoreTypeConcrete::Bitwise(_)
-                        | CoreTypeConcrete::BuiltinCosts(_)
                         | CoreTypeConcrete::EcOp(_)
                         | CoreTypeConcrete::SegmentArena(_) => Value::Unit,
                         x => {
@@ -297,6 +308,7 @@ impl VirtualMachine {
                     syscall_handler,
                     &self.gas,
                     &frame.pc,
+                    self.builtin_costs,
                 ) {
                     EvalAction::NormalBranch(branch_idx, results) => {
                         assert_eq!(
@@ -426,6 +438,7 @@ fn eval<'a>(
     syscall_handler: &mut impl StarknetSyscallHandler,
     gas: &GasMetadata,
     statement_idx: &StatementIdx,
+    builtin_costs: BuiltinCosts,
 ) -> EvalAction {
     match registry.get_libfunc(id).unwrap() {
         CoreConcreteLibfunc::ApTracking(selector) => {
@@ -458,7 +471,7 @@ fn eval<'a>(
         }
         CoreConcreteLibfunc::FunctionCall(info) => self::function_call::eval(registry, info, args),
         CoreConcreteLibfunc::Gas(selector) => {
-            self::gas::eval(registry, selector, args, gas, *statement_idx)
+            self::gas::eval(registry, selector, args, gas, *statement_idx, builtin_costs)
         }
         CoreConcreteLibfunc::Mem(selector) => self::mem::eval(registry, selector, args),
         CoreConcreteLibfunc::Nullable(_) => todo!(),

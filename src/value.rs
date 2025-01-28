@@ -13,7 +13,7 @@ use serde::Serialize;
 use starknet_types_core::felt::Felt;
 use std::{collections::HashMap, fmt::Debug, ops::Range};
 
-use crate::debug::type_to_name;
+use crate::{debug::type_to_name, gas::BuiltinCosts};
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize)]
 pub enum Value {
@@ -69,6 +69,7 @@ pub enum Value {
     Uninitialized {
         ty: ConcreteTypeId,
     },
+    BuiltinCosts(BuiltinCosts),
     Unit,
 }
 
@@ -175,7 +176,7 @@ impl Value {
             CoreTypeConcrete::EcOp(_) => matches!(self, Self::Unit),
             CoreTypeConcrete::EcPoint(_) => matches!(self, Self::EcPoint { .. }),
             CoreTypeConcrete::EcState(_) => matches!(self, Self::EcState { .. }),
-            CoreTypeConcrete::BuiltinCosts(_) => matches!(self, Self::Unit),
+            CoreTypeConcrete::BuiltinCosts(_) => matches!(self, Self::BuiltinCosts(_)),
             CoreTypeConcrete::Uint16(_) => matches!(self, Self::U16(_)),
             CoreTypeConcrete::Uint64(_) => matches!(self, Self::U64(_)),
             CoreTypeConcrete::Uint128MulGuarantee(_) => matches!(self, Self::Unit),

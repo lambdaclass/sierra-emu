@@ -134,7 +134,12 @@ mod test {
         let syscall_handler = &mut StubSyscallHandler::default();
 
         // Set the VM at the contract entrypoint
-        vm.call_contract(entry_point.selector.clone().into(), initial_gas, calldata);
+        vm.call_contract(
+            entry_point.selector.clone().into(),
+            initial_gas,
+            calldata,
+            None,
+        );
 
         // Run all the steps generating a program execution trace. (Not to be confused with a proof trace)
         let _trace = vm.run_with_trace(syscall_handler);
@@ -170,7 +175,12 @@ mod test {
         let initial_gas = 1000000;
 
         let syscall_handler = &mut StubSyscallHandler::default();
-        vm.call_contract(entry_point.selector.clone().into(), initial_gas, calldata);
+        vm.call_contract(
+            entry_point.selector.clone().into(),
+            initial_gas,
+            calldata,
+            None,
+        );
 
         let trace = vm.run_with_trace(syscall_handler);
 
