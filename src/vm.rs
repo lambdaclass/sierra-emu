@@ -18,12 +18,13 @@ use cairo_lang_sierra::{
     program_registry::ProgramRegistry,
 };
 use cairo_lang_starknet_classes::{
-    casm_contract_class::ENTRY_POINT_COST, contract_class::ContractEntryPoints,
+    casm_contract_class::ENTRY_POINT_COST, compiler_version::VersionId,
+    contract_class::ContractEntryPoints,
 };
 use cairo_lang_utils::ordered_hash_map::OrderedHashMap;
 use smallvec::{smallvec, SmallVec};
 use starknet_types_core::felt::Felt;
-use std::{fmt::Debug, sync::Arc};
+use std::{cmp::Ordering, fmt::Debug, sync::Arc};
 use tracing::{debug, trace};
 
 mod ap_tracking;
@@ -95,7 +96,17 @@ impl VirtualMachine {
 }
 
 impl VirtualMachine {
-    pub fn new_starknet(program: Arc<Program>, entry_points: &ContractEntryPoints) -> Self {
+    pub fn new_starknet(
+        program: Arc<Program>,
+        entry_points: &ContractEntryPoints,
+        sierra_version: VersionId,
+    ) -> Self {
+        let no_eq_solver = match sierra_version.major.cmp(&1) {
+            Ordering::Less => false,
+            Ordering::Equal => sierra_version.minor >= 4,
+            Ordering::Greater => true,
+        };
+
         let registry = ProgramRegistry::new(&program).unwrap();
         Self {
             gas: GasMetadata::new(
@@ -113,8 +124,8 @@ impl VirtualMachine {
                             )
                         })
                         .collect(),
-                    linear_gas_solver: true,
-                    linear_ap_change_solver: true,
+                    linear_gas_solver: no_eq_solver,
+                    linear_ap_change_solver: no_eq_solver,
                 }),
             )
             .unwrap(),
