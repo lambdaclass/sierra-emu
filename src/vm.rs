@@ -117,9 +117,9 @@ impl VirtualMachine {
                         .iter()
                         .chain(entry_points.external.iter())
                         .chain(entry_points.l1_handler.iter())
-                        .map(|id| {
+                        .map(|x| {
                             (
-                                program.funcs[id.function_idx].id.clone(),
+                                FunctionId::new(x.function_idx as u64),
                                 [(CostTokenType::Const, ENTRY_POINT_COST)].into(),
                             )
                         })
