@@ -168,5 +168,7 @@ pub fn eval_square_root(
     let lhs = u256_to_biguint(lhs_lo, lhs_hi);
     let sqrt = lhs.sqrt();
 
-    EvalAction::NormalBranch(0, smallvec![range_check, u256_to_value(sqrt)])
+    let sqrt_lo: u128 = sqrt.clone().try_into().unwrap();
+
+    EvalAction::NormalBranch(0, smallvec![range_check, Value::U128(sqrt_lo)])
 }
