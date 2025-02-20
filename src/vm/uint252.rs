@@ -19,7 +19,7 @@ pub fn eval(
     match selector {
         Uint256Concrete::IsZero(info) => eval_is_zero(registry, info, args),
         Uint256Concrete::Divmod(info) => eval_divmod(registry, info, args),
-        Uint256Concrete::SquareRoot(_) => todo!(),
+        Uint256Concrete::SquareRoot(info) => eval_square_root(registry, info, args),
         Uint256Concrete::InvModN(info) => eval_inv_mod_n(registry, info, args),
     }
 }
@@ -149,4 +149,26 @@ pub fn eval_divmod(
             Value::Unit
         ],
     )
+}
+
+pub fn eval_square_root(
+    _registry: &ProgramRegistry<CoreType, CoreLibfunc>,
+    _info: &SignatureOnlyConcreteLibfunc,
+    args: Vec<Value>,
+) -> EvalAction {
+    let [range_check @ Value::Unit, Value::Struct(lhs)]: [Value; 2] = args.try_into().unwrap()
+    else {
+        panic!()
+    };
+
+    let [Value::U128(lhs_lo), Value::U128(lhs_hi)]: [Value; 2] = lhs.try_into().unwrap() else {
+        panic!()
+    };
+
+    let lhs = u256_to_biguint(lhs_lo, lhs_hi);
+    let sqrt = lhs.sqrt();
+
+    let sqrt_lo: u128 = sqrt.clone().try_into().unwrap();
+
+    EvalAction::NormalBranch(0, smallvec![range_check, Value::U128(sqrt_lo)])
 }

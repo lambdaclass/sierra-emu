@@ -103,6 +103,7 @@ mod test {
 
     use cairo_lang_compiler::CompilerConfig;
     use cairo_lang_starknet::compile::compile_path;
+    use cairo_lang_starknet_classes::contract_class::version_id_from_serialized_sierra_program;
     use sierra_emu::{starknet::StubSyscallHandler, ContractExecutionResult, VirtualMachine};
 
     #[test]
@@ -121,11 +122,15 @@ mod test {
 
         let sierra_program = contract.extract_sierra_program().unwrap();
 
+        let (sierra_version, _) =
+            version_id_from_serialized_sierra_program(&contract.sierra_program).unwrap();
+
         let entry_point = contract.entry_points_by_type.external.first().unwrap();
 
         let mut vm = VirtualMachine::new_starknet(
             sierra_program.clone().into(),
             &contract.entry_points_by_type,
+            sierra_version,
         );
 
         let calldata = [2.into()];
@@ -162,6 +167,9 @@ mod test {
         )
         .unwrap();
 
+        let (sierra_version, _) =
+            version_id_from_serialized_sierra_program(&contract.sierra_program).unwrap();
+
         let sierra_program = contract.extract_sierra_program().unwrap();
 
         let entry_point = contract.entry_points_by_type.constructor.first().unwrap();
@@ -169,6 +177,7 @@ mod test {
         let mut vm = VirtualMachine::new_starknet(
             sierra_program.clone().into(),
             &contract.entry_points_by_type,
+            sierra_version,
         );
 
         let calldata = [2.into()];
