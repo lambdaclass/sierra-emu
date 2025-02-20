@@ -85,6 +85,11 @@ impl Value {
             CoreTypeConcrete::Uint16(_) => Value::U16(0),
             CoreTypeConcrete::Uint128(_) => Value::U128(0),
             CoreTypeConcrete::Felt252(_) => Value::Felt(0.into()),
+            CoreTypeConcrete::Enum(info) => Value::Enum {
+                self_ty: type_id.clone(),
+                index: 0,
+                payload: Box::new(Value::default_for_type(registry, &info.variants[0])),
+            },
             x => panic!("type {:?} has no default value implementation", x.info()),
         }
     }
