@@ -26,7 +26,11 @@ pub fn eval_get(
     info: &SignatureAndTypeConcreteLibfunc,
     args: Vec<Value>,
 ) -> EvalAction {
-    let [Value::FeltDict { ty, mut data }, Value::Felt(key)]: [Value; 2] = args.try_into().unwrap()
+    let [Value::FeltDict {
+        ty,
+        mut data,
+        count,
+    }, Value::Felt(key)]: [Value; 2] = args.try_into().unwrap()
     else {
         panic!()
     };
@@ -35,9 +39,19 @@ pub fn eval_get(
     let default_value = Value::default_for_type(registry, &info.ty);
     data.insert(key, default_value.clone());
 
+    let count = count + 1;
+
     EvalAction::NormalBranch(
         0,
-        smallvec![Value::FeltDictEntry { ty, data, key }, default_value,],
+        smallvec![
+            Value::FeltDictEntry {
+                ty,
+                data,
+                count,
+                key
+            },
+            default_value,
+        ],
     )
 }
 
@@ -46,7 +60,12 @@ pub fn eval_finalize(
     info: &SignatureAndTypeConcreteLibfunc,
     args: Vec<Value>,
 ) -> EvalAction {
-    let [Value::FeltDictEntry { ty, mut data, key }, value]: [Value; 2] = args.try_into().unwrap()
+    let [Value::FeltDictEntry {
+        ty,
+        mut data,
+        count,
+        key,
+    }, value]: [Value; 2] = args.try_into().unwrap()
     else {
         panic!()
     };
@@ -55,5 +74,5 @@ pub fn eval_finalize(
 
     data.insert(key, value);
 
-    EvalAction::NormalBranch(0, smallvec![Value::FeltDict { ty, data }])
+    EvalAction::NormalBranch(0, smallvec![Value::FeltDict { ty, data, count }])
 }
