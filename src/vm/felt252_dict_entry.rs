@@ -26,18 +26,18 @@ pub fn eval_get(
     info: &SignatureAndTypeConcreteLibfunc,
     args: Vec<Value>,
 ) -> EvalAction {
-    let [Value::FeltDict { ty, data }, Value::Felt(key)]: [Value; 2] = args.try_into().unwrap()
+    let [Value::FeltDict { ty, mut data }, Value::Felt(key)]: [Value; 2] = args.try_into().unwrap()
     else {
         panic!()
     };
     assert_eq!(info.ty, ty);
 
+    let default_value = Value::default_for_type(registry, &info.ty);
+    data.insert(key, default_value.clone());
+
     EvalAction::NormalBranch(
         0,
-        smallvec![
-            Value::FeltDictEntry { ty, data, key },
-            Value::default_for_type(registry, &info.ty),
-        ],
+        smallvec![Value::FeltDictEntry { ty, data, key }, default_value,],
     )
 }
 
