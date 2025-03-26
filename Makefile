@@ -2,8 +2,8 @@
 
 UNAME := $(shell uname)
 
-CAIRO_2_VERSION=2.10.0-rc.1
-SCARB_VERSION = 2.10.0-rc.0
+CAIRO_2_VERSION=2.11.1
+SCARB_VERSION = 2.11.1
 
 needs-cairo2:
 ifeq ($(wildcard ./cairo2/.),)

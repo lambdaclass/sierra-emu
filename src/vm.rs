@@ -10,7 +10,7 @@ use cairo_lang_sierra::{
         circuit::CircuitTypeConcrete,
         core::{CoreConcreteLibfunc, CoreLibfunc, CoreType, CoreTypeConcrete},
         gas::CostTokenType,
-        starknet::StarkNetTypeConcrete,
+        starknet::StarknetTypeConcrete,
         ConcreteLibfunc, ConcreteType,
     },
     ids::{ConcreteLibfuncId, FunctionId, VarId},
@@ -199,7 +199,7 @@ impl VirtualMachine {
                         CoreTypeConcrete::BuiltinCosts(_) => {
                             Value::BuiltinCosts(builtin_costs.unwrap_or_default())
                         }
-                        CoreTypeConcrete::StarkNet(StarkNetTypeConcrete::System(_)) => Value::Unit,
+                        CoreTypeConcrete::Starknet(StarknetTypeConcrete::System(_)) => Value::Unit,
                         CoreTypeConcrete::RangeCheck(_)
                         | CoreTypeConcrete::RangeCheck96(_)
                         | CoreTypeConcrete::Circuit(
@@ -249,8 +249,8 @@ impl VirtualMachine {
                         | CoreTypeConcrete::Circuit(
                             CircuitTypeConcrete::AddMod(_) | CircuitTypeConcrete::MulMod(_),
                         ) => Value::Unit,
-                        CoreTypeConcrete::StarkNet(inner) => match inner {
-                            StarkNetTypeConcrete::System(_) => Value::Unit,
+                        CoreTypeConcrete::Starknet(inner) => match inner {
+                            StarknetTypeConcrete::System(_) => Value::Unit,
                             _ => todo!(),
                         },
                         _ => iter.next().unwrap(),
@@ -494,7 +494,7 @@ fn eval<'a>(
         CoreConcreteLibfunc::Sint64(_) => todo!(),
         CoreConcreteLibfunc::Sint8(_) => todo!(),
         CoreConcreteLibfunc::SnapshotTake(info) => self::snapshot_take::eval(registry, info, args),
-        CoreConcreteLibfunc::StarkNet(selector) => {
+        CoreConcreteLibfunc::Starknet(selector) => {
             self::starknet::eval(registry, selector, args, syscall_handler)
         }
         CoreConcreteLibfunc::Struct(selector) => self::r#struct::eval(registry, selector, args),
@@ -512,5 +512,8 @@ fn eval<'a>(
             EvalAction::NormalBranch(0, smallvec![value])
         }
         CoreConcreteLibfunc::IntRange(_) => todo!(),
+        CoreConcreteLibfunc::Blake(_) => todo!(),
+        CoreConcreteLibfunc::Felt252SquashedDict(_) => todo!(),
+        CoreConcreteLibfunc::Trace(_) => todo!(),
     }
 }

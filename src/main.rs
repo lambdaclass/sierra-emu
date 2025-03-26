@@ -1,7 +1,7 @@
 use self::args::CmdArgs;
 use cairo_lang_sierra::{
     extensions::{
-        circuit::CircuitTypeConcrete, core::CoreTypeConcrete, starknet::StarkNetTypeConcrete,
+        circuit::CircuitTypeConcrete, core::CoreTypeConcrete, starknet::StarknetTypeConcrete,
     },
     ProgramParser,
 };
@@ -75,8 +75,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     | CoreTypeConcrete::Circuit(
                         CircuitTypeConcrete::AddMod(_) | CircuitTypeConcrete::MulMod(_),
                     ) => Value::Unit,
-                    CoreTypeConcrete::StarkNet(inner) => match inner {
-                        StarkNetTypeConcrete::System(_) => Value::Unit,
+                    CoreTypeConcrete::Starknet(inner) => match inner {
+                        StarknetTypeConcrete::System(_) => Value::Unit,
                         _ => todo!(),
                     },
                     _ => todo!(),

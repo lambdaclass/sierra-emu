@@ -8,7 +8,7 @@ use cairo_lang_sierra::{
         consts::SignatureAndConstConcreteLibfunc,
         core::{CoreLibfunc, CoreType, CoreTypeConcrete},
         lib_func::SignatureOnlyConcreteLibfunc,
-        starknet::StarkNetConcreteLibfunc,
+        starknet::StarknetConcreteLibfunc,
         ConcreteLibfunc,
     },
     program_registry::ProgramRegistry,
@@ -19,90 +19,90 @@ use starknet_types_core::felt::Felt;
 
 pub fn eval(
     registry: &ProgramRegistry<CoreType, CoreLibfunc>,
-    selector: &StarkNetConcreteLibfunc,
+    selector: &StarknetConcreteLibfunc,
     args: Vec<Value>,
     syscall_handler: &mut impl StarknetSyscallHandler,
 ) -> EvalAction {
     match selector {
-        StarkNetConcreteLibfunc::CallContract(info) => {
+        StarknetConcreteLibfunc::CallContract(info) => {
             self::eval_call_contract(registry, info, args, syscall_handler)
         }
-        StarkNetConcreteLibfunc::ClassHashConst(info) => {
+        StarknetConcreteLibfunc::ClassHashConst(info) => {
             eval_class_hash_const(registry, info, args)
         }
-        StarkNetConcreteLibfunc::ClassHashTryFromFelt252(info) => {
+        StarknetConcreteLibfunc::ClassHashTryFromFelt252(info) => {
             eval_class_hash_try_from_felt(registry, info, args)
         }
-        StarkNetConcreteLibfunc::ClassHashToFelt252(info) => {
+        StarknetConcreteLibfunc::ClassHashToFelt252(info) => {
             eval_class_hash_to_felt(registry, info, args)
         }
-        StarkNetConcreteLibfunc::ContractAddressConst(info) => {
+        StarknetConcreteLibfunc::ContractAddressConst(info) => {
             eval_contract_address_const(registry, info, args)
         }
-        StarkNetConcreteLibfunc::ContractAddressTryFromFelt252(info) => {
+        StarknetConcreteLibfunc::ContractAddressTryFromFelt252(info) => {
             eval_contract_address_try_from_felt(registry, info, args)
         }
-        StarkNetConcreteLibfunc::ContractAddressToFelt252(info) => {
+        StarknetConcreteLibfunc::ContractAddressToFelt252(info) => {
             eval_contract_address_to_felt(registry, info, args)
         }
-        StarkNetConcreteLibfunc::StorageRead(info) => {
+        StarknetConcreteLibfunc::StorageRead(info) => {
             eval_storage_read(registry, info, args, syscall_handler)
         }
-        StarkNetConcreteLibfunc::StorageWrite(info) => {
+        StarknetConcreteLibfunc::StorageWrite(info) => {
             eval_storage_write(registry, info, args, syscall_handler)
         }
-        StarkNetConcreteLibfunc::StorageBaseAddressConst(info) => {
+        StarknetConcreteLibfunc::StorageBaseAddressConst(info) => {
             eval_storage_base_address_const(registry, info, args)
         }
-        StarkNetConcreteLibfunc::StorageBaseAddressFromFelt252(info) => {
+        StarknetConcreteLibfunc::StorageBaseAddressFromFelt252(info) => {
             eval_storage_base_address_from_felt(registry, info, args)
         }
-        StarkNetConcreteLibfunc::StorageAddressFromBase(info) => {
+        StarknetConcreteLibfunc::StorageAddressFromBase(info) => {
             eval_storage_address_from_base(registry, info, args)
         }
-        StarkNetConcreteLibfunc::StorageAddressFromBaseAndOffset(info) => {
+        StarknetConcreteLibfunc::StorageAddressFromBaseAndOffset(info) => {
             eval_storage_address_from_base_and_offset(registry, info, args)
         }
-        StarkNetConcreteLibfunc::StorageAddressToFelt252(info) => {
+        StarknetConcreteLibfunc::StorageAddressToFelt252(info) => {
             eval_storage_address_to_felt(registry, info, args)
         }
-        StarkNetConcreteLibfunc::StorageAddressTryFromFelt252(info) => {
+        StarknetConcreteLibfunc::StorageAddressTryFromFelt252(info) => {
             eval_storage_address_try_from_felt(registry, info, args)
         }
-        StarkNetConcreteLibfunc::EmitEvent(info) => {
+        StarknetConcreteLibfunc::EmitEvent(info) => {
             eval_emit_event(registry, info, args, syscall_handler)
         }
-        StarkNetConcreteLibfunc::GetBlockHash(info) => {
+        StarknetConcreteLibfunc::GetBlockHash(info) => {
             eval_get_block_hash(registry, info, args, syscall_handler)
         }
-        StarkNetConcreteLibfunc::GetExecutionInfo(info) => {
+        StarknetConcreteLibfunc::GetExecutionInfo(info) => {
             eval_get_execution_info(registry, info, args, syscall_handler)
         }
-        StarkNetConcreteLibfunc::GetExecutionInfoV2(info) => {
+        StarknetConcreteLibfunc::GetExecutionInfoV2(info) => {
             eval_get_execution_info_v2(registry, info, args, syscall_handler)
         }
-        StarkNetConcreteLibfunc::Deploy(info) => eval_deploy(registry, info, args, syscall_handler),
-        StarkNetConcreteLibfunc::Keccak(info) => eval_keccak(registry, info, args, syscall_handler),
-        StarkNetConcreteLibfunc::Sha256ProcessBlock(info) => {
+        StarknetConcreteLibfunc::Deploy(info) => eval_deploy(registry, info, args, syscall_handler),
+        StarknetConcreteLibfunc::Keccak(info) => eval_keccak(registry, info, args, syscall_handler),
+        StarknetConcreteLibfunc::Sha256ProcessBlock(info) => {
             eval_sha256_process_block(registry, info, args, syscall_handler)
         }
-        StarkNetConcreteLibfunc::Sha256StateHandleInit(info) => {
+        StarknetConcreteLibfunc::Sha256StateHandleInit(info) => {
             eval_sha256_state_handle_init(registry, info, args, syscall_handler)
         }
-        StarkNetConcreteLibfunc::Sha256StateHandleDigest(info) => {
+        StarknetConcreteLibfunc::Sha256StateHandleDigest(info) => {
             eval_sha256_state_handle_digest(registry, info, args, syscall_handler)
         }
-        StarkNetConcreteLibfunc::LibraryCall(info) => {
+        StarknetConcreteLibfunc::LibraryCall(info) => {
             eval_library_call(registry, info, args, syscall_handler)
         }
-        StarkNetConcreteLibfunc::ReplaceClass(info) => {
+        StarknetConcreteLibfunc::ReplaceClass(info) => {
             eval_replace_class(registry, info, args, syscall_handler)
         }
-        StarkNetConcreteLibfunc::SendMessageToL1(info) => {
+        StarknetConcreteLibfunc::SendMessageToL1(info) => {
             eval_send_message_to_l1(registry, info, args, syscall_handler)
         }
-        StarkNetConcreteLibfunc::Testing(_info) => todo!(),
-        StarkNetConcreteLibfunc::Secp256(info) => match info {
+        StarknetConcreteLibfunc::Testing(_info) => todo!(),
+        StarknetConcreteLibfunc::Secp256(info) => match info {
             cairo_lang_sierra::extensions::starknet::secp256::Secp256ConcreteLibfunc::K1(info) => {
                 match info {
                     cairo_lang_sierra::extensions::starknet::secp256::Secp256OpConcreteLibfunc::New(_) => todo!(),
@@ -122,7 +122,8 @@ pub fn eval(
                 }
             }
         },
-        StarkNetConcreteLibfunc::GetClassHashAt(_) => todo!(),
+        StarknetConcreteLibfunc::GetClassHashAt(_) => todo!(),
+        StarknetConcreteLibfunc::MetaTxV0(_) => todo!(),
     }
 }
 
