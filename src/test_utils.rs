@@ -56,7 +56,6 @@ pub fn run_test_program(sierra_program: Program) -> Vec<Value> {
         .funcs
         .iter()
         .find(|f| {
-            dbg!(f);
             f.id.debug_name
                 .as_ref()
                 .map(|name| name.as_str().contains("main"))
