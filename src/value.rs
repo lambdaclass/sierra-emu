@@ -2,7 +2,7 @@ use cairo_lang_sierra::{
     extensions::{
         circuit::CircuitTypeConcrete,
         core::{CoreLibfunc, CoreType, CoreTypeConcrete},
-        starknet::StarkNetTypeConcrete,
+        starknet::StarknetTypeConcrete,
         ConcreteType,
     },
     ids::ConcreteTypeId,
@@ -127,11 +127,11 @@ impl Value {
             CoreTypeConcrete::Sint32(_) => matches!(self, Self::I32(_)),
             CoreTypeConcrete::Sint8(_) => matches!(self, Self::I8(_)),
             CoreTypeConcrete::Snapshot(info) => self.is(registry, &info.ty),
-            CoreTypeConcrete::StarkNet(
-                StarkNetTypeConcrete::ClassHash(_)
-                | StarkNetTypeConcrete::ContractAddress(_)
-                | StarkNetTypeConcrete::StorageBaseAddress(_)
-                | StarkNetTypeConcrete::StorageAddress(_),
+            CoreTypeConcrete::Starknet(
+                StarknetTypeConcrete::ClassHash(_)
+                | StarknetTypeConcrete::ContractAddress(_)
+                | StarknetTypeConcrete::StorageBaseAddress(_)
+                | StarknetTypeConcrete::StorageAddress(_),
             ) => matches!(self, Self::Felt(_)),
             CoreTypeConcrete::Struct(info) => {
                 matches!(self, Self::Struct(members)
@@ -152,7 +152,7 @@ impl Value {
             CoreTypeConcrete::RangeCheck(_)
             | CoreTypeConcrete::SegmentArena(_)
             | CoreTypeConcrete::RangeCheck96(_)
-            | CoreTypeConcrete::StarkNet(StarkNetTypeConcrete::System(_)) => {
+            | CoreTypeConcrete::Starknet(StarknetTypeConcrete::System(_)) => {
                 matches!(self, Self::Unit)
             }
 
@@ -204,16 +204,17 @@ impl Value {
             CoreTypeConcrete::Pedersen(_) => matches!(self, Self::Unit),
             CoreTypeConcrete::Poseidon(_) => matches!(self, Self::Unit),
             CoreTypeConcrete::Span(_) => todo!(),
-            CoreTypeConcrete::StarkNet(inner) => match inner {
-                StarkNetTypeConcrete::ClassHash(_)
-                | StarkNetTypeConcrete::ContractAddress(_)
-                | StarkNetTypeConcrete::StorageBaseAddress(_)
-                | StarkNetTypeConcrete::StorageAddress(_) => matches!(self, Self::Felt(_)),
-                StarkNetTypeConcrete::System(_) => matches!(self, Self::Unit),
-                StarkNetTypeConcrete::Secp256Point(_) => matches!(self, Self::Struct(_)),
-                StarkNetTypeConcrete::Sha256StateHandle(_) => matches!(self, Self::Struct { .. }),
+            CoreTypeConcrete::Starknet(inner) => match inner {
+                StarknetTypeConcrete::ClassHash(_)
+                | StarknetTypeConcrete::ContractAddress(_)
+                | StarknetTypeConcrete::StorageBaseAddress(_)
+                | StarknetTypeConcrete::StorageAddress(_) => matches!(self, Self::Felt(_)),
+                StarknetTypeConcrete::System(_) => matches!(self, Self::Unit),
+                StarknetTypeConcrete::Secp256Point(_) => matches!(self, Self::Struct(_)),
+                StarknetTypeConcrete::Sha256StateHandle(_) => matches!(self, Self::Struct { .. }),
             },
             CoreTypeConcrete::IntRange(_) => todo!(),
+            CoreTypeConcrete::Blake(_) => todo!(),
         };
 
         if !res {

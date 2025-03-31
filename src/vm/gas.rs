@@ -36,6 +36,7 @@ pub fn eval(
         GasConcreteLibfunc::GetBuiltinCosts(info) => {
             eval_get_builtin_costs(registry, info, args, builtin_costs)
         }
+        GasConcreteLibfunc::GetUnspentGas(_) => todo!(),
     }
 }
 

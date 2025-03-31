@@ -52,7 +52,16 @@ pub(crate) fn load_cairo_from_str(cairo_str: &str) -> (String, Program) {
 }
 
 pub fn run_test_program(sierra_program: Program) -> Vec<Value> {
-    let function = find_entry_point_by_idx(&sierra_program, 0).unwrap();
+    let function = sierra_program
+        .funcs
+        .iter()
+        .find(|f| {
+            f.id.debug_name
+                .as_ref()
+                .map(|name| name.as_str().contains("main"))
+                .unwrap_or_default()
+        })
+        .unwrap();
 
     let mut vm = VirtualMachine::new(Arc::new(sierra_program.clone()));
 
