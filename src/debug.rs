@@ -422,6 +422,7 @@ pub fn libfunc_to_name(value: &CoreConcreteLibfunc) -> &'static str {
         CoreConcreteLibfunc::Blake(_) => todo!(),
         CoreConcreteLibfunc::Felt252SquashedDict(_) => todo!(),
         CoreConcreteLibfunc::Trace(_) => todo!(),
+        CoreConcreteLibfunc::QM31(_) => todo!(),
     }
 }
 
@@ -545,6 +546,7 @@ pub fn type_to_name(
             format!("IntRange<{}>", type_to_name(&info.ty, registry))
         }
         CoreTypeConcrete::Blake(_) => todo!(),
+        CoreTypeConcrete::QM31(_) => todo!(),
     }
 }
 

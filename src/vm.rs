@@ -513,6 +513,7 @@ fn eval<'a>(
         }
         CoreConcreteLibfunc::IntRange(_) => todo!(),
         CoreConcreteLibfunc::Blake(_) => todo!(),
+        CoreConcreteLibfunc::QM31(_) => todo!(),
         CoreConcreteLibfunc::Felt252SquashedDict(_) => todo!(),
         CoreConcreteLibfunc::Trace(_) => todo!(),
     }
