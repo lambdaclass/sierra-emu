@@ -215,6 +215,7 @@ impl Value {
             },
             CoreTypeConcrete::IntRange(_) => todo!(),
             CoreTypeConcrete::Blake(_) => todo!(),
+            CoreTypeConcrete::QM31(_) => todo!(),
         };
 
         if !res {

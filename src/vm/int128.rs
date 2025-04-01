@@ -25,7 +25,6 @@ pub fn eval(
         Sint128Concrete::Equal(info) => eval_equal(registry, info, args),
         Sint128Concrete::ToFelt252(info) => eval_to_felt(registry, info, args),
         Sint128Concrete::FromFelt252(info) => eval_from_felt(registry, info, args),
-        Sint128Concrete::IsZero(_) => todo!("int128 is_zero"),
         Sint128Concrete::Diff(info) => eval_diff(registry, info, args),
     }
 }
