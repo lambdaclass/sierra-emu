@@ -15,6 +15,27 @@ use cairo_lang_sierra::{
 use num_bigint::BigInt;
 use smallvec::smallvec;
 
+// All binary operations have generaic arguments, this function takes their values
+// and builds bigints out of them (since we bigints to represent bounded ints' values)
+fn get_numberic_args_as_bigints(args: Vec<Value>) -> Vec<BigInt> {
+    args.into_iter()
+        .map(|v| match v {
+            Value::BoundedInt { value, .. } => value,
+            Value::I8(value) => BigInt::from(value),
+            Value::I16(value) => BigInt::from(value),
+            Value::I32(value) => BigInt::from(value),
+            Value::I64(value) => BigInt::from(value),
+            Value::I128(value) => BigInt::from(value),
+            Value::U8(value) => BigInt::from(value),
+            Value::U16(value) => BigInt::from(value),
+            Value::U32(value) => BigInt::from(value),
+            Value::U64(value) => BigInt::from(value),
+            Value::U128(value) => BigInt::from(value),
+            _ => panic!("Not a numeric value"),
+        })
+        .collect()
+}
+
 pub fn eval(
     registry: &ProgramRegistry<CoreType, CoreLibfunc>,
     selector: &BoundedIntConcreteLibfunc,
@@ -39,11 +60,7 @@ pub fn eval_add(
     info: &SignatureOnlyConcreteLibfunc,
     args: Vec<Value>,
 ) -> EvalAction {
-    let [Value::BoundedInt { value: lhs, .. }, Value::BoundedInt { value: rhs, .. }]: [Value; 2] =
-        args.try_into().unwrap()
-    else {
-        panic!()
-    };
+    let [lhs, rhs]: [BigInt; 2] = get_numberic_args_as_bigints(args).try_into().unwrap();
 
     let range = match registry
         .get_type(&info.signature.branch_signatures[0].vars[0].ty)
@@ -72,11 +89,7 @@ pub fn eval_sub(
     info: &SignatureOnlyConcreteLibfunc,
     args: Vec<Value>,
 ) -> EvalAction {
-    let [Value::BoundedInt { value: lhs, .. }, Value::BoundedInt { value: rhs, .. }]: [Value; 2] =
-        args.try_into().unwrap()
-    else {
-        panic!()
-    };
+    let [lhs, rhs]: [BigInt; 2] = get_numberic_args_as_bigints(args).try_into().unwrap();
 
     let range = match registry
         .get_type(&info.signature.branch_signatures[0].vars[0].ty)
@@ -105,11 +118,7 @@ pub fn eval_mul(
     info: &SignatureOnlyConcreteLibfunc,
     args: Vec<Value>,
 ) -> EvalAction {
-    let [Value::BoundedInt { value: lhs, .. }, Value::BoundedInt { value: rhs, .. }]: [Value; 2] =
-        args.try_into().unwrap()
-    else {
-        panic!()
-    };
+    let [lhs, rhs]: [BigInt; 2] = get_numberic_args_as_bigints(args).try_into().unwrap();
 
     let range = match registry
         .get_type(&info.signature.branch_signatures[0].vars[0].ty)
@@ -320,6 +329,28 @@ mod tests {
     use super::Value;
 
     use crate::{load_cairo, test_utils::run_test_program};
+
+    #[test]
+    fn test_bounded_int_sub() {
+        let (_, program) = load_cairo!(
+            use core::internal::bounded_int::{SubHelper, BoundedInt};
+            use core::internal::bounded_int;
+
+            impl U8BISub of SubHelper<u8, u8> {
+                type Result = BoundedInt<-255, 255>;
+            }
+
+            extern fn bounded_int_sub<Lhs, Rhs, impl H: SubHelper<Lhs, Rhs>>(
+                lhs: Lhs, rhs: Rhs,
+            ) -> H::Result nopanic;
+
+            fn main() -> BoundedInt<-255, 255> {
+                bounded_int_sub(0_u8, 255_u8)
+            }
+        );
+
+        run_test_program(program);
+    }
 
     #[test]
     fn test_trim_i8() {
