@@ -15,7 +15,7 @@ use cairo_lang_sierra::{
 use num_bigint::BigInt;
 use smallvec::smallvec;
 
-// All binary operations have generaic arguments, this function takes their values
+// All binary operations have generic arguments, this function takes their values
 // and builds bigints out of them (since we bigints to represent bounded ints' values)
 fn get_numberic_args_as_bigints(args: Vec<Value>) -> Vec<BigInt> {
     args.into_iter()
