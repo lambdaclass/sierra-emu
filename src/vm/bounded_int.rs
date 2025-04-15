@@ -19,6 +19,7 @@ use smallvec::smallvec;
 // and builds bigints out of them (since we bigints to represent bounded ints' values)
 fn get_numberic_args_as_bigints(args: Vec<Value>) -> Vec<BigInt> {
     args.into_iter()
+        .filter(|v| !matches!(v, Value::Unit))
         .map(|v| match v {
             Value::BoundedInt { value, .. } => value,
             Value::I8(value) => BigInt::from(value),
@@ -147,20 +148,7 @@ pub fn eval_div_rem(
     info: &BoundedIntDivRemConcreteLibfunc,
     args: Vec<Value>,
 ) -> EvalAction {
-    let [range_check @ Value::Unit, Value::BoundedInt {
-        range: lhs_range,
-        value: lhs,
-    }, Value::BoundedInt {
-        range: rhs_range,
-        value: rhs,
-    }]: [Value; 3] = args.try_into().unwrap()
-    else {
-        panic!()
-    };
-    assert_eq!(lhs_range.start, info.lhs.lower);
-    assert_eq!(lhs_range.end, info.lhs.upper);
-    assert_eq!(rhs_range.start, info.rhs.lower);
-    assert_eq!(rhs_range.end, info.rhs.upper);
+    let [lhs, rhs]: [BigInt; 2] = get_numberic_args_as_bigints(args).try_into().unwrap();
 
     let quo = &lhs / &rhs;
     let rem = lhs % rhs;
@@ -185,7 +173,7 @@ pub fn eval_div_rem(
     EvalAction::NormalBranch(
         0,
         smallvec![
-            range_check,
+            Value::Unit, // range_check
             Value::BoundedInt {
                 range: quo_range,
                 value: quo,
