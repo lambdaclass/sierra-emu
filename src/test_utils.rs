@@ -52,7 +52,6 @@ pub(crate) fn load_cairo_from_str(cairo_str: &str) -> (String, Program) {
 }
 
 pub fn run_test_program(sierra_program: Program) -> Vec<Value> {
-    println!("{}", sierra_program);
     let function = sierra_program
         .funcs
         .iter()
