@@ -1,6 +1,6 @@
 use crate::{
     debug::libfunc_to_name,
-    gas::{BuiltinCosts, GasMetadata, MetadataComputationConfig},
+    gas::{BuiltinCosts, GasMetadata},
     starknet::StarknetSyscallHandler,
     ContractExecutionResult, ProgramTrace, StateDump, Value,
 };
@@ -17,6 +17,7 @@ use cairo_lang_sierra::{
     program::{GenFunction, GenStatement, Invocation, Program, StatementIdx},
     program_registry::ProgramRegistry,
 };
+use cairo_lang_sierra_to_casm::metadata::MetadataComputationConfig;
 use cairo_lang_starknet_classes::{
     casm_contract_class::ENTRY_POINT_COST, compiler_version::VersionId,
     contract_class::ContractEntryPoints,
@@ -76,7 +77,8 @@ impl Debug for VirtualMachine {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("VirtualMachine")
             .field("frames", &self.frames)
-            .field("gas", &self.gas)
+            .field("gas_info", &self.gas.0.gas_info)
+            .field("ap_change_info", &self.gas.0.ap_change_info)
             .finish_non_exhaustive()
     }
 }
@@ -126,6 +128,8 @@ impl VirtualMachine {
                         .collect(),
                     linear_gas_solver: no_eq_solver,
                     linear_ap_change_solver: no_eq_solver,
+                    skip_non_linear_solver_comparisons: false,
+                    compute_runtime_costs: false
                 }),
             )
             .unwrap(),
@@ -481,9 +485,14 @@ fn eval<'a>(
             self::felt252_dict_entry::eval(registry, selector, args)
         }
         CoreConcreteLibfunc::FunctionCall(info) => self::function_call::eval(registry, info, args),
-        CoreConcreteLibfunc::Gas(selector) => {
-            self::gas::eval(registry, selector, args, gas, *statement_idx, builtin_costs)
-        }
+        CoreConcreteLibfunc::Gas(selector) => self::gas::eval(
+            registry,
+            selector,
+            args,
+            &gas,
+            *statement_idx,
+            builtin_costs,
+        ),
         CoreConcreteLibfunc::Mem(selector) => self::mem::eval(registry, selector, args),
         CoreConcreteLibfunc::Nullable(_) => todo!(),
         CoreConcreteLibfunc::Pedersen(selector) => self::pedersen::eval(registry, selector, args),
