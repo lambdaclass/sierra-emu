@@ -77,8 +77,7 @@ impl Debug for VirtualMachine {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("VirtualMachine")
             .field("frames", &self.frames)
-            .field("gas_info", &self.gas.0.gas_info)
-            .field("ap_change_info", &self.gas.0.ap_change_info)
+            .field("gas", &self.gas)
             .finish_non_exhaustive()
     }
 }

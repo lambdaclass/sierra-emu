@@ -1,3 +1,5 @@
+use std::{fmt::Debug, ops::Deref};
+
 use cairo_lang_runner::token_gas_cost;
 use cairo_lang_sierra::{
     extensions::gas::CostTokenType,
@@ -78,6 +80,23 @@ impl From<CairoGasMetadataError> for GasMetadataError {
     }
 }
 
+impl Deref for GasMetadata {
+    type Target = CairoGasMetadata;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl Debug for GasMetadata {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("GasMetadata")
+            .field("ap_change_info", &self.ap_change_info)
+            .field("gas_info", &self.gas_info)
+            .finish()
+    }
+}
+
 impl GasMetadata {
     pub fn new(
         sierra_program: &Program,
@@ -118,11 +137,11 @@ impl GasMetadata {
     }
 
     pub fn initial_required_gas(&self, func: &FunctionId) -> Option<u64> {
-        if self.0.gas_info.function_costs.is_empty() {
+        if self.gas_info.function_costs.is_empty() {
             return None;
         }
         Some(
-            self.0.gas_info.function_costs[func]
+            self.gas_info.function_costs[func]
                 .iter()
                 .map(|(token_type, val)| val.into_or_panic::<usize>() * token_gas_cost(*token_type))
                 .sum::<usize>() as u64,
@@ -148,7 +167,7 @@ impl GasMetadata {
         idx: StatementIdx,
         cost_type: CostTokenType,
     ) -> Option<u64> {
-        self.0
+        self
             .gas_info
             .variable_values
             .get(&(idx, cost_type))
@@ -164,12 +183,12 @@ impl Clone for GasMetadata {
     fn clone(&self) -> Self {
         Self(CairoGasMetadata {
             ap_change_info: ApChangeInfo {
-                variable_values: self.0.ap_change_info.variable_values.clone(),
-                function_ap_change: self.0.ap_change_info.function_ap_change.clone(),
+                variable_values: self.ap_change_info.variable_values.clone(),
+                function_ap_change: self.ap_change_info.function_ap_change.clone(),
             },
             gas_info: GasInfo {
-                variable_values: self.0.gas_info.variable_values.clone(),
-                function_costs: self.0.gas_info.function_costs.clone(),
+                variable_values: self.gas_info.variable_values.clone(),
+                function_costs: self.gas_info.function_costs.clone(),
             },
         })
     }
